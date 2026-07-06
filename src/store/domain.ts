@@ -28,6 +28,9 @@ export const useDomainStore = defineStore('endge-domain-store', () => {
   // Пользовательские компоненты
   const components = computed(() => domain.value.getComponents())
 
+  // SFC-компоненты нового API
+  const componentSFCs = computed(() => domain.value.getComponentSFCs())
+
   // Пользовательские сценарии
   const scenarios = computed(() => domain.value.getScenarios())
 
@@ -112,6 +115,7 @@ export const useDomainStore = defineStore('endge-domain-store', () => {
     typesComplex,
     queries,
     components,
+    componentSFCs,
     scenarios,
     actions,
     converters,

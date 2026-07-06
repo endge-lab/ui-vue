@@ -3,19 +3,19 @@ import { onScopeDispose, ref } from 'vue'
 
 /**
  * Текущий проект (приложение) для виджета домена.
- * Синхронизируется с Endge.app, сохраняется в ядро (localStorage). null = «Все».
+ * Синхронизируется с Endge.context, сохраняется в ядро (localStorage). null = «Все».
  */
 export function useCurrentProjectFilter() {
-  const app = Endge.app
-  const current = ref<string | null>(app.getCurrentProject())
+  const context = Endge.context
+  const current = ref<string | null>(context.getCurrentProject())
 
-  const off = app.subscribe(() => {
-    current.value = app.getCurrentProject()
+  const off = context.subscribe(() => {
+    current.value = context.getCurrentProject()
   })
   onScopeDispose(off)
 
   return {
     current,
-    setCurrent: (identity: string | null) => app.setCurrentProject(identity),
+    setCurrent: (identity: string | null) => context.setCurrentProject(identity),
   }
 }

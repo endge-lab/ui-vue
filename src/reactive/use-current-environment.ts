@@ -2,20 +2,20 @@ import { Endge } from '@endge/core'
 import { onScopeDispose, ref } from 'vue'
 
 /**
- * Текущая среда исполнения (Endge.app.environment).
- * Синхронизируется с localStorage через Endge.app.
+ * Текущая среда исполнения (Endge.context.environment).
+ * Синхронизируется с localStorage через Endge.context.
  */
 export function useCurrentEnvironment() {
-  const app = Endge.app
-  const current = ref<string | null>(app.getCurrentEnvironment())
+  const context = Endge.context
+  const current = ref<string | null>(context.getCurrentEnvironment())
 
-  const off = app.subscribe(() => {
-    current.value = app.getCurrentEnvironment()
+  const off = context.subscribe(() => {
+    current.value = context.getCurrentEnvironment()
   })
   onScopeDispose(off)
 
   return {
     current,
-    setCurrent: (identity: string | null) => app.setCurrentEnvironment(identity),
+    setCurrent: (identity: string | null) => context.setCurrentEnvironment(identity),
   }
 }

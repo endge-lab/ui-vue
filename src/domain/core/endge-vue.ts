@@ -1,7 +1,7 @@
 import type { PhaseName } from '@endge/raph'
 import type { Ref } from 'vue'
 
-import { ComponentType, Endge } from '@endge/core'
+import { ComponentType, Endge, EndgeModule, type EndgePlugin } from '@endge/core'
 import { Raph, RaphNode } from '@endge/raph'
 import { randomString } from '@endge/utils'
 import { onBeforeUnmount, ref, watch } from 'vue'
@@ -16,51 +16,37 @@ import JSXRender_Text from '@/ui/render/dsl-jsx/JSXRender_Text'
 import ComponentType_DSL from '@/ui/render/ts/ComponentType_DSL'
 import ComponentType_Table from '@/ui/render/vue/ComponentType_TableV2.vue'
 
-export class EndgeVue {
-  /**
-   * Регистрация системных данных ядра Vue
-   */
-  static init(): void {
-    const registerLegacyViewRenderer = (
-      componentIdentity: string,
-      renderType: 'functional' | 'component',
-      component: unknown,
-      label?: string,
-    ): void => {
-      Endge.uiRegistry.registerLegacyComponentRenderer({
-        ref: `legacy:${componentIdentity}:view`,
-        componentIdentity,
-        host: 'view',
-        renderType,
-        component,
-        label,
-      })
-    }
+export class EndgeVueModule extends EndgeModule {
+  private _started = false
 
-    //
-    // Регистрация компонентных рендеров - родительский контейнер (Vue)
-    registerLegacyViewRenderer(
+  public override setup(): void {
+    this.registerLegacyViewRenderer(
       ComponentType.Table,
       'component',
       ComponentType_Table,
       'ComponentType.Table:view',
     )
-    registerLegacyViewRenderer(
+    this.registerLegacyViewRenderer(
       ComponentType.DSL,
       'functional',
       ComponentType_DSL,
       'ComponentType.DSL:view',
     )
 
-    //
-    // Регистрация JSX рендеров
-    registerLegacyViewRenderer('Layout', 'functional', JSXRender_Layout, 'JSX:Layout')
-    registerLegacyViewRenderer('Flex', 'functional', JSXRender_Flex, 'JSX:Flex')
-    registerLegacyViewRenderer('Box', 'functional', JSXRender_Box, 'JSX:Box')
-    registerLegacyViewRenderer('Component', 'functional', JSXRender_Component, 'JSX:Component')
-    registerLegacyViewRenderer('Text', 'functional', JSXRender_Text, 'JSX:Text')
-    registerLegacyViewRenderer('DateTime', 'functional', JSXRender_DateTime, 'JSX:DateTime')
-    registerLegacyViewRenderer('Icon', 'functional', JSXRender_Icon, 'JSX:Icon')
+    this.registerLegacyViewRenderer('Layout', 'functional', JSXRender_Layout, 'JSX:Layout')
+    this.registerLegacyViewRenderer('Flex', 'functional', JSXRender_Flex, 'JSX:Flex')
+    this.registerLegacyViewRenderer('Box', 'functional', JSXRender_Box, 'JSX:Box')
+    this.registerLegacyViewRenderer('Component', 'functional', JSXRender_Component, 'JSX:Component')
+    this.registerLegacyViewRenderer('Text', 'functional', JSXRender_Text, 'JSX:Text')
+    this.registerLegacyViewRenderer('DateTime', 'functional', JSXRender_DateTime, 'JSX:DateTime')
+    this.registerLegacyViewRenderer('Icon', 'functional', JSXRender_Icon, 'JSX:Icon')
+  }
+
+  public override start(): void {
+    if (this._started)
+      return
+
+    this._started = true
 
     Raph.addPhase({
       name: 'watch' as PhaseName,
@@ -75,16 +61,51 @@ export class EndgeVue {
           return
 
         ctxs.forEach((ctx) => {
-          if (!ctx.node?.meta?.ref) {
+          const path = ctx.node?.meta?.path
+
+          if (!ctx.node?.meta?.ref || typeof path !== 'string') {
             return
           }
-          (ctx.node.meta.ref as Ref<unknown>).value = Raph.get(ctx.node.meta.path)
+
+          (ctx.node.meta.ref as Ref<unknown>).value = Raph.get(path)
         })
       },
     })
-    Raph.reinitPhases()
   }
 
+  public override reset(): void {
+    this._started = false
+  }
+
+  private registerLegacyViewRenderer(
+    componentIdentity: string,
+    renderType: 'functional' | 'component',
+    component: unknown,
+    label?: string,
+  ): void {
+    Endge.uiRegistry.registerLegacyComponentRenderer({
+      ref: `legacy:${componentIdentity}:view`,
+      componentIdentity,
+      host: 'view',
+      renderType,
+      component,
+      label,
+    })
+  }
+}
+
+export const EndgeVuePlugin: EndgePlugin = {
+  id: '@endge/vue',
+  install(): void {
+    Endge.defineModule({
+      key: 'vue',
+      module: new EndgeVueModule(),
+      before: 'runtime',
+    })
+  },
+}
+
+export class EndgeVue {
   static makeRaphRef<T>(path: string): Ref<T> {
     const newRef = ref<T>(Raph.get(path) as T)
 

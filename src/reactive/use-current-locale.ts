@@ -2,20 +2,20 @@ import { Endge } from '@endge/core'
 import { onScopeDispose, ref } from 'vue'
 
 /**
- * Текущая локаль (Endge.app.currentLocale).
- * Мок: en | ru. Синхронизируется с localStorage через Endge.app.
+ * Текущая локаль (Endge.context.currentLocale).
+ * Мок: en | ru. Синхронизируется с localStorage через Endge.context.
  */
 export function useCurrentLocale() {
-  const app = Endge.app
-  const current = ref<string>(app.currentLocale)
+  const context = Endge.context
+  const current = ref<string>(context.currentLocale)
 
-  const off = app.subscribe(() => {
-    current.value = app.currentLocale
+  const off = context.subscribe(() => {
+    current.value = context.currentLocale
   })
   onScopeDispose(off)
 
   return {
     current,
-    setCurrent: (locale: string | null) => app.setCurrentLocale(locale),
+    setCurrent: (locale: string | null) => context.setCurrentLocale(locale),
   }
 }

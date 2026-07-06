@@ -55,8 +55,6 @@ const fn = (
     }
   }
 
-  console.log(`[Component: ${id}] localComData:`, localComData)
-
   // Создаем изолированный scope для компонента
   const scopeId = `component-scope-${randomString(5)}`
   const scope = Endge.script.getScope(scopeId, props.scope)
