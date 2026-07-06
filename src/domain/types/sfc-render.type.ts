@@ -9,6 +9,7 @@ import type {
   RuntimeHostLocalInputSource,
   RuntimeHostRaphInputBinding,
   RuntimeHostRaphInputSource,
+  RuntimeBoundaryPatch,
 } from '@endge/core'
 import type { h as VueH, VNode } from 'vue'
 
@@ -72,6 +73,11 @@ export interface SFCVueRuntimeRendererProps {
 export type SFCVueRuntimeBridgeUpdate = (
   props: Record<string, unknown>,
 ) => void
+
+/** Callback точечного patch-а от runtime boundary в Vue adapter. */
+export type SFCVueRuntimeBridgeBoundaryPatch = (
+  patch: RuntimeBoundaryPatch,
+) => void | boolean | Promise<void | boolean>
 
 /** Тип Vue h-функции, который нужен renderer-слою без привязки к компоненту. */
 export type SFCVueRenderH = typeof VueH

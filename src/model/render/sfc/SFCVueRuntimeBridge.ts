@@ -1,8 +1,9 @@
 import type {
+  SFCVueRuntimeBridgeBoundaryPatch,
   SFCVueRuntimeBridgeUpdate,
   SFCVueRuntimeInputSource,
 } from '@/domain/types/sfc-render.type'
-import type { ComponentSFCRuntimeHost, RuntimeHostUpdateContext } from '@endge/core'
+import type { ComponentSFCRuntimeHost, RuntimeBoundaryPatch, RuntimeHostUpdateContext } from '@endge/core'
 
 import { Raph } from '@endge/raph'
 
@@ -13,10 +14,19 @@ import { Raph } from '@endge/raph'
 export class SFCVueRuntimeBridge {
   private readonly _host: ComponentSFCRuntimeHost
   private readonly _onUpdate: SFCVueRuntimeBridgeUpdate
+  private readonly _onBoundaryPatch: SFCVueRuntimeBridgeBoundaryPatch | null
   private _input: SFCVueRuntimeInputSource
   private _isMounted = false
   private readonly _propsDirtyHandler = (_ctx: RuntimeHostUpdateContext): void => {
     if (this._isMounted)
+      this._emitResolvedProps()
+  }
+  private readonly _boundaryDirtyHandler = async (patch: RuntimeBoundaryPatch): Promise<void> => {
+    if (!this._isMounted)
+      return
+
+    const applied = await this._onBoundaryPatch?.(patch)
+    if (!applied)
       this._emitResolvedProps()
   }
 
@@ -24,10 +34,12 @@ export class SFCVueRuntimeBridge {
     host: ComponentSFCRuntimeHost
     input: SFCVueRuntimeInputSource
     onUpdate: SFCVueRuntimeBridgeUpdate
+    onBoundaryPatch?: SFCVueRuntimeBridgeBoundaryPatch | null
   }) {
     this._host = input.host
     this._input = input.input
     this._onUpdate = input.onUpdate
+    this._onBoundaryPatch = input.onBoundaryPatch ?? null
   }
 
   /**
@@ -40,6 +52,7 @@ export class SFCVueRuntimeBridge {
     this._isMounted = true
     this._host.setInputSource(this._input)
     this._host.on('props:dirty', this._propsDirtyHandler)
+    this._host.on('boundary:dirty', this._boundaryDirtyHandler)
     this._emitResolvedProps()
   }
 
@@ -59,7 +72,14 @@ export class SFCVueRuntimeBridge {
    */
   public destroy(): void {
     this._host.off('props:dirty', this._propsDirtyHandler)
+    this._host.off('boundary:dirty', this._boundaryDirtyHandler)
     this._isMounted = false
+  }
+
+  /** Принудительно перечитывает props из текущего input source. */
+  public refresh(): void {
+    if (this._isMounted)
+      this._emitResolvedProps()
   }
 
   /**
