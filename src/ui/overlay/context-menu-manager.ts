@@ -75,6 +75,18 @@ export async function executeEndgeContextMenuItem(item: ContextMenuItemDescripto
   closeEndgeContextMenu()
 }
 
+export function resolveEndgeContextMenuItemLabel(item: ContextMenuItemDescriptor): string {
+  const fallback = item.label
+
+  if (Endge.i18n.te(item.label))
+    return Endge.i18n.t(item.label, { defaultValue: fallback })
+
+  if (item.command !== item.label && Endge.i18n.te(item.command))
+    return Endge.i18n.t(item.command, { defaultValue: fallback })
+
+  return fallback
+}
+
 function compactSeparators(items: ContextMenuNodeDescriptor[]): ContextMenuNodeDescriptor[] {
   const result: ContextMenuNodeDescriptor[] = []
 

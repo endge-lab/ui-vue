@@ -91,19 +91,19 @@ const DEFAULT_TABLE_COLUMN_MENU: ContextMenuDescriptor = {
     {
       kind: 'item',
       id: TABLE_RUNTIME_COMMAND_IDS.sortSetColumnAsc,
-      label: 'Сортировать по возрастанию',
+      label: TABLE_RUNTIME_COMMAND_IDS.sortSetColumnAsc,
       command: TABLE_RUNTIME_COMMAND_IDS.sortSetColumnAsc,
     },
     {
       kind: 'item',
       id: TABLE_RUNTIME_COMMAND_IDS.sortSetColumnDesc,
-      label: 'Сортировать по убыванию',
+      label: TABLE_RUNTIME_COMMAND_IDS.sortSetColumnDesc,
       command: TABLE_RUNTIME_COMMAND_IDS.sortSetColumnDesc,
     },
     {
       kind: 'item',
       id: TABLE_RUNTIME_COMMAND_IDS.sortClearColumn,
-      label: 'Сбросить сортировку колонки',
+      label: TABLE_RUNTIME_COMMAND_IDS.sortClearColumn,
       command: TABLE_RUNTIME_COMMAND_IDS.sortClearColumn,
     },
     {
@@ -113,7 +113,7 @@ const DEFAULT_TABLE_COLUMN_MENU: ContextMenuDescriptor = {
     {
       kind: 'item',
       id: TABLE_RUNTIME_COMMAND_IDS.sortClearAll,
-      label: 'Сбросить все сортировки',
+      label: TABLE_RUNTIME_COMMAND_IDS.sortClearAll,
       command: TABLE_RUNTIME_COMMAND_IDS.sortClearAll,
     },
   ],
@@ -591,12 +591,14 @@ const SFCRevoGridColumnHeader = defineComponent({
       style: {
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         gap: '6px',
         width: '100%',
         height: '100%',
         minWidth: 0,
         position: 'relative',
+        padding: props.sortEnabled ? '0 30px' : '0 8px',
+        boxSizing: 'border-box',
         cursor: props.isSortable ? 'pointer' : undefined,
         pointerEvents: 'auto',
         userSelect: 'none',
@@ -615,46 +617,74 @@ const SFCRevoGridColumnHeader = defineComponent({
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
           minWidth: 0,
+          maxWidth: '100%',
+          textAlign: 'center',
         },
       }, `${props.title} \u200e`),
       props.sortEnabled && props.sortDirection
         ? vueH('span', {
             style: {
-              marginLeft: 'auto',
-              fontSize: '11px',
-              lineHeight: '1',
-              opacity: '0.72',
-            },
-          }, `${props.sortDirection.toUpperCase()}${props.sortIndex != null ? props.sortIndex + 1 : ''}`)
-        : null,
-      props.hasMenu
-        ? vueH('button', {
-            type: 'button',
-            'aria-label': 'Открыть меню колонки',
-            style: {
+              position: 'absolute',
+              right: '7px',
+              top: '50%',
+              transform: 'translateY(-50%)',
               display: 'inline-flex',
-              flex: '0 0 22px',
-              width: '22px',
-              height: '22px',
+              width: '20px',
+              height: '20px',
               alignItems: 'center',
               justifyContent: 'center',
-              border: 0,
-              borderRadius: '4px',
-              background: 'transparent',
-              color: 'inherit',
-              cursor: 'pointer',
-              font: 'inherit',
+              color: '#475569',
               lineHeight: '1',
-              padding: 0,
-              opacity: '0.72',
             },
-            onClick: handleMenuOpen,
-            onContextmenu: handleMenuOpen,
-          }, '⋮')
+          }, [
+            renderSortDirectionIcon(props.sortDirection),
+            props.sortIndex != null
+              ? vueH('span', {
+                  style: {
+                    position: 'absolute',
+                    right: '-5px',
+                    top: '-4px',
+                    minWidth: '13px',
+                    height: '13px',
+                    borderRadius: '999px',
+                    background: '#0f172a',
+                    color: '#fff',
+                    fontSize: '9px',
+                    fontWeight: '600',
+                    lineHeight: '13px',
+                    textAlign: 'center',
+                    padding: '0 3px',
+                    boxSizing: 'border-box',
+                  },
+                }, String(props.sortIndex + 1))
+              : null,
+          ])
         : null,
     ])
   },
 })
+
+function renderSortDirectionIcon(direction: ComponentSFCTableSortDirection): ReturnType<SFCVueRenderH> {
+  return vueH('svg', {
+    width: 15,
+    height: 15,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    'stroke-width': 2.1,
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round',
+    'aria-hidden': 'true',
+  }, direction === 'asc'
+    ? [
+        vueH('path', { d: 'M12 19V5' }),
+        vueH('path', { d: 'm5 12 7-7 7 7' }),
+      ]
+    : [
+        vueH('path', { d: 'M12 5v14' }),
+        vueH('path', { d: 'm19 12-7 7-7-7' }),
+      ])
+}
 
 function getSortMeta(columnKey: string, sortState: ComponentSFCTableSortStateItem[]): SFCTableSortMeta {
   const index = sortState.findIndex(item => item.key === columnKey)

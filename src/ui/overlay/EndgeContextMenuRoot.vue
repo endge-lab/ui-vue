@@ -1,16 +1,23 @@
 <script setup lang="ts">
-import type { ContextMenuItemDescriptor } from '@endge/core'
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { Endge, type ContextMenuItemDescriptor } from '@endge/core'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import {
   closeEndgeContextMenu,
   endgeContextMenuState,
   executeEndgeContextMenuItem,
   getExecutableContextMenuItems,
+  resolveEndgeContextMenuItemLabel,
 } from '@/ui/overlay/context-menu-manager'
 
 const menuRef = ref<HTMLElement | null>(null)
-const menuItems = computed(() => getExecutableContextMenuItems())
+const i18nVersion = ref(0)
+let unsubscribeI18n: (() => void) | null = null
+
+const menuItems = computed(() => {
+  i18nVersion.value
+  return getExecutableContextMenuItems()
+})
 const position = computed(() => ({
   left: `${endgeContextMenuState.x}px`,
   top: `${endgeContextMenuState.y}px`,
@@ -33,6 +40,14 @@ watch(
 
 onBeforeUnmount(() => {
   removeGlobalListeners()
+  unsubscribeI18n?.()
+  unsubscribeI18n = null
+})
+
+onMounted(() => {
+  unsubscribeI18n = Endge.i18n.subscribe(() => {
+    i18nVersion.value += 1
+  })
 })
 
 function addGlobalListeners(): void {
@@ -82,6 +97,11 @@ function clampMenuToViewport(): void {
 async function runItem(item: ContextMenuItemDescriptor): Promise<void> {
   await executeEndgeContextMenuItem(item)
 }
+
+function resolveItemLabel(item: ContextMenuItemDescriptor): string {
+  i18nVersion.value
+  return resolveEndgeContextMenuItemLabel(item)
+}
 </script>
 
 <template>
@@ -117,7 +137,7 @@ async function runItem(item: ContextMenuItemDescriptor): Promise<void> {
           >
             {{ item.icon }}
           </span>
-          <span class="endge-context-menu-root__label">{{ item.label }}</span>
+          <span class="endge-context-menu-root__label">{{ resolveItemLabel(item) }}</span>
         </button>
       </template>
     </div>
