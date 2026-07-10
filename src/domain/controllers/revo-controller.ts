@@ -60,7 +60,7 @@ export interface RevoGridCoreOptions {
   cellSort: (header: Entity, rule: any, a: Row, b: Row) => number
 }
 
-export type SelectedItem = {
+export type RevoGridControllerSelectedItem = {
   model?: Row | null
   col?: string | null
   row: string | null
@@ -75,9 +75,9 @@ export class RevoGrid_Controller {
   /** UI-состояние фильтров (MultiFilterItem) */
   filterMulti: MultiFilterItem = {}
   /** Текущее выделение (данные, без DOM) */
-  selected: SelectedItem = { model: null, col: null, row: null, lastTime: 0 }
+  selected: RevoGridControllerSelectedItem = { model: null, col: null, row: null, lastTime: 0 }
   /** Мультивыделение (данные, без DOM) */
-  multiSelected: SelectedItem[] = []
+  multiSelected: RevoGridControllerSelectedItem[] = []
 
   constructor(opts: RevoGridCoreOptions) {
     this.opts = opts
@@ -219,7 +219,7 @@ export class RevoGrid_Controller {
   toggleMulti(rowId: string): void {
     const idx = this.multiSelected.findIndex((x) => x.row === rowId)
     if (idx >= 0) this.multiSelected.splice(idx, 1)
-    else this.multiSelected.push({ row: rowId } as SelectedItem)
+    else this.multiSelected.push({ row: rowId } as RevoGridControllerSelectedItem)
   }
 
   resetSelection(): void {

@@ -104,7 +104,7 @@ export class SFCVueRuntimeBridge {
     if (this._input.kind !== 'raph')
       return {}
 
-    const props: Record<string, unknown> = {}
+    const props: Record<string, unknown> = { ...(this._input.props ?? {}) }
     for (const [prop, binding] of Object.entries(this._input.bindings)) {
       props[prop] = Raph.get(binding.path)
     }

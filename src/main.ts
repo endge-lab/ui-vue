@@ -33,6 +33,8 @@ export * from '@/ui/render/dsl-jsx/JSXRender_Layout'
 export * from '@/ui/render/dsl-jsx/JSXRender_Text'
 
 export * from '@/domain/types/sfc-render.type'
+export * from '@/domain/types/filter-renderer.type'
+export * from '@/ui/filter'
 export * from '@/ui/render/sfc/SFCRender_Base'
 export * from '@/ui/render/sfc/SFCRender_Context'
 export * from '@/ui/render/sfc/SFCRender_Evaluator'

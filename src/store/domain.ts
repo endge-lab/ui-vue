@@ -64,6 +64,9 @@ export const useDomainStore = defineStore('endge-domain-store', () => {
   // Фильтры (коллекция filters в Payload)
   const filters = computed(() => domain.value.getFilters())
 
+  // Runtime-композиции (коллекция compositions в Payload)
+  const compositions = computed(() => domain.value.getCompositions())
+
   // Окружения (коллекция environments в Payload)
   const environments = computed(() => domain.value.getEnvironments())
 
@@ -126,6 +129,7 @@ export const useDomainStore = defineStore('endge-domain-store', () => {
     queriesNames,
     parameters,
     filters,
+    compositions,
     environments,
     tenants,
     behaviorBindings,
