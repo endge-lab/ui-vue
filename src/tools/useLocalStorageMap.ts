@@ -1,8 +1,28 @@
-import { useLocalStorage } from '@vueuse/core'
+import type { StorageLike } from '@vueuse/core'
+import { useStorage } from '@vueuse/core'
 import { ref, watch } from 'vue'
 
+let safeLocalStorage: StorageLike | undefined
+
+function getSafeLocalStorage(): StorageLike | undefined {
+  if (typeof window === 'undefined')
+    return undefined
+
+  if (!safeLocalStorage) {
+    const storage = window.localStorage
+
+    safeLocalStorage = {
+      getItem: key => storage.getItem(key),
+      setItem: (key, value) => storage.setItem(key, value),
+      removeItem: key => storage.removeItem(key),
+    }
+  }
+
+  return safeLocalStorage
+}
+
 export function useLocalStorageMap(key: string) {
-  const raw = useLocalStorage<Array<[string, any]>>(key, [])
+  const raw = useStorage<Array<[string, any]>>(key, [], getSafeLocalStorage())
 
   const internal = ref(new Map<string, any>(raw.value))
 
