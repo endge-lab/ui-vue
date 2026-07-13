@@ -27,6 +27,7 @@ import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
 
 export class EndgeVueModule extends EndgeModule {
   private _started = false
+  private _unsubscribeWorkspace: (() => void) | null = null
 
   public override setup(): void {
     Endge.uiRegistry.adapters.register(NativeVueSFCAdapter)
@@ -54,6 +55,10 @@ export class EndgeVueModule extends EndgeModule {
   }
 
   public override build(): void {
+    this._activateWorkspaceAdapter()
+  }
+
+  private _activateWorkspaceAdapter(): void {
     Endge.uiRegistry.adapters.activate({
       id: Endge.workspace.defaultSfcAdapterId,
       protocol: ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
@@ -92,9 +97,15 @@ export class EndgeVueModule extends EndgeModule {
         })
       },
     })
+
+    this._unsubscribeWorkspace = Endge.workspace.subscribe(() => {
+      this._activateWorkspaceAdapter()
+    })
   }
 
   public override reset(): void {
+    this._unsubscribeWorkspace?.()
+    this._unsubscribeWorkspace = null
     this._started = false
   }
 
