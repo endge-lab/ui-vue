@@ -5,7 +5,6 @@ import { useSubscribableRef } from '@endge/utils'
 
 export const useDomainStore = defineStore('endge-domain-store', () => {
   const { refObj: domain } = useSubscribableRef(Endge.domain)
-  const { refObj: uiRegistry } = useSubscribableRef(Endge.uiRegistry)
   const { refObj: eventsRef } = useSubscribableRef(Endge.events)
 
   // Все проекты домена
@@ -97,11 +96,6 @@ export const useDomainStore = defineStore('endge-domain-store', () => {
   // Ссылка на реактивное хранилище
   const storage = ref(Endge.store.getStates())
 
-  // Имена зарегистрированных рендеров компонентов
-  const rendersNames = computed(() => {
-    return uiRegistry.value.serialize().legacyRenderers
-  })
-
   // Имена зарегистрированных названий запросов
   const queriesNames = computed(() => {
     return ['query-gql', 'query-rest']
@@ -125,7 +119,6 @@ export const useDomainStore = defineStore('endge-domain-store', () => {
     navigations,
     folders,
     storage,
-    rendersNames,
     queriesNames,
     parameters,
     filters,
