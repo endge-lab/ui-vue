@@ -39,6 +39,12 @@ import { SFCRender_Base } from '@/ui/render/sfc/SFCRender_Base'
 import { extendSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { evaluateSFCProps, evaluateSFCValue } from '@/ui/render/sfc/SFCRender_Evaluator'
 import { renderSFCNodes } from '@/ui/render/sfc/SFCRender_Node'
+import {
+  normalizeSFCTableCellAlignment,
+  type SFCTableCellAlignment,
+  type SFCTableCellAlign,
+  type SFCTableCellVerticalAlign,
+} from '@/ui/render/sfc/SFCRender_TableAlignment'
 import { SFCVueBoundaryRegistryKey } from '@/ui/render/sfc/SFCRender_BoundaryRegistry'
 import { closeEndgeContextMenu, openEndgeContextMenu } from '@/ui/overlay/context-menu-manager'
 
@@ -76,6 +82,11 @@ interface SFCTableCellRenderInput {
   column: SFCTableColumn
   cellProps: Record<string, unknown>
   rows: Record<string, unknown>[]
+}
+
+interface SFCTableCellAlignmentStyle {
+  alignItems: 'flex-start' | 'center' | 'flex-end'
+  justifyContent: 'flex-start' | 'center' | 'flex-end'
 }
 
 interface SFCTableSortMeta {
@@ -172,6 +183,12 @@ export const SFCRender_Table: SFCVueRenderFunction = SFCRender_Base((input) => {
   const sortMode = normalizeComponentSFCTableSortMode(input.props['sort-mode'] ?? input.props.sortMode ?? sortDescriptor.mode)
   const pinMode = normalizeComponentSFCTableColumnPinMode(input.props['column-pin'] ?? input.props.columnPin ?? pinDescriptor.mode)
   const tableId = normalizeText(input.props.id ?? input.props.tableId ?? input.attrs.id, '')
+  const cellAlignmentStyle = createCellAlignmentStyle(
+    normalizeSFCTableCellAlignment(
+      input.props['cell-align'] ?? input.props.cellAlign,
+      input.props['cell-vertical-align'] ?? input.props.cellVerticalAlign,
+    ),
+  )
 
   return input.h('div', {
     ...input.attrs,
@@ -203,6 +220,7 @@ export const SFCRender_Table: SFCVueRenderFunction = SFCRender_Base((input) => {
           ...cellInput,
           fallbackH: input.h,
           context: input.context,
+          cellAlignmentStyle,
         })
       },
     }),
@@ -1258,6 +1276,7 @@ function readRowPath(row: Record<string, unknown>, path: string): unknown {
 function renderTableCell(input: SFCTableCellRenderInput & {
   fallbackH: SFCVueRenderH
   context: SFCVueRenderContext
+  cellAlignmentStyle: SFCTableCellAlignmentStyle
 }): ReturnType<SFCVueRenderH> {
   const h = input.h ?? input.fallbackH
   const rowIndex = normalizeNumber(input.cellProps.rowIndex, 0)
@@ -1273,12 +1292,31 @@ function renderTableCell(input: SFCTableCellRenderInput & {
     class: 'endge-sfc-table-cell',
     style: {
       display: 'flex',
-      alignItems: 'center',
+      ...input.cellAlignmentStyle,
       width: '100%',
       height: '100%',
       minWidth: 0,
     },
   }, children)
+}
+
+function createCellAlignmentStyle(alignment: SFCTableCellAlignment): SFCTableCellAlignmentStyle {
+  return {
+    alignItems: mapVerticalCellAlignment(alignment.vertical),
+    justifyContent: mapHorizontalCellAlignment(alignment.horizontal),
+  }
+}
+
+function mapHorizontalCellAlignment(value: SFCTableCellAlign): 'flex-start' | 'center' | 'flex-end' {
+  if (value === 'center')
+    return 'center'
+  return value === 'right' ? 'flex-end' : 'flex-start'
+}
+
+function mapVerticalCellAlignment(value: SFCTableCellVerticalAlign): 'flex-start' | 'center' | 'flex-end' {
+  if (value === 'middle')
+    return 'center'
+  return value === 'bottom' ? 'flex-end' : 'flex-start'
 }
 
 async function updateGridCells(input: {
