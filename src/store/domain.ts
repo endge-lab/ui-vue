@@ -69,12 +69,6 @@ export const useDomainStore = defineStore('endge-domain-store', () => {
   // Тенанты (коллекция tenants в Payload)
   const tenants = computed(() => domain.value.getTenants())
 
-  // Биндинги поведения (коллекция behavior-bindings в Payload)
-  const behaviorBindings = computed(() => domain.value.getBehaviorBindings())
-
-  // Биндинги presentation (коллекция presentation-bindings в Payload)
-  const presentationBindings = computed(() => domain.value.getPresentationBindings())
-
   // Политики (коллекция policies в Payload)
   const policies = computed(() => domain.value.getPolicies())
 
@@ -120,8 +114,6 @@ export const useDomainStore = defineStore('endge-domain-store', () => {
     compositions,
     environments,
     tenants,
-    behaviorBindings,
-    presentationBindings,
     policies,
     styles,
     vocabs,
