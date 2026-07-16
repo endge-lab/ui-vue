@@ -8,6 +8,7 @@ import type {
   ComponentSFCTableSortMode,
   ComponentSFCTableSortStateItem,
   ContextMenuDescriptor,
+  EndgeStyleMatchNode,
   RComponentSFC_IR_ElementNode,
   RComponentSFC_IR_Node,
   RuntimeBoundaryPatch,
@@ -47,6 +48,18 @@ import {
 } from '@/ui/render/sfc/SFCRender_TableAlignment'
 import { SFCVueBoundaryRegistryKey } from '@/ui/render/sfc/SFCRender_BoundaryRegistry'
 import { closeEndgeContextMenu, openEndgeContextMenu } from '@/ui/overlay/context-menu-manager'
+import { getEndgeDOMStyleClasses } from '@/model/style/endge-dom-style'
+
+interface SFCTablePublicPartAttrs extends Record<string, unknown> {
+  part: string
+  'data-endge-part': string
+  class: string[]
+}
+
+interface SFCTableHeaderParts {
+  header: SFCTablePublicPartAttrs
+  headerContent: SFCTablePublicPartAttrs
+}
 
 interface SFCTableColumn {
   key: string
@@ -56,6 +69,7 @@ interface SFCTableColumn {
   sort: SFCTableColumnSort | null
   cellNodes: RComponentSFC_IR_Node[]
   rowDependencies: Set<string>
+  headerParts: SFCTableHeaderParts
 }
 
 interface SFCTableColumnSort {
@@ -608,10 +622,22 @@ function collectTableColumns(
   sortDescriptor: ReturnType<typeof normalizeComponentSFCTableSort>,
   pinDescriptor: ReturnType<typeof normalizeComponentSFCTableColumnPin>,
 ): SFCTableColumn[] {
-  return tableNode.children
+  const columnNodes = tableNode.children
     .filter(isElementNode)
     .filter(node => node.tag === 'Column')
-    .map((node, index) => createTableColumn(node, context, index, sortDescriptor, pinDescriptor))
+  const headerSiblings: EndgeStyleMatchNode[] = []
+  const headerContentSiblings: EndgeStyleMatchNode[] = []
+
+  return columnNodes.map((node, index) => {
+    const header = createTablePublicPartNode(context, 'header', index, columnNodes.length, headerSiblings)
+    const headerContent = createTablePublicPartNode(context, 'header-content', index, columnNodes.length, headerContentSiblings)
+    headerSiblings.push(header)
+    headerContentSiblings.push(headerContent)
+    return createTableColumn(node, context, index, sortDescriptor, pinDescriptor, {
+      header: createTablePublicPartAttrs(context, header, 'header'),
+      headerContent: createTablePublicPartAttrs(context, headerContent, 'header-content'),
+    })
+  })
 }
 
 function createTableColumn(
@@ -620,6 +646,7 @@ function createTableColumn(
   index: number,
   sortDescriptor: ReturnType<typeof normalizeComponentSFCTableSort>,
   pinDescriptor: ReturnType<typeof normalizeComponentSFCTableColumnPin>,
+  headerParts: SFCTableHeaderParts,
 ): SFCTableColumn {
   const props = evaluateSFCProps(columnNode.props, context)
   const key = normalizeColumnKey(columnNode, context, props.key, `column_${index}`)
@@ -640,6 +667,45 @@ function createTableColumn(
       : null,
     cellNodes: resolveCellNodes(columnNode),
     rowDependencies: extractRowDependencies(resolveCellNodes(columnNode), key),
+    headerParts,
+  }
+}
+
+/** Creates a pseudo-element-like logical node that retains the Table host selector identity. */
+function createTablePublicPartNode(
+  context: SFCVueRenderContext,
+  part: 'header' | 'header-content',
+  index: number,
+  siblingCount: number,
+  previousSiblings: readonly EndgeStyleMatchNode[],
+): EndgeStyleMatchNode {
+  const host = context.styleParent
+  return {
+    tag: host?.tag ?? 'Table',
+    id: host?.id,
+    classes: host?.classes ?? new Set(),
+    attributes: host?.attributes ?? {},
+    states: host?.states ?? new Set(),
+    parts: new Set([part]),
+    component: host?.component,
+    identity: host?.identity,
+    ownerScopeId: host?.ownerScopeId ?? context.styleOwnerScopeId,
+    parent: host?.parent,
+    previousSiblings: [...previousSiblings],
+    index: index + 1,
+    siblingCount,
+  }
+}
+
+function createTablePublicPartAttrs(
+  context: SFCVueRenderContext,
+  node: EndgeStyleMatchNode,
+  part: 'header' | 'header-content',
+): SFCTablePublicPartAttrs {
+  return {
+    part,
+    'data-endge-part': part,
+    class: getEndgeDOMStyleClasses(context.styleArtifacts, node),
   }
 }
 
@@ -690,6 +756,8 @@ function createRevoColumn(
     pin: toRevoGridPinSide(pinSide),
     columnTemplate: VGridVueTemplate(SFCRevoGridColumnHeader, {
       title: column.title,
+      headerAttrs: column.headerParts.header,
+      headerContentAttrs: column.headerParts.headerContent,
       isSortable: column.sort?.sortable === true,
       sortEnabled: sortMeta.enabled,
       sortDirection: sortMeta.direction,
@@ -707,6 +775,14 @@ const SFCRevoGridColumnHeader = defineComponent({
   props: {
     title: {
       type: String,
+      required: true,
+    },
+    headerAttrs: {
+      type: Object as PropType<SFCTablePublicPartAttrs>,
+      required: true,
+    },
+    headerContentAttrs: {
+      type: Object as PropType<SFCTablePublicPartAttrs>,
       required: true,
     },
     isSortable: {
@@ -758,10 +834,13 @@ const SFCRevoGridColumnHeader = defineComponent({
     }
 
     return () => vueH('div', {
+      part: props.headerAttrs.part,
+      'data-endge-part': props.headerAttrs['data-endge-part'],
       class: [
         'endge-sfc-table-header',
         props.isSortable ? 'endge-sfc-table-header--sortable' : '',
         props.sortEnabled ? 'endge-sfc-table-header--sorted' : '',
+        props.headerAttrs.class,
       ],
       role: props.isSortable ? 'button' : undefined,
       tabindex: props.isSortable ? 0 : undefined,
@@ -769,12 +848,10 @@ const SFCRevoGridColumnHeader = defineComponent({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '6px',
         width: '100%',
         height: '100%',
         minWidth: 0,
         position: 'relative',
-        padding: props.sortEnabled ? '0 30px' : '0 8px',
         boxSizing: 'border-box',
         cursor: props.isSortable ? 'pointer' : undefined,
         pointerEvents: 'auto',
@@ -787,19 +864,36 @@ const SFCRevoGridColumnHeader = defineComponent({
           handleClick(event as unknown as MouseEvent)
       },
     }, [
-      vueH('span', {
+      vueH('div', {
+        part: props.headerContentAttrs.part,
+        'data-endge-part': props.headerContentAttrs['data-endge-part'],
+        class: ['endge-sfc-table-header-content', props.headerContentAttrs.class],
         style: {
-          display: 'block',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '6px',
+          width: '100%',
+          height: '100%',
           minWidth: 0,
-          maxWidth: '100%',
-          textAlign: 'center',
+          position: 'relative',
+          padding: props.sortEnabled ? '0 30px' : '0 8px',
+          boxSizing: 'border-box',
         },
-      }, `${props.title} \u200e`),
-      props.sortEnabled && props.sortDirection
-        ? vueH('span', {
+      }, [
+        vueH('span', {
+          style: {
+            display: 'block',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            minWidth: 0,
+            maxWidth: '100%',
+            textAlign: 'center',
+          },
+        }, `${props.title} \u200e`),
+        props.sortEnabled && props.sortDirection
+          ? vueH('span', {
             style: {
               position: 'absolute',
               right: '7px',
@@ -813,10 +907,10 @@ const SFCRevoGridColumnHeader = defineComponent({
               color: '#475569',
               lineHeight: '1',
             },
-          }, [
-            renderSortDirectionIcon(props.sortDirection),
-            props.sortIndex != null
-              ? vueH('span', {
+            }, [
+              renderSortDirectionIcon(props.sortDirection),
+              props.sortIndex != null
+                ? vueH('span', {
                   style: {
                     position: 'absolute',
                     right: '-5px',
@@ -833,10 +927,11 @@ const SFCRevoGridColumnHeader = defineComponent({
                     padding: '0 3px',
                     boxSizing: 'border-box',
                   },
-                }, String(props.sortIndex + 1))
-              : null,
-          ])
-        : null,
+                  }, String(props.sortIndex + 1))
+                : null,
+            ])
+          : null,
+      ]),
     ])
   },
 })
