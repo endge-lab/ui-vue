@@ -215,7 +215,7 @@ function createStyleNode(
     ownerScopeId: context.styleOwnerScopeId,
     runtimeScopeIds: new Set(context.runtimeScopeIds),
     parent: context.styleParent,
-    previousSiblings: [...context.styleSiblings],
+    previousSibling: context.styleSiblings.at(-1),
     index: context.styleSiblings.length + 1,
     siblingCount: context.styleSiblingCount || context.styleSiblings.length + 1,
   }

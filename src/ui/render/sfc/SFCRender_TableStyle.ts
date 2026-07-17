@@ -45,18 +45,21 @@ export interface SFCTableCellStyleSurfaces {
 
 interface SFCTableRowStyleMeta {
   row: SFCTablePublicSurface
-  cells: SFCTableCellStyleSurfaces[]
+  columnCount: number
+  contract: SFCTableStyleContract
 }
 
 export const SFC_TABLE_ROW_CLASS_FIELD = '__endgeStyleRowClass'
 const SFC_TABLE_ROW_STYLE_META = Symbol('endge.table.row-style-meta')
 const APPLIED_STYLE_CLASSES_ATTRIBUTE = 'data-endge-applied-style-classes'
+const MAX_CELL_SURFACE_CACHE_SIZE = 512
+const cellSurfaceCaches = new WeakMap<SFCTableStyleContract, Map<string, SFCTableCellStyleSurfaces>>()
 
 export function createSFCTableStyleContract(context: SFCVueRenderContext): SFCTableStyleContract {
   const grid = createSurface(context, 'grid', 1, 1)
-  const header = createSurface(context, 'header', 1, 1, [], grid.node)
-  const body = createSurface(context, 'body', 1, 1, [], grid.node)
-  const groupRow = createSurface(context, 'group-row', 1, 1, [], body.node)
+  const header = createSurface(context, 'header', 1, 1, undefined, grid.node)
+  const body = createSurface(context, 'body', 1, 1, undefined, grid.node)
+  const groupRow = createSurface(context, 'group-row', 1, 1, undefined, body.node)
   return { context, grid, header, body, groupRow }
 }
 
@@ -64,7 +67,7 @@ export function createSFCTableColumnStyleSurfaces(
   contract: SFCTableStyleContract,
   columnCount: number,
 ): SFCTableColumnStyleSurfaces[] {
-  const headerCells: EndgeStyleMatchNode[] = []
+  let previousHeaderCell: EndgeStyleMatchNode | undefined
   const result: SFCTableColumnStyleSurfaces[] = []
 
   for (let index = 0; index < columnCount; index++) {
@@ -73,16 +76,16 @@ export function createSFCTableColumnStyleSurfaces(
       'header-cell',
       index + 1,
       columnCount,
-      headerCells,
+      previousHeaderCell,
       contract.header.node,
     )
-    headerCells.push(headerCell.node)
+    previousHeaderCell = headerCell.node
     const headerContent = createSurface(
       contract.context,
       'header-content',
       1,
       1,
-      [],
+      undefined,
       headerCell.node,
     )
     result.push({ headerCell, headerContent })
@@ -96,7 +99,14 @@ export function decorateSFCTableRows(
   columnCount: number,
   contract: SFCTableStyleContract,
 ): Record<string, unknown>[] {
-  const rowNodes: EndgeStyleMatchNode[] = []
+  cellSurfaceCaches.delete(contract)
+
+  // RevoGrid still exposes the public parts without EndgeCSS rules. Avoid
+  // creating logical match nodes and row clones in that common fast path.
+  if (!contract.context.styleArtifacts.some(artifact => artifact.rules.length > 0))
+    return [...rows]
+
+  let previousRow: EndgeStyleMatchNode | undefined
 
   return rows.map((row, rowIndex) => {
     const rowSurface = createSurface(
@@ -104,33 +114,10 @@ export function decorateSFCTableRows(
       'row',
       rowIndex + 1,
       rows.length,
-      rowNodes,
+      previousRow,
       contract.body.node,
     )
-    rowNodes.push(rowSurface.node)
-
-    const cellNodes: EndgeStyleMatchNode[] = []
-    const cells: SFCTableCellStyleSurfaces[] = []
-    for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-      const cell = createSurface(
-        contract.context,
-        'cell',
-        columnIndex + 1,
-        columnCount,
-        cellNodes,
-        rowSurface.node,
-      )
-      cellNodes.push(cell.node)
-      const cellContent = createSurface(
-        contract.context,
-        'cell-content',
-        1,
-        1,
-        [],
-        cell.node,
-      )
-      cells.push({ cell, cellContent })
-    }
+    previousRow = rowSurface.node
 
     const decorated = {
       ...row,
@@ -139,7 +126,7 @@ export function decorateSFCTableRows(
     Object.defineProperty(decorated, SFC_TABLE_ROW_STYLE_META, {
       configurable: false,
       enumerable: false,
-      value: { row: rowSurface, cells } satisfies SFCTableRowStyleMeta,
+      value: { row: rowSurface, columnCount, contract } satisfies SFCTableRowStyleMeta,
       writable: false,
     })
     return decorated
@@ -151,7 +138,57 @@ export function getSFCTableCellStyleSurfaces(
   columnIndex: number,
 ): SFCTableCellStyleSurfaces | null {
   const metadata = (row as unknown as Record<PropertyKey, unknown>)[SFC_TABLE_ROW_STYLE_META] as SFCTableRowStyleMeta | undefined
-  return metadata?.cells[columnIndex] ?? null
+  if (!metadata || columnIndex < 0 || columnIndex >= metadata.columnCount)
+    return null
+
+  const cache = getCellSurfaceCache(metadata.contract)
+  const cacheKey = `${metadata.row.node.index}:${metadata.row.node.siblingCount}:${metadata.columnCount}:${columnIndex}`
+  const cached = cache.get(cacheKey)
+  if (cached) {
+    // Refresh insertion order so active viewport cells stay in the bounded LRU.
+    cache.delete(cacheKey)
+    cache.set(cacheKey, cached)
+    return cached
+  }
+
+  // RevoGrid virtualizes cells. Build the neutral sibling chain only for the
+  // cell it is currently asking the renderer to display, and do not retain it
+  // on any of the 10k+ source rows.
+  let previousCell: EndgeStyleMatchNode | undefined
+  let cell: SFCTablePublicSurface | undefined
+  for (let index = 0; index <= columnIndex; index++) {
+    cell = createSurface(
+      metadata.contract.context,
+      'cell',
+      index + 1,
+      metadata.columnCount,
+      previousCell,
+      metadata.row.node,
+    )
+    previousCell = cell.node
+  }
+
+  if (!cell)
+    return null
+
+  const result = {
+    cell,
+    cellContent: createSurface(
+      metadata.contract.context,
+      'cell-content',
+      1,
+      1,
+      undefined,
+      cell.node,
+    ),
+  }
+  cache.set(cacheKey, result)
+  if (cache.size > MAX_CELL_SURFACE_CACHE_SIZE) {
+    const oldest = cache.keys().next().value
+    if (oldest !== undefined)
+      cache.delete(oldest)
+  }
+  return result
 }
 
 export function toRevoGridSurfaceProps(attrs: SFCTablePublicPartAttrs): Record<string, unknown> {
@@ -193,7 +230,7 @@ function createSurface(
   part: SFCTablePublicPart,
   index: number,
   siblingCount: number,
-  previousSiblings: readonly EndgeStyleMatchNode[] = [],
+  previousSibling?: EndgeStyleMatchNode,
   parent?: EndgeStyleMatchNode,
 ): SFCTablePublicSurface {
   const host = context.styleParent
@@ -208,7 +245,7 @@ function createSurface(
     identity: host?.identity,
     ownerScopeId: host?.ownerScopeId ?? context.styleOwnerScopeId,
     parent: parent ?? host?.parent,
-    previousSiblings: [...previousSiblings],
+    previousSibling,
     index,
     siblingCount,
   }
@@ -229,4 +266,15 @@ function applySurfaceAttrs(element: HTMLElement, attrs: SFCTablePublicPartAttrs)
   element.setAttribute(APPLIED_STYLE_CLASSES_ATTRIBUTE, attrs.class.join(' '))
   element.setAttribute('part', attrs.part)
   element.setAttribute('data-endge-part', attrs['data-endge-part'])
+}
+
+function getCellSurfaceCache(
+  contract: SFCTableStyleContract,
+): Map<string, SFCTableCellStyleSurfaces> {
+  let cache = cellSurfaceCaches.get(contract)
+  if (!cache) {
+    cache = new Map()
+    cellSurfaceCaches.set(contract, cache)
+  }
+  return cache
 }

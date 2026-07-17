@@ -747,11 +747,20 @@ function createRevoColumn(
     columnProperties: () => toRevoGridSurfaceProps(column.styleSurfaces.headerCell.attrs),
     cellProperties: (cellProps: Record<string, unknown>) => {
       const row = cellProps.model
-      if (!isPlainObject(row))
-        return undefined
+      if (!isPlainObject(row)) {
+        return {
+          part: 'cell',
+          'data-endge-part': 'cell',
+        }
+      }
 
       const surfaces = getSFCTableCellStyleSurfaces(row, column.index)
-      return surfaces ? toRevoGridSurfaceProps(surfaces.cell.attrs) : undefined
+      return surfaces
+        ? toRevoGridSurfaceProps(surfaces.cell.attrs)
+        : {
+            part: 'cell',
+            'data-endge-part': 'cell',
+          }
     },
     columnTemplate: VGridVueTemplate(SFCRevoGridColumnHeader, {
       title: column.title,
@@ -1217,7 +1226,7 @@ function applyTableSort(
     return cloneRows(rows)
 
   return rows
-    .map((row, index) => ({ row: { ...row }, index }))
+    .map((row, index) => ({ row, index }))
     .sort((a, b) => {
       for (const rule of rules) {
         const result = compareRows(a.row, b.row, rule.sort)
@@ -1385,8 +1394,8 @@ function renderTableCell(input: SFCTableCellRenderInput & {
   const contentAttrs = styleSurfaces?.cellContent.attrs
 
   return h('div', {
-    part: contentAttrs?.part,
-    'data-endge-part': contentAttrs?.['data-endge-part'],
+    part: contentAttrs?.part ?? 'cell-content',
+    'data-endge-part': contentAttrs?.['data-endge-part'] ?? 'cell-content',
     class: ['endge-sfc-table-cell-content', contentAttrs?.class],
     style: {
       display: 'flex',
@@ -1636,13 +1645,16 @@ function normalizeRows(value: unknown): Record<string, unknown>[] {
 
   return value.map((item) => {
     return isPlainObject(item)
-      ? { ...item }
+      ? item
       : { value: item }
   })
 }
 
 function cloneRows(rows: Record<string, unknown>[]): Record<string, unknown>[] {
-  return rows.map(row => ({ ...row }))
+  // Rows enter the table as normalized immutable snapshots. Copying the
+  // collection is sufficient and avoids duplicating every 10k-row snapshot at
+  // each base/current/previous transition.
+  return [...rows]
 }
 
 function replaceRowSnapshot(

@@ -12,6 +12,7 @@ import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
 import {
+  createSFCTableStyleContract,
   decorateSFCTableRows,
   getSFCTableCellStyleSurfaces,
   SFC_TABLE_ROW_CLASS_FIELD,
@@ -108,5 +109,56 @@ describe('SFC EndgeCSS runtime markers', () => {
     expect(contract.groupRow.attrs.class).toHaveLength(1)
     expect(column.styleSurfaces.headerCell.attrs.class).toHaveLength(1)
     expect(column.styleSurfaces.headerContent.attrs.class).toHaveLength(1)
+  })
+
+  it('keeps 10k-row Table style metadata linear and materializes cells lazily', () => {
+    const compiled = compileComponentSFC(`<template>
+      <Table id="large-schedule" :rows="[]">
+        <Column key="flight" title="Flight"><Text>GH0967</Text></Column>
+      </Table>
+    </template>
+    <style scoped lang="endgecss">
+      #large-schedule:nth-child(even)::part(row) { background-color: #eee; }
+      #large-schedule::part(cell) { border-bottom: 1px solid gray; }
+      #large-schedule::part(cell-content) { color: #222; }
+    </style>`, { identity: 'large-schedule' })
+    const ir = compiled.ir!
+    const rendered = renderSFCNode(h, ir.template.roots[0], createSFCVueRenderContext({}, 0, null, ir))
+
+    expect(isVNode(rendered)).toBe(true)
+    if (!isVNode(rendered) || !Array.isArray(rendered.children)) return
+    const grid = rendered.children[0]
+    expect(isVNode(grid)).toBe(true)
+    if (!isVNode(grid)) return
+
+    const source = Array.from({ length: 10_000 }, (_, index) => ({ id: index }))
+    const rows = decorateSFCTableRows(source, 13, grid.props?.styleContract as SFCTableStyleContract)
+    expect(rows).toHaveLength(10_000)
+    expect(rows[1][SFC_TABLE_ROW_CLASS_FIELD]).toContain('endge-es-')
+
+    const metadataSymbol = Object.getOwnPropertySymbols(rows[0])
+      .find(symbol => symbol.description === 'endge.table.row-style-meta')
+    expect(metadataSymbol).toBeDefined()
+    const metadata = (rows[0] as Record<PropertyKey, unknown>)[metadataSymbol!] as Record<string, unknown>
+    expect(metadata).not.toHaveProperty('cells')
+    expect(metadata).toMatchObject({ columnCount: 13 })
+
+    const firstPass = getSFCTableCellStyleSurfaces(rows[0], 12)
+    const secondPass = getSFCTableCellStyleSurfaces(rows[0], 12)
+    expect(firstPass?.cell.attrs.class).toHaveLength(1)
+    expect(firstPass?.cellContent.attrs.class).toHaveLength(1)
+    expect(secondPass).toBe(firstPass)
+  })
+
+  it('uses a zero-clone row fast path when no EndgeCSS rules are active', () => {
+    const context = createSFCVueRenderContext({}, 0, null, null, [], 'test', [])
+    const contract = createSFCTableStyleContract(context)
+    const source = Array.from({ length: 10_000 }, (_, index) => ({ id: index }))
+    const rows = decorateSFCTableRows(source, 13, contract)
+
+    expect(rows).not.toBe(source)
+    expect(rows[9_999]).toBe(source[9_999])
+    expect(rows[9_999]).not.toHaveProperty(SFC_TABLE_ROW_CLASS_FIELD)
+    expect(Object.getOwnPropertySymbols(rows[9_999])).toHaveLength(0)
   })
 })
