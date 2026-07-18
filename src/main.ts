@@ -1,5 +1,4 @@
 import '@/assets/styles.scss'
-import '@/ui/layout/endge-app-helper-menu.css'
 
 export * from '@/domain/core/endge-vue'
 
@@ -9,7 +8,6 @@ export * from '@/reactive/use-current-theme'
 export * from '@/reactive/use-current-project-filter'
 export * from '@/reactive/use-ui'
 export * from '@/store/domain'
-export { default as EndgeAppHelperMenu } from '@/ui/layout/EndgeAppHelperMenu.vue'
 export { default as EndgeShell } from '@/ui/layout/EndgeShell.vue'
 export { default as EndgePage } from '@/ui/render/entities/EndgePage.vue'
 export { default as EndgeContextMenuRoot } from '@/ui/overlay/EndgeContextMenuRoot.vue'
