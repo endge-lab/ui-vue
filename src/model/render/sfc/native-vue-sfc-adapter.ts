@@ -11,6 +11,7 @@ import { SFCRender_DateTime } from '@/ui/render/sfc/SFCRender_DateTime'
 import { SFCRender_Divider } from '@/ui/render/sfc/SFCRender_Divider'
 import { SFCRender_Dot } from '@/ui/render/sfc/SFCRender_Dot'
 import { SFCRender_Flex } from '@/ui/render/sfc/SFCRender_Flex'
+import { SFCRender_Grid } from '@/ui/render/sfc/SFCRender_Grid'
 import { SFCRender_Icon } from '@/ui/render/sfc/SFCRender_Icon'
 import { SFCRender_Input } from '@/ui/render/sfc/SFCRender_Input'
 import { SFCRender_Number } from '@/ui/render/sfc/SFCRender_Number'
@@ -35,6 +36,7 @@ export const NativeVueSFCAdapter: SFCVueRenderAdapter = {
     Dot: SFCRender_Dot,
     Box: SFCRender_Box,
     Flex: SFCRender_Flex,
+    Grid: SFCRender_Grid,
     Divider: SFCRender_Divider,
     Input: SFCRender_Input,
     Textarea: SFCRender_Textarea,

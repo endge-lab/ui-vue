@@ -272,8 +272,37 @@ function createSFCStyle(props: Record<string, unknown>): Record<string, string> 
   assignStyle(style, 'minHeight', props.minH)
   assignStyle(style, 'maxWidth', props.maxW)
   assignStyle(style, 'maxHeight', props.maxH)
+  assignGridPlacement(style, 'gridColumn', props.colStart, props.colSpan)
+  assignGridPlacement(style, 'gridRow', props.rowStart, props.rowSpan)
 
   return style
+}
+
+function assignGridPlacement(
+  style: Record<string, string>,
+  key: 'gridColumn' | 'gridRow',
+  startValue: unknown,
+  spanValue: unknown,
+): void {
+  const start = normalizePositiveInteger(startValue)
+  const span = normalizePositiveInteger(spanValue)
+  if (start != null && span != null) {
+    style[key] = `${start} / span ${span}`
+    return
+  }
+  if (start != null) {
+    style[key] = String(start)
+    return
+  }
+  if (span != null) {
+    style[key] = `span ${span}`
+  }
+}
+
+function normalizePositiveInteger(value: unknown): number | null {
+  if (value == null || value === false || value === '') return null
+  const numeric = Number(value)
+  return Number.isInteger(numeric) && numeric > 0 ? numeric : null
 }
 
 function assignSpacing(style: Record<string, string>, key: string, value: unknown): void {
