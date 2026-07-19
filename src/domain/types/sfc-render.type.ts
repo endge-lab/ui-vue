@@ -172,6 +172,12 @@ export interface SFCVueRenderAdapter extends UIRenderAdapter<SFCVueRenderFunctio
   protocolVersion: 1
   renderer: 'vue'
   renderers: SFCVueRenderAdapterRendererMap
+  roots: {
+    shell: unknown
+    sfc: unknown
+    'sfc-runtime': unknown
+    'filter-view': unknown
+  }
 }
 
 /** Вход функции рендера произвольного SFC IR узла. */

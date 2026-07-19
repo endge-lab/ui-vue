@@ -35,12 +35,21 @@ export class EndgeVueModule extends EndgeModule {
   }
 
   private _activateWorkspaceAdapter(): void {
+    const selectedId = Endge.workspace.defaultSfcAdapterId
+    const selected = Endge.uiRegistry.adapters.get(selectedId)
+    if (!selected) {
+      Endge.uiRegistry.adapters.require({ id: selectedId })
+      return
+    }
+    if (selected.renderer !== 'vue')
+      return
     Endge.uiRegistry.adapters.activate({
       id: Endge.workspace.defaultSfcAdapterId,
       protocol: ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
       protocolVersion: ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
       renderer: 'vue',
       requiredRendererKeys: SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS,
+      requiredRootKeys: ['shell', 'sfc', 'sfc-runtime', 'filter-view'],
     })
   }
 
@@ -101,6 +110,10 @@ export class EndgeVueModule extends EndgeModule {
   }
 
   private _refreshStyles(): void {
+    if (Endge.uiRegistry.adapters.active?.renderer !== 'vue') {
+      this._styleRuntime.reset()
+      return
+    }
     const artifacts: EndgeStylePlacement[] = [...Endge.styles.getActivePlacements()]
     const hiddenScopeIds = Endge.runtime.scopes.getAll()
       .filter(scope => scope.state !== 'active' && scope.state !== 'inactive' && scope.state !== 'disposed')

@@ -2,8 +2,10 @@ import {
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
 } from '@endge/core'
+import { markRaw } from 'vue'
 
 import type { SFCVueRenderAdapter } from '@/domain/types/sfc-render.type'
+import EndgeFilterRenderer from '@/ui/filter/EndgeFilterRenderer.vue'
 import { SFCRender_Badge } from '@/ui/render/sfc/SFCRender_Badge'
 import { SFCRender_Box } from '@/ui/render/sfc/SFCRender_Box'
 import { SFCRender_Checkbox } from '@/ui/render/sfc/SFCRender_Checkbox'
@@ -19,6 +21,9 @@ import { SFCRender_Select } from '@/ui/render/sfc/SFCRender_Select'
 import { SFCRender_Text } from '@/ui/render/sfc/SFCRender_Text'
 import { SFCRender_Textarea } from '@/ui/render/sfc/SFCRender_Textarea'
 import { SFCRender_Table } from '@/ui/render/sfc/SFCRender_Table'
+import EndgeShell from '@/ui/layout/EndgeShell.vue'
+import SFC_Renderer from '@/ui/render/sfc/SFC_Renderer.vue'
+import SFC_RuntimeRenderer from '@/ui/render/sfc/SFC_RuntimeRenderer.vue'
 
 export const NATIVE_VUE_SFC_ADAPTER_ID = 'native-vue'
 
@@ -44,5 +49,11 @@ export const NativeVueSFCAdapter: SFCVueRenderAdapter = {
     Checkbox: SFCRender_Checkbox,
     Select: SFCRender_Select,
     Table: SFCRender_Table,
+  },
+  roots: {
+    shell: markRaw(EndgeShell),
+    sfc: markRaw(SFC_Renderer),
+    'sfc-runtime': markRaw(SFC_RuntimeRenderer),
+    'filter-view': markRaw(EndgeFilterRenderer),
   },
 }

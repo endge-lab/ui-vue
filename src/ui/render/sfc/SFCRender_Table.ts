@@ -558,6 +558,7 @@ const SFCRevoGridTable = defineComponent({
         target: tableActionTarget,
         columnKey: column.key,
         columnIndex,
+        hideable: false,
         pinnable: column.pinnable,
         pinMode: props.pinMode,
         pinState: getPinSide(column.key, pinState.value),
