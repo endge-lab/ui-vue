@@ -1,30 +1,41 @@
 import type { SourceFieldOption } from '@endge/core'
 
 import type { SFCVueRenderAdapterFunction, SFCVueRenderH } from '@/domain/types/sfc-render.type'
+import NativeMultiSelect from '@/ui/render/sfc/NativeMultiSelect.vue'
 
 /** Рендерит одиночный или множественный display-only select. */
 export const SFCRender_Select: SFCVueRenderAdapterFunction = (input) => {
   const multiple = input.props.multiple === true
   const options = normalizeOptions(input.props.options)
   const selectedValues = normalizeSelectedValues(input.props.value, multiple)
+
+  if (multiple) {
+    return input.h(NativeMultiSelect, {
+      ...input.attrs,
+      class: ['endge-sfc-select', input.props.class],
+      options,
+      selectedValues: [...selectedValues],
+      placeholder: input.props.placeholder == null ? undefined : String(input.props.placeholder),
+      readonly: input.props.readonly === true,
+      disabled: input.props.disabled === true,
+    })
+  }
+
   const optionNodes = options.map((option, index) => renderOption(input.h, option, index, selectedValues))
 
-  if (!multiple) {
-    const hasSelectedOption = options.some(option => selectedValues.has(String(option.value)))
-    if (!hasSelectedOption) {
-      optionNodes.unshift(input.h('option', {
-        key: 'placeholder',
-        value: '',
-        disabled: input.props.placeholder != null,
-        selected: true,
-      }, input.props.placeholder == null ? '' : String(input.props.placeholder)))
-    }
+  const hasSelectedOption = options.some(option => selectedValues.has(String(option.value)))
+  if (!hasSelectedOption) {
+    optionNodes.unshift(input.h('option', {
+      key: 'placeholder',
+      value: '',
+      disabled: input.props.placeholder != null,
+      selected: true,
+    }, input.props.placeholder == null ? '' : String(input.props.placeholder)))
   }
 
   return input.h('select', {
     ...input.attrs,
     class: ['endge-sfc-select', input.props.class],
-    multiple,
     readonly: input.props.readonly === true,
     disabled: input.props.disabled === true,
   }, optionNodes)

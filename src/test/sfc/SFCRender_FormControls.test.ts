@@ -102,10 +102,9 @@ describe('display-only SFC form controls', () => {
       options,
       placeholder: 'Не показывается',
     })
-    const multipleOptions = vnodeChildren(multiple)
-    expect(multiple.props?.multiple).toBe(true)
-    expect(multipleOptions).toHaveLength(3)
-    expect(multipleOptions.map(option => option.props?.selected)).toEqual([true, false, true])
+    expect(multiple.props?.options).toEqual(options)
+    expect(multiple.props?.selectedValues).toEqual(['1', 'true'])
+    expect(multiple.props?.placeholder).toBe('Не показывается')
   })
 
   it('does not register change callbacks on controls or their children', () => {
