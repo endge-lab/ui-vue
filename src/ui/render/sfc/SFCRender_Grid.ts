@@ -2,6 +2,10 @@ import type { SFCVueRenderAdapterFunction } from '@/domain/types/sfc-render.type
 
 /** Рендерит renderer-neutral Grid через нативный CSS Grid. */
 export const SFCRender_Grid: SFCVueRenderAdapterFunction = (input) => {
+  const gap = normalizeLength(input.props.gap, 4)
+  const columnGap = normalizeLength(input.props.columnGap, 4)
+  const rowGap = normalizeLength(input.props.rowGap, 4)
+
   return input.h('div', {
     ...input.attrs,
     class: ['endge-sfc-grid', input.props.class],
@@ -12,9 +16,9 @@ export const SFCRender_Grid: SFCVueRenderAdapterFunction = (input) => {
       gridTemplateRows: normalizeOptionalTracks(input.props.rows),
       gridAutoRows: normalizeLength(input.props.autoRows),
       gridAutoFlow: normalizeAutoFlow(input.props.autoFlow),
-      gap: normalizeLength(input.props.gap, 4),
-      columnGap: normalizeLength(input.props.columnGap, 4),
-      rowGap: normalizeLength(input.props.rowGap, 4),
+      ...(gap ? { gap } : {}),
+      ...(columnGap ? { columnGap } : {}),
+      ...(rowGap ? { rowGap } : {}),
       alignItems: normalizeAlignment(input.props.align),
       justifyItems: normalizeAlignment(input.props.justify),
     },

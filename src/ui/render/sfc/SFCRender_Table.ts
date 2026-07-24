@@ -10,6 +10,7 @@ import type {
   ComponentSFCEventBoundary,
   ComponentSFCEventRuntimeSource,
   ContextMenuDescriptor,
+  ProgramMetadataMap,
   RComponentSFC_IR_ElementNode,
   RComponentSFC_IR_EventBinding,
   RComponentSFC_IR_Node,
@@ -78,6 +79,7 @@ interface SFCTableColumn {
   cellNodes: RComponentSFC_IR_Node[]
   rowDependencies: Set<string>
   styleSurfaces: SFCTableColumnStyleSurfaces
+  metadata: ProgramMetadataMap
 }
 
 interface SFCTableColumnSort {
@@ -1055,6 +1057,7 @@ function createTableColumn(
     cellNodes: resolveCellNodes(columnNode),
     rowDependencies: extractRowDependencies(resolveCellNodes(columnNode), key),
     styleSurfaces,
+    metadata: context.metadata?.nodes.find(node => node.nodeId === columnNode.id)?.values ?? {},
   }
 }
 
@@ -1780,6 +1783,7 @@ function renderTableCell(input: SFCTableCellRenderInput & {
     rowIndex,
     rowKey: rowIdentity,
     columnKey: input.column.key,
+    columnMeta: input.column.metadata,
     value: row[input.column.key],
   }, input.context.iteration, `${input.context.consumerScope}/row:${String(rowIdentity)}/column:${input.column.key}`)
   const children = renderSFCNodes(h, input.column.cellNodes, cellContext)

@@ -2,7 +2,7 @@ import type { SFCVueRenderAdapterFunction } from '@/domain/types/sfc-render.type
 
 /** Рендерит дату или время через базовые форматы SFC v1. */
 export const SFCRender_DateTime: SFCVueRenderAdapterFunction = (input) => {
-  const value = formatDateTime(input.props.value, input.props.format)
+  const value = formatDateTime(input.props.value, input.props.format, input.props.empty)
 
   return input.h('time', {
     ...input.attrs,
@@ -11,8 +11,8 @@ export const SFCRender_DateTime: SFCVueRenderAdapterFunction = (input) => {
   }, value)
 }
 
-function formatDateTime(value: unknown, format: unknown): string {
-  if (value == null) return ''
+function formatDateTime(value: unknown, format: unknown, empty: unknown): string {
+  if (value == null || value === '') return empty == null ? '' : String(empty)
 
   const date = new Date(String(value))
   if (Number.isNaN(date.getTime())) return String(value)

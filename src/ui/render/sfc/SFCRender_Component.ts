@@ -36,6 +36,7 @@ export const SFCRender_Component: SFCVueRenderFunction = SFCRender_Base((input) 
     input.context.styleArtifacts,
     childBoundary,
     input.context.inspection,
+    artifact.metadata,
   )
   childContext.styleParent = input.context.styleParent
   childContext.inspectionParentId = input.context.inspectionParentId

@@ -36,6 +36,8 @@ export const SFCRender_Select: SFCVueRenderAdapterFunction = (input) => {
   return input.h('select', {
     ...input.attrs,
     class: ['endge-sfc-select', input.props.class],
+    value: [...selectedValues][0] ?? '',
+    multiple: false,
     readonly: input.props.readonly === true,
     disabled: input.props.disabled === true,
   }, optionNodes)

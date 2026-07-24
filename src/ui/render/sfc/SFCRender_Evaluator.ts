@@ -516,6 +516,22 @@ function callSafeGlobal(
     const fallback = args[1] == null ? undefined : String(args[1])
     return context.host?.translate(args[0], fallback) ?? fallback ?? `{{${args[0]}}}`
   }
+  if (name === 'vocab') {
+    if (
+      typeof args[0] !== 'string'
+      || args.length > 2
+      || (
+        args[1] != null
+        && (typeof args[1] !== 'object' || Array.isArray(args[1]))
+      )
+    ) {
+      return UNSUPPORTED_EXPRESSION
+    }
+    return context.host?.resolveVocabOptions(
+      args[0],
+      args[1] as { valuePath?: string, labelPath?: string } | undefined,
+    ) ?? []
+  }
   if (name === 'Boolean') return Boolean(args[0])
   if (name === 'Number') return Number(args[0])
   if (name === 'String') return String(args[0] ?? '')

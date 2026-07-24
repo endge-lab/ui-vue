@@ -1,3 +1,86 @@
 revo-grid * {
   color: var(--color-text);
 }
+
+.endge-sfc-input,
+.endge-sfc-select,
+.endge-sfc-textarea {
+  background-color: var(--background, #fff);
+  border: 1px solid var(--border, #d4d4d8);
+  border-radius: .5rem;
+  box-sizing: border-box;
+  color: var(--foreground, #18181b);
+  font: inherit;
+  min-width: 0;
+  outline: none;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    opacity 120ms ease;
+  width: 100%;
+}
+
+.endge-sfc-input,
+.endge-sfc-select {
+  height: 2.5rem;
+}
+
+.endge-sfc-input {
+  padding: 0 .75rem;
+}
+
+.endge-sfc-textarea {
+  min-height: 5rem;
+  padding: .625rem .75rem;
+  resize: vertical;
+}
+
+.endge-sfc-select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    calc(100% - 1rem) calc(50% - .125rem),
+    calc(100% - .75rem) calc(50% - .125rem);
+  background-repeat: no-repeat;
+  background-size: .3rem .3rem;
+  cursor: pointer;
+  display: block;
+  line-height: 1.25rem;
+  padding: 0 2.5rem 0 .75rem;
+}
+
+.endge-sfc-input:focus-visible,
+.endge-sfc-select:focus-visible,
+.endge-sfc-textarea:focus-visible {
+  border-color: var(--ring, #71717a);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring, #71717a) 18%, transparent);
+}
+
+.endge-sfc-input:disabled,
+.endge-sfc-select:disabled,
+.endge-sfc-textarea:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+.endge-sfc-checkbox-field {
+  align-items: center;
+  cursor: pointer;
+  display: inline-flex;
+  gap: .5rem;
+  min-height: 2.5rem;
+}
+
+.endge-sfc-checkbox {
+  accent-color: var(--primary, #18181b);
+  height: 1rem;
+  margin: 0;
+  width: 1rem;
+}
+
+.endge-sfc-checkbox-field:has(.endge-sfc-checkbox:disabled) {
+  cursor: not-allowed;
+  opacity: .55;
+}
