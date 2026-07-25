@@ -26,8 +26,8 @@ const TEST_WORKSPACE: EndgeWorkspaceDefinition = {
     ],
     defaultTheme: 'light',
     defaultAuthProfileIdentity: null,
-    sfcAdapterIds: ['native-vue'],
-    defaultSfcAdapterId: 'native-vue',
+    sfcAdapterIds: ['vue-native'],
+    defaultSfcAdapterId: 'vue-native',
     diagnostics: {
       telemetry: {
         collection: {
@@ -64,7 +64,7 @@ describe('EndgeVueModule SFC adapter', () => {
     Endge.workspace.apply(TEST_WORKSPACE)
   })
 
-  it('registers and activates native-vue for the selected workspace', () => {
+  it('registers and activates vue-native for the selected workspace', () => {
     const module = new EndgeVueModule()
 
     module.setup()
@@ -86,7 +86,7 @@ describe('EndgeVueModule SFC adapter', () => {
     })
 
     expect(() => module.build()).toThrow(
-      'adapter "customer-aodb" is not registered. Registered adapters: native-vue',
+      'adapter "customer-aodb" is not registered. Registered adapters: vue-native',
     )
   })
 
@@ -109,7 +109,7 @@ describe('EndgeVueModule SFC adapter', () => {
       ...TEST_WORKSPACE,
       configuration: {
         ...TEST_WORKSPACE.configuration,
-        sfcAdapterIds: ['native-vue', 'customer-aodb'],
+        sfcAdapterIds: ['vue-native', 'customer-aodb'],
         defaultSfcAdapterId: 'customer-aodb',
       },
     })

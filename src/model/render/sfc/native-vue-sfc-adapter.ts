@@ -25,7 +25,7 @@ import EndgeShell from '@/ui/layout/EndgeShell.vue'
 import SFC_Renderer from '@/ui/render/sfc/SFC_Renderer.vue'
 import SFC_RuntimeRenderer from '@/ui/render/sfc/SFC_RuntimeRenderer.vue'
 
-export const NATIVE_VUE_SFC_ADAPTER_ID = 'native-vue'
+export const NATIVE_VUE_SFC_ADAPTER_ID = 'vue-native'
 
 /** Нативный DOM adapter для Vue render engine. */
 export const NativeVueSFCAdapter: SFCVueRenderAdapter = {

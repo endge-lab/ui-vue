@@ -25,7 +25,7 @@ fields. Execution errors are fatal for the current render pass.
 
 ## Render adapters
 
-`@endge/ui-vue` регистрирует нативный DOM adapter `native-vue`. Выбранный идентификатор берется из `Workspace.defaultSfcAdapterId` на фазе `build()`.
+`@endge/ui-vue` регистрирует нативный DOM adapter `vue-native`. Выбранный идентификатор берется из `Workspace.defaultSfcAdapterId` на фазе `build()`.
 
 Массив `Workspace.sfcAdapterIds` описывает доступные пользователю варианты, но не устанавливает код adapter-а. Реальная implementation должна быть зарегистрирована приложением до `build()`. Если выбранного adapter-а нет, либо его protocol, renderer или набор primitives несовместимы, boot завершается ошибкой до запуска runtime.
 
