@@ -391,11 +391,13 @@ function assignSemanticTone(
 
   const fallbacks: Record<string, string> = surface === 'background'
     ? {
+        neutral: '#e5e7eb',
         danger: '#fee2e2',
         success: '#dcfce7',
         warning: '#fef3c7',
       }
     : {
+        neutral: '#374151',
         danger: '#dc2626',
         success: '#047857',
         warning: '#b45309',
