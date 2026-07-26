@@ -85,6 +85,64 @@ describe('SFC Table layout', () => {
       selectionMode: 'multiple',
     })
   })
+
+  it('resolves Column metadata from the current component artifact when host metadata belongs to its owner', () => {
+    const column: RComponentSFC_IR_ElementNode = {
+      id: 'test-table-column',
+      kind: 'element',
+      tag: 'Column',
+      props: {
+        key: literal('fueling'),
+      },
+      directives: {},
+      children: [],
+    }
+    const tableNode: RComponentSFC_IR_ElementNode = {
+      id: 'test-table',
+      kind: 'element',
+      tag: 'Table',
+      props: {
+        rows: literal([]),
+      },
+      directives: {},
+      children: [column],
+    }
+    const context = createSFCVueRenderContext({})
+    context.componentStack = ['groundhandling-tgo-table']
+    context.metadata = { self: {}, nodes: [] }
+    context.host = {
+      getArtifactReader: () => ({
+        getArtifact: () => ({
+          metadata: {
+            self: {},
+            nodes: [{
+              nodeId: column.id,
+              nodeKind: 'Column',
+              key: 'fueling',
+              values: {
+                'groundhandling.process': {
+                  version: 1,
+                  critical: true,
+                },
+              },
+            }],
+          },
+        }),
+      }),
+    } as any
+
+    const rendered = renderSFCNode(h, tableNode, context)
+    if (!isVNode(rendered))
+      throw new Error('Table did not render a VNode')
+
+    const grid = (rendered.children as VNode[])[0]
+    expect(grid?.props?.columns[0]?.metadata).toEqual({
+      'groundhandling.process': {
+        version: 1,
+        critical: true,
+      },
+    })
+  })
 })
 
 function renderTable(props: Record<string, unknown> = {}): VNode {

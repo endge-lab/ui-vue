@@ -1,5 +1,6 @@
 import RevoGrid, { VGridVueTemplate } from '@revolist/vue3-datagrid'
 import type {
+  ComponentSFCProgramPayload,
   ComponentSFCTableColumnMenuDescriptor,
   ComponentSFCTableColumnPinMode,
   ComponentSFCTableColumnPinStateItem,
@@ -1103,8 +1104,35 @@ function createTableColumn(
     cellNodes: resolveCellNodes(columnNode),
     rowDependencies: extractRowDependencies(resolveCellNodes(columnNode), key),
     styleSurfaces,
-    metadata: context.metadata?.nodes.find(node => node.nodeId === columnNode.id)?.values ?? {},
+    metadata: resolveTableColumnMetadata(columnNode, context),
   }
+}
+
+function resolveTableColumnMetadata(
+  columnNode: RComponentSFC_IR_ElementNode,
+  context: SFCVueRenderContext,
+): ProgramMetadataMap {
+  const contextMetadata = context.metadata?.nodes
+    .find(node => node.nodeId === columnNode.id)
+    ?.values
+  if (contextMetadata)
+    return contextMetadata
+
+  /*
+   * Вложенный Table может рендериться тем же runtime host, что и владелец
+   * composition. В таком случае host metadata относится не к текущему SFC,
+   * хотя IR и componentStack уже переключены на дочерний компонент.
+   */
+  const componentIdentity = context.componentStack.at(-1)
+  if (!componentIdentity)
+    return {}
+
+  const artifacts = context.host?.getArtifactReader() ?? Endge.program
+  return artifacts
+    .getArtifact<ComponentSFCProgramPayload>('component-sfc', componentIdentity)
+    ?.metadata.nodes
+    .find(node => node.nodeId === columnNode.id)
+    ?.values ?? {}
 }
 
 function resolveCellNodes(columnNode: RComponentSFC_IR_ElementNode): RComponentSFC_IR_Node[] {
