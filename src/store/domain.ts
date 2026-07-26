@@ -22,7 +22,7 @@ export const useDomainStore = defineStore('endge-domain-store', () => {
   // Сложные типы домена
   const typesComplex = computed(() => types.value.filter((x) => !x.isPrimitive))
 
-  // Editor-facing Type Registry. Legacy RType.fields is intentionally excluded.
+  // Editor-facing projection of the source-backed Type Registry.
   const typeCatalog = computed(() => {
     const compiled = program.value.getTypeCatalog()
     if (compiled.length)
