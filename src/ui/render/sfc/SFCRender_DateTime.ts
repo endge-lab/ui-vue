@@ -14,7 +14,14 @@ export const SFCRender_DateTime: SFCVueRenderAdapterFunction = (input) => {
 function formatDateTime(value: unknown, format: unknown, empty: unknown): string {
   if (value == null || value === '') return empty == null ? '' : String(empty)
 
-  const date = new Date(String(value))
+  const text = String(value).trim()
+  const timeOnly = format === 'HH:mm'
+    ? text.match(/^(\d{2}):(\d{2})(?::\d{2})?$/)
+    : null
+  if (timeOnly)
+    return `${timeOnly[1]}:${timeOnly[2]}`
+
+  const date = new Date(text)
   if (Number.isNaN(date.getTime())) return String(value)
 
   if (format === 'HH:mm') {

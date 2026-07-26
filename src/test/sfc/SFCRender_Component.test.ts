@@ -237,9 +237,7 @@ function createArtifact(identity: string, source: string): ProgramArtifact<Compo
 
 function createComputationArtifact(identity: string): ProgramArtifact<ComputationProgramPayload> {
   const compiled = compileComputation({
-    source: "defineComputation({ outputs: { result: { value: input('value') } }, result: output('result') })",
-    input: { type: 'Input' },
-    output: { type: 'Output' },
+    source: "defineComputation({ input: field(Input), output: field(Output), outputs: { result: { value: input('value') } }, result: output('result') })",
   })
   return {
     ref: { entityType: 'computation', id: identity, identity },
@@ -265,8 +263,6 @@ function createAsyncComputationArtifact(identity: string): ProgramArtifact<Compu
       },
       result: output('result'),
     })`,
-    input: null,
-    output: null,
   })
   return {
     ref: { entityType: 'computation', id: identity, identity },
