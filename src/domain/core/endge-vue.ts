@@ -6,6 +6,7 @@ import {
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
   Endge,
   EndgeModule,
+  type EndgeBootContext,
   type EndgePlugin,
 } from '@endge/core'
 import { Raph, RaphNode } from '@endge/raph'
@@ -19,6 +20,7 @@ import type { EndgeStylePlacement } from '@endge/core'
 
 export class EndgeVueModule extends EndgeModule {
   private _started = false
+  private _adapterFallbackIds: readonly string[] = []
   private _unsubscribeWorkspace: (() => void) | null = null
   private _unsubscribeStyles: (() => void) | null = null
   private _unsubscribeProgram: (() => void) | null = null
@@ -26,7 +28,8 @@ export class EndgeVueModule extends EndgeModule {
   private _unsubscribeRuntimeScopes: (() => void) | null = null
   private readonly _styleRuntime = new EndgeDOMStyleRuntime()
 
-  public override setup(): void {
+  public override setup(ctx?: EndgeBootContext): void {
+    this._adapterFallbackIds = ctx?.ui?.adapterFallbackIds ?? []
     Endge.uiRegistry.adapters.register(NativeVueSFCAdapter)
   }
 
@@ -36,7 +39,10 @@ export class EndgeVueModule extends EndgeModule {
 
   private _activateWorkspaceAdapter(): void {
     const selectedId = Endge.workspace.defaultSfcAdapterId
-    const selected = Endge.uiRegistry.adapters.get(selectedId)
+    const selected = Endge.uiRegistry.adapters.resolveAvailable(
+      selectedId,
+      this._adapterFallbackIds,
+    )
     if (!selected) {
       Endge.uiRegistry.adapters.require({ id: selectedId })
       return
@@ -44,7 +50,7 @@ export class EndgeVueModule extends EndgeModule {
     if (selected.renderer !== 'vue')
       return
     Endge.uiRegistry.adapters.activate({
-      id: Endge.workspace.defaultSfcAdapterId,
+      id: selected.id,
       protocol: ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
       protocolVersion: ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
       renderer: 'vue',
@@ -106,6 +112,7 @@ export class EndgeVueModule extends EndgeModule {
     this._unsubscribeRuntimeScopes?.()
     this._unsubscribeRuntimeScopes = null
     this._styleRuntime.reset()
+    this._adapterFallbackIds = []
     this._started = false
   }
 
