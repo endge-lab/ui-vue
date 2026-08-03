@@ -83,6 +83,9 @@ describe('SFC intrinsic Events', () => {
         modifiers: { alt: true, ctrl: false, meta: false, shift: false },
       }),
       node.events,
+      [],
+      0,
+      expect.any(Object),
     )
   })
 })
