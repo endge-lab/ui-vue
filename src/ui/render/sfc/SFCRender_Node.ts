@@ -133,6 +133,7 @@ function getSFCElementRenderer(
     case 'Column':
     case 'Cell':
     case 'ColumnMenu':
+    case 'RowMenu':
     case 'MenuItem':
     case 'MenuSeparator':
       return SFCRender_Structural

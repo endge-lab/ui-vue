@@ -62,7 +62,7 @@ export function getExecutableContextMenuItems(): ContextMenuNodeDescriptor[] {
     if (item.kind === 'separator')
       return true
 
-    return Endge.runtime.actions.canExecute(item.action, context)
+    return Endge.runtime.actions.canExecute(item.action, context, item.input)
   }))
 }
 
@@ -71,8 +71,12 @@ export async function executeEndgeContextMenuItem(item: ContextMenuItemDescripto
   if (!context)
     return
 
-  await Endge.runtime.actions.execute(item.action, context)
-  closeEndgeContextMenu()
+  try {
+    await Endge.runtime.actions.execute(item.action, context, item.input)
+  }
+  finally {
+    closeEndgeContextMenu()
+  }
 }
 
 export function resolveEndgeContextMenuItemLabel(item: ContextMenuItemDescriptor): string {

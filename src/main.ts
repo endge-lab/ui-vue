@@ -11,6 +11,7 @@ export * from '@/store/domain'
 export { default as EndgeShell } from '@/ui/layout/EndgeShell.vue'
 export { default as EndgePage } from '@/ui/render/entities/EndgePage.vue'
 export { default as EndgeContextMenuRoot } from '@/ui/overlay/EndgeContextMenuRoot.vue'
+export { resolveSFCTableMenu } from '@/ui/render/sfc/SFCRender_TableMenu'
 export * from '@/ui/overlay/context-menu-manager'
 
 export * from '@/domain/types/sfc-render.type'

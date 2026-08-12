@@ -2,6 +2,7 @@ import RevoGrid, { VGridVueTemplate } from '@revolist/vue3-datagrid'
 import type {
   ComponentSFCProgramPayload,
   ComponentSFCTableColumnMenuDescriptor,
+  ComponentSFCTableRowMenuDescriptor,
   ComponentSFCTableColumnPinMode,
   ComponentSFCTableColumnPinStateItem,
   ComponentSFCTableSortComparator,
@@ -16,7 +17,9 @@ import type {
   RComponentSFC_IR_EventBinding,
   RComponentSFC_IR_Node,
   RuntimeBoundaryPatch,
+  RuntimeActionContext,
   TableColumnActionContext,
+  TableRowActionContext,
   TableColumnPinSide,
   TableColumnSortState,
   TableRuntimeActionTarget,
@@ -28,6 +31,7 @@ import type {
 import {
   Endge,
   normalizeComponentSFCTableColumnMenu,
+  normalizeComponentSFCTableRowMenu,
   normalizeComponentSFCTableColumnPin,
   normalizeComponentSFCTableColumnPinMode,
   normalizeComponentSFCTableColumnVisibility,
@@ -47,6 +51,7 @@ import type {
 import { SFCRender_Base } from '@/ui/render/sfc/SFCRender_Base'
 import { extendSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { evaluateSFCProps, evaluateSFCValue, readSFCObjectPath } from '@/ui/render/sfc/SFCRender_Evaluator'
+import { resolveSFCTableMenu } from '@/ui/render/sfc/SFCRender_TableMenu'
 import { renderSFCNodes } from '@/ui/render/sfc/SFCRender_Node'
 import {
   normalizeSFCTableCellAlignment,
@@ -213,7 +218,8 @@ export const SFCRender_Table: SFCVueRenderFunction = SFCRender_Base((input) => {
   const sortDescriptor = normalizeComponentSFCTableSort(input.node)
   const pinDescriptor = normalizeComponentSFCTableColumnPin(input.node)
   const visibilityDescriptor = normalizeComponentSFCTableColumnVisibility(input.node)
-  const columnMenuDescriptor = normalizeComponentSFCTableColumnMenu(input.node)
+  const columnMenuDescriptor = input.node.tableMenus?.column ?? normalizeComponentSFCTableColumnMenu(input.node)
+  const rowMenuDescriptor = input.node.tableMenus?.row ?? normalizeComponentSFCTableRowMenu(input.node)
   const styleContract = createSFCTableStyleContract(input.context)
   const columns = collectTableColumns(input.node, input.context, sortDescriptor, pinDescriptor, styleContract)
   const source = rows.map(row => ({ ...row }))
@@ -262,6 +268,8 @@ export const SFCRender_Table: SFCVueRenderFunction = SFCRender_Base((input) => {
       sortMode,
       pinMode,
       columnMenu: columnMenuDescriptor,
+      rowMenu: rowMenuDescriptor,
+      menuContext: tableContext,
       defaultSort: sortDescriptor.defaultSort,
       defaultPin: pinDescriptor.defaultPin,
       defaultHidden: visibilityDescriptor.defaultHidden,
@@ -346,6 +354,14 @@ const SFCRevoGridTable = defineComponent({
     },
     columnMenu: {
       type: Object as PropType<ComponentSFCTableColumnMenuDescriptor>,
+      required: true,
+    },
+    rowMenu: {
+      type: Object as PropType<ComponentSFCTableRowMenuDescriptor>,
+      required: true,
+    },
+    menuContext: {
+      type: Object as PropType<SFCVueRenderContext>,
       required: true,
     },
     defaultSort: {
@@ -817,7 +833,7 @@ const SFCRevoGridTable = defineComponent({
         return null
 
       if (props.columnMenu.mode === 'inline')
-        return props.columnMenu.menu
+        return resolveSFCTableMenu(props.columnMenu.menu, props.menuContext)
 
       if ((props.pinMode !== 'disabled' && column.pinnable) || column.sort?.sortable)
         return DEFAULT_TABLE_COLUMN_MENU
@@ -962,13 +978,48 @@ const SFCRevoGridTable = defineComponent({
       event: MouseEvent,
     ): void {
       event.preventDefault()
+      const rowId = getRowId(row, rowIndex)
+      const value = readRowPath(row, columnKey)
       emitTableEvent('rowContextMenuRequested', {
         tableId: effectiveTableId(),
-        rowId: getRowId(row, rowIndex),
+        rowId,
         rowIndex,
         row,
         columnKey,
         anchor: { x: event.clientX, y: event.clientY },
+      })
+
+      if (props.rowMenu.mode !== 'inline' || !props.rowMenu.menu) return
+      const menuContext = extendSFCVueRenderContext(
+        props.menuContext,
+        { row, rowId, rowIndex, columnKey, value },
+        props.menuContext.iteration,
+        `${props.menuContext.consumerScope}/row-menu:${rowId}:${columnKey}`,
+      )
+      const menu = resolveSFCTableMenu(props.rowMenu.menu, menuContext)
+      const context: TableRowActionContext = {
+        surface: 'table-row',
+        runtimeId: props.runtimeState?.runtimeId ?? props.boundaryId,
+        tableRuntimeId: props.runtimeState?.runtimeId ?? props.boundaryId,
+        tableId: effectiveTableId(),
+        target: tableActionTarget,
+        row,
+        rowId,
+        rowIndex,
+        columnKey,
+        value,
+      }
+      if (!menu || !hasExecutableMenuItem(menu, context)) {
+        closeEndgeContextMenu(props.boundaryId)
+        return
+      }
+      event.stopPropagation()
+      openEndgeContextMenu({
+        ownerId: props.boundaryId,
+        x: event.clientX,
+        y: event.clientY,
+        menu,
+        context,
       })
     }
 
@@ -1433,9 +1484,9 @@ function toRevoGridPinSide(side: TableColumnPinSide): 'colPinStart' | 'colPinEnd
 
 function hasExecutableMenuItem(
   menu: ContextMenuDescriptor,
-  context: TableColumnActionContext,
+  context: RuntimeActionContext,
 ): boolean {
-  return menu.items.some(item => item.kind === 'item' && Endge.runtime.actions.canExecute(item.action, context))
+  return menu.items.some(item => item.kind === 'item' && Endge.runtime.actions.canExecute(item.action, context, item.input))
 }
 
 function createInitialSortState(
@@ -2304,6 +2355,7 @@ function isTableMenuNode(node: RComponentSFC_IR_Node): boolean {
   return isElementNode(node)
     && (
       node.tag === 'ColumnMenu'
+      || node.tag === 'RowMenu'
       || node.tag === 'MenuItem'
       || node.tag === 'MenuSeparator'
     )

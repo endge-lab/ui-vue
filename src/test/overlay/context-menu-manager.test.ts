@@ -11,7 +11,7 @@ import {
 
 const menu: ContextMenuDescriptor = {
   kind: 'context-menu',
-  items: [{ kind: 'item', id: 'test.run', action: 'test.run', label: 'Run' }],
+  items: [{ kind: 'item', id: 'test.run', action: 'test.run', label: 'Run', input: { rowId: '42' } }],
 }
 
 describe('context menu Action execution', () => {
@@ -29,6 +29,6 @@ describe('context menu Action execution', () => {
     expect(getExecutableContextMenuItems()).toEqual(menu.items)
     await executeEndgeContextMenuItem(menu.items[0] as Extract<typeof menu.items[number], { kind: 'item' }>)
 
-    expect(execute).toHaveBeenCalledWith(context, undefined)
+    expect(execute).toHaveBeenCalledWith(context, { rowId: '42' })
   })
 })
