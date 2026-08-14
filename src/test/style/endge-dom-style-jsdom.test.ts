@@ -1,13 +1,9 @@
 /** @vitest-environment jsdom */
-import { compileEndgeCSS, type EndgeStyleMatchNode } from '@endge/core'
+import { compileEndgeCSS } from '@endge/core'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { EndgeDOMStyleRuntime } from '@/model/style/EndgeDOMStyleRuntime'
-import { getEndgeDOMStyleClasses, materializeEndgeCSSForDOM } from '@/model/style/endge-dom-style'
-
-function textNode(): EndgeStyleMatchNode {
-  return { tag: 'Text', classes: new Set(), attributes: {}, states: new Set(), parts: new Set(), index: 1, siblingCount: 1 }
-}
+import { materializeEndgeCSSForDOM } from '@/model/style/endge-dom-style'
 
 describe('EndgeCSS DOM application', () => {
   afterEach(() => {
@@ -22,10 +18,31 @@ describe('EndgeCSS DOM application', () => {
     style.textContent = materializeEndgeCSSForDOM([artifact]).css
     document.head.append(style)
     const element = document.createElement('span')
-    element.className = getEndgeDOMStyleClasses([artifact], textNode()).join(' ')
+    element.dataset.endgeNode = 'text'
+    element.dataset.endgeTag = 'Text'
     document.body.append(element)
     expect(getComputedStyle(element).color).toBe('rgb(255, 0, 0)')
     expect(style.sheet?.cssRules[0] && (style.sheet.cssRules[0] as CSSStyleRule).style.getPropertyPriority('color')).toBe('important')
+  })
+
+  it('lets the DOM evaluate physical child position without JS style surfaces', () => {
+    const artifact = compileEndgeCSS('Flex > Text:nth-child(even):state(delayed) { color: rgb(255, 0, 0); }').artifact!
+    const style = document.createElement('style')
+    style.textContent = materializeEndgeCSSForDOM([artifact]).css
+    document.head.append(style)
+    const parent = document.createElement('div')
+    parent.dataset.endgeNode = 'flex'
+    parent.dataset.endgeTag = 'Flex'
+    for (let index = 0; index < 3; index++) {
+      const child = document.createElement('span')
+      child.dataset.endgeNode = `text-${index}`
+      child.dataset.endgeTag = 'Text'
+      child.dataset.endgeState = 'delayed'
+      parent.append(child)
+    }
+    document.body.append(parent)
+    expect(getComputedStyle(parent.children[0]).color).not.toBe('rgb(255, 0, 0)')
+    expect(getComputedStyle(parent.children[1]).color).toBe('rgb(255, 0, 0)')
   })
 
   it('atomically reuses one managed fallback style element', () => {

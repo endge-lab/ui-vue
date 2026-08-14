@@ -32,7 +32,10 @@ describe('SFCVueRenderInspection', () => {
     ])
     const tableId = registerSFCInspectionElement(table, { rows: context.props.rows }, context)
     const templateContext = { ...context, inspectionParentId: tableId }
-    registerSFCInspectionDefinitionTree(table.children[0]!, templateContext)
+    const column = table.children[0] as RComponentSFC_IR_ElementNode
+    const cell = column.children[0] as RComponentSFC_IR_ElementNode
+    const badge = cell.children[0] as RComponentSFC_IR_ElementNode
+    registerSFCInspectionDefinitionTree(column, templateContext)
 
     const firstCellContext = extendSFCVueRenderContext(context, {
       row: { id: 'SU-100', status: 'boarding' },
@@ -49,8 +52,8 @@ describe('SFCVueRenderInspection', () => {
     }, null, 'root/table:table/row:SU-200/column:status')
     secondCellContext.inspectionParentId = tableId
 
-    const firstId = registerSFCInspectionElement(table.children[0]!.children[0]!.children[0] as RComponentSFC_IR_ElementNode, { value: 'boarding' }, firstCellContext)
-    const secondId = registerSFCInspectionElement(table.children[0]!.children[0]!.children[0] as RComponentSFC_IR_ElementNode, { value: 'departed' }, secondCellContext)
+    const firstId = registerSFCInspectionElement(badge, { value: 'boarding' }, firstCellContext)
+    const secondId = registerSFCInspectionElement(badge, { value: 'departed' }, secondCellContext)
 
     expect(firstId).not.toBe(secondId)
     expect(session.getNode(firstId!)).toMatchObject({

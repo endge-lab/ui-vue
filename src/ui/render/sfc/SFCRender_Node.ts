@@ -51,7 +51,6 @@ export function renderSFCNodes(
   nodes: RComponentSFC_IR_Node[] | undefined,
   context: SFCVueRenderContext,
 ): SFCVueRenderListResult {
-  context.styleSiblingCount = (nodes ?? []).filter(isElementNode).length
   const result: SFCVueRenderListResult = []
   let chainActive = false
   let previousMatched = false

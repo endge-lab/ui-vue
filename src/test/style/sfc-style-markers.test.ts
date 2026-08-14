@@ -11,13 +11,8 @@ import { h, isVNode } from 'vue'
 import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
-import {
-  createSFCTableStyleContract,
-  decorateSFCTableRows,
-  getSFCTableCellStyleSurfaces,
-  SFC_TABLE_ROW_CLASS_FIELD,
-  type SFCTableStyleContract,
-} from '@/ui/render/sfc/SFCRender_TableStyle'
+import { normalizeSFCTableRows } from '@/ui/render/sfc/SFCRender_Table'
+import type { SFCTableMarkers } from '@/ui/render/sfc/SFCRender_TableStyle'
 
 describe('SFC EndgeCSS runtime markers', () => {
   beforeAll(() => {
@@ -31,7 +26,7 @@ describe('SFC EndgeCSS runtime markers', () => {
     })
   })
 
-  it('normalizes id, class, state, part and attaches a matched generated class', () => {
+  it('normalizes id, class, state and part without generated matching classes', () => {
     const compiled = compileComponentSFC(`<template>
       <Text id="status" class="flight-card" state="delayed selected" part="status">Delayed</Text>
     </template>
@@ -47,7 +42,8 @@ describe('SFC EndgeCSS runtime markers', () => {
     expect(rendered.props?.['data-endge-state']).toBe('delayed selected')
     expect(rendered.props?.part).toBe('status')
     expect(rendered.props?.['data-endge-scope-root']).toBe(ir.style?.scopeId)
-    expect(String(rendered.props?.class)).toContain('endge-es-')
+    expect(String(rendered.props?.class)).toContain('flight-card')
+    expect(String(rendered.props?.class)).not.toContain('endge-es-')
   })
 
   it('exposes the complete Table structural style contract', () => {
@@ -77,41 +73,40 @@ describe('SFC EndgeCSS runtime markers', () => {
     expect(isVNode(grid)).toBe(true)
     if (!isVNode(grid)) return
 
-    const contract = grid.props?.styleContract as SFCTableStyleContract
+    const markers = grid.props?.styleMarkers as SFCTableMarkers
     const column = (grid.props?.columns as any[])[0]
-    expect(contract.grid.attrs).toMatchObject({ part: 'grid', 'data-endge-part': 'grid' })
-    expect(contract.header.attrs).toMatchObject({ part: 'header', 'data-endge-part': 'header' })
-    expect(contract.body.attrs).toMatchObject({ part: 'body', 'data-endge-part': 'body' })
-    expect(contract.groupRow.attrs).toMatchObject({ part: 'group-row', 'data-endge-part': 'group-row' })
-    expect(column.styleSurfaces.headerCell.attrs).toMatchObject({
+    expect(markers.grid).toMatchObject({ part: 'grid', 'data-endge-part': 'grid' })
+    expect(markers.grid['data-endge-id']).toBe('groundhandling-control')
+    expect(markers.grid.id).toBeUndefined()
+    expect(markers.header).toMatchObject({ part: 'header', 'data-endge-part': 'header' })
+    expect(markers.body).toMatchObject({ part: 'body', 'data-endge-part': 'body' })
+    expect(markers.groupRow).toMatchObject({ part: 'group-row', 'data-endge-part': 'group-row' })
+    expect(column.markers.headerCell).toMatchObject({
       part: 'header-cell',
       'data-endge-part': 'header-cell',
     })
-    expect(column.styleSurfaces.headerContent.attrs).toMatchObject({
+    expect(column.markers.headerContent).toMatchObject({
       part: 'header-content',
       'data-endge-part': 'header-content',
     })
 
-    const rows = decorateSFCTableRows([{ id: 1 }, { id: 2 }], 1, contract)
-    expect(rows[0][SFC_TABLE_ROW_CLASS_FIELD]).toBe('')
-    expect(rows[1][SFC_TABLE_ROW_CLASS_FIELD]).toContain('endge-es-')
-    expect(getSFCTableCellStyleSurfaces(rows[0], 0)?.cell.attrs).toMatchObject({
+    expect(column.markers.cell).toMatchObject({
       part: 'cell',
       'data-endge-part': 'cell',
     })
-    expect(getSFCTableCellStyleSurfaces(rows[0], 0)?.cellContent.attrs).toMatchObject({
+    expect(column.markers.cellContent).toMatchObject({
       part: 'cell-content',
       'data-endge-part': 'cell-content',
     })
-    expect(contract.grid.attrs.class).toHaveLength(1)
-    expect(contract.header.attrs.class).toHaveLength(1)
-    expect(contract.body.attrs.class).toHaveLength(1)
-    expect(contract.groupRow.attrs.class).toHaveLength(1)
-    expect(column.styleSurfaces.headerCell.attrs.class).toHaveLength(1)
-    expect(column.styleSurfaces.headerContent.attrs.class).toHaveLength(1)
+    expect(markers.grid.class).toEqual([])
+    expect(markers.header.class).toEqual([])
+    expect(markers.body.class).toEqual([])
+    expect(markers.groupRow.class).toEqual([])
+    expect(column.markers.headerCell.class).toEqual([])
+    expect(column.markers.headerContent.class).toEqual([])
   })
 
-  it('keeps 10k-row Table style metadata linear and materializes cells lazily', () => {
+  it('keeps 10k-row objects untouched and creates no cell style cache', () => {
     const compiled = compileComponentSFC(`<template>
       <Table id="large-schedule" :rows="[]">
         <Column key="flight" title="Flight"><Text>GH0967</Text></Column>
@@ -132,33 +127,15 @@ describe('SFC EndgeCSS runtime markers', () => {
     if (!isVNode(grid)) return
 
     const source = Array.from({ length: 10_000 }, (_, index) => ({ id: index }))
-    const rows = decorateSFCTableRows(source, 13, grid.props?.styleContract as SFCTableStyleContract)
+    const rows = normalizeSFCTableRows(source)
     expect(rows).toHaveLength(10_000)
-    expect(rows[1][SFC_TABLE_ROW_CLASS_FIELD]).toContain('endge-es-')
-
-    const metadataSymbol = Object.getOwnPropertySymbols(rows[0])
-      .find(symbol => symbol.description === 'endge.table.row-style-meta')
-    expect(metadataSymbol).toBeDefined()
-    const metadata = (rows[0] as Record<PropertyKey, unknown>)[metadataSymbol!] as Record<string, unknown>
-    expect(metadata).not.toHaveProperty('cells')
-    expect(metadata).toMatchObject({ columnCount: 13 })
-
-    const firstPass = getSFCTableCellStyleSurfaces(rows[0], 12)
-    const secondPass = getSFCTableCellStyleSurfaces(rows[0], 12)
-    expect(firstPass?.cell.attrs.class).toHaveLength(1)
-    expect(firstPass?.cellContent.attrs.class).toHaveLength(1)
-    expect(secondPass).toBe(firstPass)
+    expect(rows[9_999]).toBe(source[9_999])
+    expect(Object.getOwnPropertySymbols(rows[0])).toHaveLength(0)
   })
 
-  it('uses a zero-clone row fast path when no EndgeCSS rules are active', () => {
-    const context = createSFCVueRenderContext({}, 0, null, null, [], 'test', [])
-    const contract = createSFCTableStyleContract(context)
-    const source = Array.from({ length: 10_000 }, (_, index) => ({ id: index }))
-    const rows = decorateSFCTableRows(source, 13, contract)
-
-    expect(rows).not.toBe(source)
-    expect(rows[9_999]).toBe(source[9_999])
-    expect(rows[9_999]).not.toHaveProperty(SFC_TABLE_ROW_CLASS_FIELD)
-    expect(Object.getOwnPropertySymbols(rows[9_999])).toHaveLength(0)
+  it('wraps primitive rows without creating style metadata', () => {
+    const rows = normalizeSFCTableRows(['first', 2])
+    expect(rows).toEqual([{ id: 0, value: 'first' }, { id: 1, value: 2 }])
+    expect(Object.getOwnPropertySymbols(rows[0])).toHaveLength(0)
   })
 })

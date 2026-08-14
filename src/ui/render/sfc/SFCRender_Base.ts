@@ -15,7 +15,6 @@ import type {
 } from '@/domain/types/sfc-render.type'
 import { extendSFCVueRenderContext, extendSFCVueStyleContext } from '@/ui/render/sfc/SFCRender_Context'
 import { evaluateSFCProps, evaluateSFCValue, isTruthySFCValue } from '@/ui/render/sfc/SFCRender_Evaluator'
-import { getEndgeDOMStyleClasses } from '@/model/style/endge-dom-style'
 import { createSFCInspectionAttrs, registerSFCInspectionElement } from '@/model/render/sfc/SFCVueRenderInspection'
 import {
   attachSFCEditableAttrs,
@@ -132,9 +131,6 @@ function renderOnce(
 ): SFCVueRenderResult {
   const props = evaluateSFCProps(input.node.props, input.context)
   const styleNode = createStyleNode(input.node, props, input.context)
-  input.context.styleSiblings.push(styleNode)
-  const generatedClasses = getEndgeDOMStyleClasses(input.context.styleArtifacts, styleNode)
-  if (generatedClasses.length > 0) props.class = [props.class, ...generatedClasses]
   const inspectionId = input.context.inspection
     ? registerSFCInspectionElement(input.node, props, input.context)
     : null
@@ -276,10 +272,8 @@ function renderForDirective(
   const source = evaluateSFCValue(directive.source, input.context)
   const entries = createForEntries(source)
   if (!entries) return null
-  const logicalSiblings: EndgeStyleMatchNode[] = []
-
   const children = entries
-    .map(([key, value], index) => renderForItem(input, renderFn, directive, key, value, index, entries.length, logicalSiblings))
+    .map(([key, value], index) => renderForItem(input, renderFn, directive, key, value, index))
     .filter((child): child is Exclude<SFCVueRenderResult, null> => child !== null)
 
   return input.h('span', {
@@ -294,8 +288,6 @@ function renderForItem(
   key: unknown,
   value: unknown,
   index: number,
-  count: number,
-  styleSiblings: EndgeStyleMatchNode[],
 ): SFCVueRenderResult {
   const locals: Record<string, unknown> = {
     [directive.item]: value,
@@ -310,9 +302,6 @@ function renderForItem(
     indexValue: index,
     key,
   }, `${input.context.consumerScope}/for:${input.node.id}:${String(key)}`)
-  context.styleSiblings = styleSiblings
-  context.styleSiblingCount = count
-
   return renderOnce({
     ...input,
     context,
@@ -340,9 +329,8 @@ function createStyleNode(
     ownerScopeId: context.styleOwnerScopeId,
     runtimeScopeIds: new Set(context.runtimeScopeIds),
     parent: context.styleParent,
-    previousSibling: context.styleSiblings.at(-1),
-    index: context.styleSiblings.length + 1,
-    siblingCount: context.styleSiblingCount || context.styleSiblings.length + 1,
+    index: 1,
+    siblingCount: 1,
   }
 }
 

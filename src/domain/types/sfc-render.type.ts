@@ -60,10 +60,6 @@ export interface SFCVueRenderContext {
   styleArtifacts: readonly EndgeStyleSheetArtifact[]
   /** Logical parent in the abstract SFC tree. */
   styleParent: EndgeStyleMatchNode | undefined
-  /** Already rendered logical siblings; physical Vue wrappers are not present here. */
-  styleSiblings: EndgeStyleMatchNode[]
-  /** Expected logical sibling count for structural pseudo selectors. */
-  styleSiblingCount: number
   /** Current scoped SFC owner. */
   styleOwnerScopeId: string | undefined
   /** Runtime lifecycle ancestry used by renderer boundary isolation. */

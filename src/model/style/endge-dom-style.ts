@@ -1,6 +1,6 @@
 import type {
+  EndgeStyleAttributeSelector,
   EndgeStyleDiagnostic,
-  EndgeStyleMatchNode,
   EndgeStylePlacement,
   EndgeStyleRule,
   EndgeStyleSelector,
@@ -8,7 +8,7 @@ import type {
   EndgeStyleSpecificity,
   EndgeStyleTargetProfile,
 } from '@endge/core'
-import { evaluateEndgeStyleSupport, matchEndgeStyleRule } from '@endge/core'
+import { evaluateEndgeStyleSupport } from '@endge/core'
 
 export interface EndgeDOMStyleClassEntry {
   artifactIdentity: string
@@ -19,15 +19,12 @@ export interface EndgeDOMStyleClassEntry {
 
 export interface EndgeDOMStyleMaterialization {
   css: string
+  /** Compatibility field. Native DOM selectors no longer need generated classes. */
   classes: EndgeDOMStyleClassEntry[]
   diagnostics: EndgeStyleDiagnostic[]
 }
 
 export type EndgeDOMStyleInput = EndgeStyleSheetArtifact | EndgeStylePlacement
-
-function generatedClass(rule: EndgeStyleRule, selectorIndex: number): string {
-  return `endge-${rule.id}-${selectorIndex}`.replace(/[^a-zA-Z0-9_-]/g, '-')
-}
 
 function compareSpecificity(left: EndgeStyleSpecificity, right: EndgeStyleSpecificity): number {
   return left.ids - right.ids || left.classes - right.classes || left.types - right.types
@@ -49,23 +46,24 @@ function collectCapabilities(rule: EndgeStyleRule): string[] {
   return result
 }
 
-/** Converts neutral EndgeCSS artifacts to browser CSS over generated runtime classes. */
+/** Converts neutral EndgeCSS AST selectors to browser-native semantic selectors. */
 export function materializeEndgeCSSForDOM(
   inputs: readonly EndgeDOMStyleInput[],
   target: EndgeStyleTargetProfile = { renderer: 'dom', capabilities: [] },
 ): EndgeDOMStyleMaterialization {
   const diagnostics: EndgeStyleDiagnostic[] = []
-  const classes: EndgeDOMStyleClassEntry[] = []
   const availableCapabilities = new Set(target.capabilities ?? [])
   const declarations: Array<{
     selector: EndgeStyleSelector
-    className: string
+    nativeSelector: string
     property: string
     value: string
     important: boolean
     sourceOrder: number
     boundaryId?: string
     theme?: string
+    scope?: EndgeStyleRule['scope']
+    artifactScopeId?: string
   }> = []
 
   inputs.forEach((input, artifactOrder) => {
@@ -78,10 +76,10 @@ export function materializeEndgeCSSForDOM(
       const declarationsText = theme.declarations
         .map(declaration => `${declaration.property}:${declaration.value}${declaration.important ? '!important' : ''};`)
         .join('')
-      if (declarationsText)
+      if (declarationsText) {
         declarations.push({
           selector: { source: root, segments: [], specificity: { ids: 0, classes: 0, types: 0 } },
-          className: root,
+          nativeSelector: root,
           property: '',
           value: declarationsText,
           important: false,
@@ -89,6 +87,7 @@ export function materializeEndgeCSSForDOM(
           boundaryId,
           theme: theme.id,
         })
+      }
     }
 
     for (const rule of artifact.rules) {
@@ -103,22 +102,23 @@ export function materializeEndgeCSSForDOM(
         }
       }
       if (!evaluateEndgeStyleSupport(rule.supports, target)) continue
-      rule.selectors.forEach((selector, selectorIndex) => {
-        const className = generatedClass(rule, selectorIndex)
-        classes.push({ artifactIdentity: artifact.identity, ruleId: rule.id, selectorIndex, className })
+      for (const selector of rule.selectors) {
+        const nativeSelector = compileSelector(selector, artifact.scope === 'component' ? artifact.scopeId : undefined)
         for (const declaration of rule.declarations) {
           declarations.push({
             selector,
-            className,
+            nativeSelector,
             property: declaration.property,
             value: declaration.value,
             important: declaration.important,
             sourceOrder: artifactOrder * 1_000_000 + rule.sourceOrder,
             boundaryId,
             theme: rule.theme,
+            scope: rule.scope,
+            artifactScopeId: artifact.scope === 'component' ? artifact.scopeId : undefined,
           })
         }
-      })
+      }
     }
   })
 
@@ -128,52 +128,88 @@ export function materializeEndgeCSSForDOM(
     || left.sourceOrder - right.sourceOrder)
 
   const css = declarations.map((declaration) => {
-    let baseSelector = declaration.className.startsWith(':root') || declaration.className.startsWith('[data-')
-      ? declaration.className
-      // Every generated class has the same non-zero CSS specificity. Endge has
-      // already resolved its own specificity through declaration order, while
-      // the class must still be able to override renderer/vendor tag defaults.
-      : `.${declaration.className}`
-    if (declaration.boundaryId) {
-      const marker = `[data-endge-runtime-scope~=${cssString(declaration.boundaryId)}]`
-      baseSelector = baseSelector === ':root'
-        ? marker
-        : `${marker}${baseSelector},${marker} ${baseSelector}`
-    }
-    const theme = declaration.theme
-    const selector = theme
-      ? baseSelector.split(',').map(selectorPart =>
-          selectorPart === ':root'
-            ? `:root[data-endge-theme=${cssString(theme)}]`
-            : `:root[data-endge-theme=${cssString(theme)}] ${selectorPart}`,
-        ).join(',')
-      : baseSelector
-    if (!declaration.property)
-      return `${selector}{${declaration.value}}`
-    return `${selector}{${declaration.property}:${declaration.value}${declaration.important ? '!important' : ''};}`
+    let selector = declaration.nativeSelector
+    if (selector !== ':root' && !selector.startsWith('[data-endge-scope-root='))
+      selector = uniformSpecificitySelector(selector)
+    if (declaration.boundaryId)
+      selector = applyBoundary(selector, declaration.boundaryId)
+    if (declaration.theme)
+      selector = selector === ':root'
+        ? `:root[data-endge-theme=${cssString(declaration.theme)}]`
+        : `:root[data-endge-theme=${cssString(declaration.theme)}] :is(${selector})`
+    const body = declaration.property
+      ? `${declaration.property}:${declaration.value}${declaration.important ? '!important' : ''};`
+      : declaration.value
+    const rule = `${selector}{${body}}`
+    if (!declaration.scope) return rule
+    const roots = declaration.scope.root.map(item => compileSelector(item, declaration.artifactScopeId)).join(',')
+    const limit = declaration.scope.limit?.map(item => compileSelector(item, declaration.artifactScopeId)).join(',')
+    return `@scope (${roots})${limit ? ` to (${limit})` : ''}{${rule}}`
   }).join('\n')
 
-  return { css, classes, diagnostics }
+  return { css, classes: [], diagnostics }
+}
+
+function compileSelector(selector: EndgeStyleSelector, scopeId?: string): string {
+  if (selector.segments.length === 0) return selector.source
+  return selector.segments.map((segment, index) => {
+    const combinator = index === 0
+      ? ''
+      : segment.combinator === 'child'
+        ? ' > '
+        : segment.combinator === 'adjacent'
+          ? ' + '
+          : segment.combinator === 'sibling'
+            ? ' ~ '
+            : ' '
+    const isTarget = index === selector.segments.length - 1
+    return `${combinator}${compileCompound(segment.compound, isTarget ? scopeId : undefined)}`
+  }).join('')
+}
+
+function compileCompound(
+  compound: EndgeStyleSelector['segments'][number]['compound'],
+  scopeId?: string,
+): string {
+  const parts: string[] = []
+  if (compound.tag) parts.push(`[data-endge-tag=${cssString(compound.tag)}]`)
+  for (const id of compound.ids) parts.push(`[data-endge-id=${cssString(id)}]`)
+  for (const className of compound.classes) parts.push(`.${escapeIdentifier(className)}`)
+  for (const attribute of compound.attributes) parts.push(compileAttribute(attribute))
+  for (const pseudo of compound.pseudos) {
+    if (pseudo.name === 'first-child' || pseudo.name === 'last-child') parts.push(`:${pseudo.name}`)
+    else if (pseudo.name === 'nth-child') parts.push(`:nth-child(${pseudo.expression})`)
+    else if (pseudo.name === 'component') parts.push(`[data-endge-component=${cssString(pseudo.value)}]`)
+    else if (pseudo.name === 'identity') parts.push(`[data-endge-identity=${cssString(pseudo.value)}]`)
+    else if (pseudo.name === 'state') parts.push(`[data-endge-state~=${cssString(pseudo.value)}]`)
+    else if (pseudo.name === 'part') parts.push(`[data-endge-part~=${cssString(pseudo.value)}]`)
+    else if ('selectors' in pseudo)
+      parts.push(`:${pseudo.name}(${pseudo.selectors.map(item => compileSelector(item, scopeId)).join(',')})`)
+  }
+  if (scopeId) parts.push(`[data-endge-scope=${cssString(scopeId)}]`)
+  return parts.join('') || '*'
+}
+
+function compileAttribute(attribute: EndgeStyleAttributeSelector): string {
+  const name = escapeIdentifier(attribute.name)
+  if (attribute.operator === 'exists') return `[${name}]`
+  return `[${name}${attribute.operator}${cssString(attribute.value ?? '')}${attribute.insensitive ? ' i' : ''}]`
+}
+
+function uniformSpecificitySelector(selector: string): string {
+  return `:where(${selector}):is([data-endge-node],[data-endge-part])`
+}
+
+function applyBoundary(selector: string, boundaryId: string): string {
+  const marker = `[data-endge-runtime-scope~=${cssString(boundaryId)}]`
+  if (selector === ':root') return marker
+  return `${marker}${selector},${marker} ${selector}`
+}
+
+function escapeIdentifier(value: string): string {
+  return value.replace(/(^-?\d)|[^a-zA-Z0-9_-]/g, match => `\\${match.codePointAt(0)!.toString(16)} `)
 }
 
 function isPlacement(input: EndgeDOMStyleInput): input is EndgeStylePlacement {
   return 'artifact' in input && 'boundaryId' in input
-}
-
-/** Returns stable classes for all neutral selectors matching one logical node. */
-export function getEndgeDOMStyleClasses(
-  artifacts: readonly EndgeStyleSheetArtifact[],
-  node: EndgeStyleMatchNode,
-  target: EndgeStyleTargetProfile = { renderer: 'dom', capabilities: [] },
-): string[] {
-  const result: string[] = []
-  for (const artifact of artifacts) {
-    for (const rule of artifact.rules) {
-      const matched = matchEndgeStyleRule(artifact, rule, node, target, rule.theme)
-      rule.selectors.forEach((selector, selectorIndex) => {
-        if (matched.includes(selector)) result.push(generatedClass(rule, selectorIndex))
-      })
-    }
-  }
-  return result
 }

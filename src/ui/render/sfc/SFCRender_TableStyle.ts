@@ -1,280 +1,127 @@
-import type { EndgeStyleMatchNode } from '@endge/core'
-
 import type { SFCVueRenderContext } from '@/domain/types/sfc-render.type'
-import { getEndgeDOMStyleClasses } from '@/model/style/endge-dom-style'
 
-export type SFCTablePublicPart =
-  | 'grid'
-  | 'header'
-  | 'header-cell'
-  | 'header-content'
-  | 'body'
-  | 'row'
-  | 'cell'
-  | 'cell-content'
-  | 'group-row'
+export type SFCTablePublicPart
+  = 'grid'
+    | 'header'
+    | 'header-cell'
+    | 'header-content'
+    | 'body'
+    | 'row'
+    | 'cell'
+    | 'cell-content'
+    | 'group-row'
 
-export interface SFCTablePublicPartAttrs extends Record<string, unknown> {
+export interface SFCTableMarkerAttrs extends Record<string, unknown> {
   part: SFCTablePublicPart
   'data-endge-part': SFCTablePublicPart
   class: string[]
 }
 
-export interface SFCTablePublicSurface {
-  node: EndgeStyleMatchNode
-  attrs: SFCTablePublicPartAttrs
-}
-
-export interface SFCTableStyleContract {
+export interface SFCTableMarkers {
   context: SFCVueRenderContext
-  grid: SFCTablePublicSurface
-  header: SFCTablePublicSurface
-  body: SFCTablePublicSurface
-  groupRow: SFCTablePublicSurface
+  grid: SFCTableMarkerAttrs
+  header: SFCTableMarkerAttrs
+  body: SFCTableMarkerAttrs
+  row: SFCTableMarkerAttrs
+  groupRow: SFCTableMarkerAttrs
 }
 
-export interface SFCTableColumnStyleSurfaces {
-  headerCell: SFCTablePublicSurface
-  headerContent: SFCTablePublicSurface
+export interface SFCTableColumnMarkers {
+  headerCell: SFCTableMarkerAttrs
+  headerContent: SFCTableMarkerAttrs
+  cell: SFCTableMarkerAttrs
+  cellContent: SFCTableMarkerAttrs
 }
 
-export interface SFCTableCellStyleSurfaces {
-  cell: SFCTablePublicSurface
-  cellContent: SFCTablePublicSurface
-}
-
-interface SFCTableRowStyleMeta {
-  row: SFCTablePublicSurface
-  columnCount: number
-  contract: SFCTableStyleContract
-}
-
-export const SFC_TABLE_ROW_CLASS_FIELD = '__endgeStyleRowClass'
-const SFC_TABLE_ROW_STYLE_META = Symbol('endge.table.row-style-meta')
-const APPLIED_STYLE_CLASSES_ATTRIBUTE = 'data-endge-applied-style-classes'
-const MAX_CELL_SURFACE_CACHE_SIZE = 512
-const cellSurfaceCaches = new WeakMap<SFCTableStyleContract, Map<string, SFCTableCellStyleSurfaces>>()
-
-export function createSFCTableStyleContract(context: SFCVueRenderContext): SFCTableStyleContract {
-  const grid = createSurface(context, 'grid', 1, 1)
-  const header = createSurface(context, 'header', 1, 1, undefined, grid.node)
-  const body = createSurface(context, 'body', 1, 1, undefined, grid.node)
-  const groupRow = createSurface(context, 'group-row', 1, 1, undefined, body.node)
-  return { context, grid, header, body, groupRow }
-}
-
-export function createSFCTableColumnStyleSurfaces(
-  contract: SFCTableStyleContract,
-  columnCount: number,
-): SFCTableColumnStyleSurfaces[] {
-  let previousHeaderCell: EndgeStyleMatchNode | undefined
-  const result: SFCTableColumnStyleSurfaces[] = []
-
-  for (let index = 0; index < columnCount; index++) {
-    const headerCell = createSurface(
-      contract.context,
-      'header-cell',
-      index + 1,
-      columnCount,
-      previousHeaderCell,
-      contract.header.node,
-    )
-    previousHeaderCell = headerCell.node
-    const headerContent = createSurface(
-      contract.context,
-      'header-content',
-      1,
-      1,
-      undefined,
-      headerCell.node,
-    )
-    result.push({ headerCell, headerContent })
-  }
-
-  return result
-}
-
-export function decorateSFCTableRows(
-  rows: readonly Record<string, unknown>[],
-  columnCount: number,
-  contract: SFCTableStyleContract,
-): Record<string, unknown>[] {
-  cellSurfaceCaches.delete(contract)
-
-  // RevoGrid still exposes the public parts without EndgeCSS rules. Avoid
-  // creating logical match nodes and row clones in that common fast path.
-  if (!contract.context.styleArtifacts.some(artifact => artifact.rules.length > 0))
-    return [...rows]
-
-  let previousRow: EndgeStyleMatchNode | undefined
-
-  return rows.map((row, rowIndex) => {
-    const rowSurface = createSurface(
-      contract.context,
-      'row',
-      rowIndex + 1,
-      rows.length,
-      previousRow,
-      contract.body.node,
-    )
-    previousRow = rowSurface.node
-
-    const decorated = {
-      ...row,
-      [SFC_TABLE_ROW_CLASS_FIELD]: rowSurface.attrs.class.join(' '),
-    }
-    Object.defineProperty(decorated, SFC_TABLE_ROW_STYLE_META, {
-      configurable: false,
-      enumerable: false,
-      value: { row: rowSurface, columnCount, contract } satisfies SFCTableRowStyleMeta,
-      writable: false,
-    })
-    return decorated
-  })
-}
-
-export function getSFCTableCellStyleSurfaces(
-  row: Record<string, unknown>,
-  columnIndex: number,
-): SFCTableCellStyleSurfaces | null {
-  const metadata = (row as unknown as Record<PropertyKey, unknown>)[SFC_TABLE_ROW_STYLE_META] as SFCTableRowStyleMeta | undefined
-  if (!metadata || columnIndex < 0 || columnIndex >= metadata.columnCount)
-    return null
-
-  const cache = getCellSurfaceCache(metadata.contract)
-  const cacheKey = `${metadata.row.node.index}:${metadata.row.node.siblingCount}:${metadata.columnCount}:${columnIndex}`
-  const cached = cache.get(cacheKey)
-  if (cached) {
-    // Refresh insertion order so active viewport cells stay in the bounded LRU.
-    cache.delete(cacheKey)
-    cache.set(cacheKey, cached)
-    return cached
-  }
-
-  // RevoGrid virtualizes cells. Build the neutral sibling chain only for the
-  // cell it is currently asking the renderer to display, and do not retain it
-  // on any of the 10k+ source rows.
-  let previousCell: EndgeStyleMatchNode | undefined
-  let cell: SFCTablePublicSurface | undefined
-  for (let index = 0; index <= columnIndex; index++) {
-    cell = createSurface(
-      metadata.contract.context,
-      'cell',
-      index + 1,
-      metadata.columnCount,
-      previousCell,
-      metadata.row.node,
-    )
-    previousCell = cell.node
-  }
-
-  if (!cell)
-    return null
-
-  const result = {
-    cell,
-    cellContent: createSurface(
-      metadata.contract.context,
-      'cell-content',
-      1,
-      1,
-      undefined,
-      cell.node,
-    ),
-  }
-  cache.set(cacheKey, result)
-  if (cache.size > MAX_CELL_SURFACE_CACHE_SIZE) {
-    const oldest = cache.keys().next().value
-    if (oldest !== undefined)
-      cache.delete(oldest)
-  }
-  return result
-}
-
-export function toRevoGridSurfaceProps(attrs: SFCTablePublicPartAttrs): Record<string, unknown> {
+export function createSFCTableMarkers(context: SFCVueRenderContext): SFCTableMarkers {
   return {
-    part: attrs.part,
-    'data-endge-part': attrs['data-endge-part'],
+    context,
+    grid: createMarkerAttrs(context, 'grid'),
+    header: createMarkerAttrs(context, 'header'),
+    body: createMarkerAttrs(context, 'body'),
+    row: createMarkerAttrs(context, 'row'),
+    groupRow: createMarkerAttrs(context, 'group-row'),
+  }
+}
+
+export function createSFCTableColumnMarkers(
+  markers: SFCTableMarkers,
+  columnCount: number,
+): SFCTableColumnMarkers[] {
+  return Array.from({ length: columnCount }, () => ({
+    headerCell: createMarkerAttrs(markers.context, 'header-cell'),
+    headerContent: createMarkerAttrs(markers.context, 'header-content'),
+    cell: createMarkerAttrs(markers.context, 'cell'),
+    cellContent: createMarkerAttrs(markers.context, 'cell-content'),
+  }))
+}
+
+export function toRevoGridMarkerProps(attrs: SFCTableMarkerAttrs): Record<string, unknown> {
+  return {
+    ...attrs,
     class: Object.fromEntries(attrs.class.map(className => [className, true])),
   }
 }
 
-/** Applies logical surfaces to RevoGrid-owned DOM without leaking vendor selectors into EndgeCSS. */
-export function syncSFCTableDOMSurfaces(
-  grid: HTMLElement,
-  contract: SFCTableStyleContract,
-): void {
-  applySurfaceAttrs(grid, contract.grid.attrs)
+/** Marks vendor-owned DOM only; native CSS performs all selector matching. */
+export function syncSFCTableDOMMarkers(grid: HTMLElement, markers: SFCTableMarkers): void {
+  applyMarkerAttrs(grid, markers.grid)
   grid.querySelectorAll<HTMLElement>('revogr-header')
-    .forEach(element => applySurfaceAttrs(element, contract.header.attrs))
+    .forEach(element => applyMarkerAttrs(element, markers.header))
   grid.querySelectorAll<HTMLElement>('revogr-data')
     .forEach((element) => {
       const rowType = element.getAttribute('type') ?? (element as HTMLElement & { type?: string }).type
-      if (rowType === 'rgRow') applySurfaceAttrs(element, contract.body.attrs)
+      if (rowType === 'rgRow') applyMarkerAttrs(element, markers.body)
     })
   grid.querySelectorAll<HTMLElement>('.rgRow')
-    .forEach((element) => {
-      const part: SFCTablePublicPart = element.classList.contains('groupingRow') ? 'group-row' : 'row'
-      if (part === 'group-row') {
-        applySurfaceAttrs(element, contract.groupRow.attrs)
-        return
-      }
-
-      element.setAttribute('part', part)
-      element.setAttribute('data-endge-part', part)
-    })
+    .forEach((element) => applyMarkerAttrs(
+      element,
+      element.classList.contains('groupingRow') ? markers.groupRow : markers.row,
+    ))
 }
 
-function createSurface(
-  context: SFCVueRenderContext,
-  part: SFCTablePublicPart,
-  index: number,
-  siblingCount: number,
-  previousSibling?: EndgeStyleMatchNode,
-  parent?: EndgeStyleMatchNode,
-): SFCTablePublicSurface {
+function createMarkerAttrs(context: SFCVueRenderContext, part: SFCTablePublicPart): SFCTableMarkerAttrs {
   const host = context.styleParent
-  const node: EndgeStyleMatchNode = {
-    tag: host?.tag ?? 'Table',
-    id: host?.id,
-    classes: host?.classes ?? new Set<string>(),
-    attributes: host?.attributes ?? {},
-    states: host?.states ?? new Set<string>(),
-    parts: new Set([part]),
-    component: host?.component,
-    identity: host?.identity,
-    ownerScopeId: host?.ownerScopeId ?? context.styleOwnerScopeId,
-    parent: parent ?? host?.parent,
-    previousSibling,
-    index,
-    siblingCount,
+  const attrs: SFCTableMarkerAttrs = {
+    part,
+    'data-endge-part': part,
+    class: [...(host?.classes ?? [])],
+    'data-endge-tag': host?.tag ?? 'Table',
   }
-  return {
-    node,
-    attrs: {
-      part,
-      'data-endge-part': part,
-      class: getEndgeDOMStyleClasses(context.styleArtifacts, node),
-    },
+  appendAuthoredAttributes(attrs, host?.attributes)
+  if (host?.id) attrs['data-endge-id'] = host.id
+  if (host?.states.size) attrs['data-endge-state'] = [...host.states].join(' ')
+  if (host?.component) attrs['data-endge-component'] = host.component
+  if (host?.identity) attrs['data-endge-identity'] = host.identity
+  const scopeId = host?.ownerScopeId ?? context.styleOwnerScopeId
+  if (scopeId) attrs['data-endge-scope'] = scopeId
+  if (context.runtimeScopeIds.length)
+    attrs['data-endge-runtime-scope'] = context.runtimeScopeIds.join(' ')
+  return attrs
+}
+
+function appendAuthoredAttributes(
+  target: SFCTableMarkerAttrs,
+  attributes: Record<string, unknown> | undefined,
+): void {
+  for (const [name, value] of Object.entries(attributes ?? {})) {
+    if (
+      ['class', 'style', 'part', 'id', 'state', 'component', 'identity', 'ref', 'key'].includes(name)
+      || name.startsWith('on')
+    )
+      continue
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
+      target[name] = value
   }
 }
 
-function applySurfaceAttrs(element: HTMLElement, attrs: SFCTablePublicPartAttrs): void {
-  const previousClasses = element.getAttribute(APPLIED_STYLE_CLASSES_ATTRIBUTE)?.split(/\s+/).filter(Boolean) ?? []
-  previousClasses.forEach(className => element.classList.remove(className))
-  attrs.class.forEach(className => element.classList.add(className))
-  element.setAttribute(APPLIED_STYLE_CLASSES_ATTRIBUTE, attrs.class.join(' '))
-  element.setAttribute('part', attrs.part)
-  element.setAttribute('data-endge-part', attrs['data-endge-part'])
-}
-
-function getCellSurfaceCache(
-  contract: SFCTableStyleContract,
-): Map<string, SFCTableCellStyleSurfaces> {
-  let cache = cellSurfaceCaches.get(contract)
-  if (!cache) {
-    cache = new Map()
-    cellSurfaceCaches.set(contract, cache)
+function applyMarkerAttrs(element: HTMLElement, attrs: SFCTableMarkerAttrs): void {
+  for (const [key, value] of Object.entries(attrs)) {
+    if (key === 'class') {
+      for (const className of attrs.class) element.classList.add(className)
+    }
+    else if (value != null) {
+      element.setAttribute(key, String(value))
+    }
   }
-  return cache
 }

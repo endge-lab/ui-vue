@@ -63,16 +63,13 @@ import { SFCVueBoundaryRegistryKey } from '@/ui/render/sfc/SFCRender_BoundaryReg
 import NativeTablePagination from '@/ui/table/NativeTablePagination.vue'
 import { closeEndgeContextMenu, openEndgeContextMenu } from '@/ui/overlay/context-menu-manager'
 import {
-  createSFCTableColumnStyleSurfaces,
-  createSFCTableStyleContract,
-  decorateSFCTableRows,
-  getSFCTableCellStyleSurfaces,
-  SFC_TABLE_ROW_CLASS_FIELD,
-  type SFCTableColumnStyleSurfaces,
-  type SFCTablePublicPartAttrs,
-  type SFCTableStyleContract,
-  syncSFCTableDOMSurfaces,
-  toRevoGridSurfaceProps,
+  createSFCTableColumnMarkers,
+  createSFCTableMarkers,
+  type SFCTableColumnMarkers,
+  type SFCTableMarkerAttrs,
+  type SFCTableMarkers,
+  syncSFCTableDOMMarkers,
+  toRevoGridMarkerProps,
 } from '@/ui/render/sfc/SFCRender_TableStyle'
 
 interface SFCTableColumn {
@@ -84,7 +81,7 @@ interface SFCTableColumn {
   sort: SFCTableColumnSort | null
   cellNodes: RComponentSFC_IR_Node[]
   rowDependencies: Set<string>
-  styleSurfaces: SFCTableColumnStyleSurfaces
+  markers: SFCTableColumnMarkers
   metadata: ProgramMetadataMap
 }
 
@@ -211,7 +208,7 @@ const DEFAULT_TABLE_COLUMN_MENU: ContextMenuDescriptor = {
 
 /** Рендерит SFC Table primitive через RevoGrid, не раскрывая RevoGrid в SFC-синтаксис. */
 export const SFCRender_Table: SFCVueRenderFunction = SFCRender_Base((input) => {
-  const rows = normalizeRows(input.props.rows)
+  const rows = normalizeSFCTableRows(input.props.rows)
   const explicitHeight = input.props.height ?? input.props.h
   const fillsAvailableHeight = explicitHeight == null || explicitHeight === ''
   const rowKey = normalizeText(input.props['row-key'] ?? input.props.rowKey, 'id')
@@ -220,9 +217,9 @@ export const SFCRender_Table: SFCVueRenderFunction = SFCRender_Base((input) => {
   const visibilityDescriptor = normalizeComponentSFCTableColumnVisibility(input.node)
   const columnMenuDescriptor = input.node.tableMenus?.column ?? normalizeComponentSFCTableColumnMenu(input.node)
   const rowMenuDescriptor = input.node.tableMenus?.row ?? normalizeComponentSFCTableRowMenu(input.node)
-  const styleContract = createSFCTableStyleContract(input.context)
-  const columns = collectTableColumns(input.node, input.context, sortDescriptor, pinDescriptor, styleContract)
-  const source = rows.map(row => ({ ...row }))
+  const styleMarkers = createSFCTableMarkers(input.context)
+  const columns = collectTableColumns(input.node, input.context, sortDescriptor, pinDescriptor, styleMarkers)
+  const source = rows
   const sortMode = normalizeComponentSFCTableSortMode(input.props['sort-mode'] ?? input.props.sortMode ?? sortDescriptor.mode)
   const pinMode = normalizeComponentSFCTableColumnPinMode(input.props['column-pin'] ?? input.props.columnPin ?? pinDescriptor.mode)
   const tableId = normalizeText(input.props.id ?? input.props.tableId ?? input.attrs.id, '')
@@ -263,7 +260,7 @@ export const SFCRender_Table: SFCVueRenderFunction = SFCRender_Base((input) => {
       runtimeState: input.context.runtimeState,
       columns,
       source,
-      styleContract,
+      styleMarkers,
       rowKey,
       sortMode,
       pinMode,
@@ -336,8 +333,8 @@ const SFCRevoGridTable = defineComponent({
       type: Array as PropType<Record<string, unknown>[]>,
       required: true,
     },
-    styleContract: {
-      type: Object as PropType<SFCTableStyleContract>,
+    styleMarkers: {
+      type: Object as PropType<SFCTableMarkers>,
       required: true,
     },
     rowKey: {
@@ -441,7 +438,7 @@ const SFCRevoGridTable = defineComponent({
     const previousPinSignature = shallowRef(createTablePinSignature(props.pinMode, props.defaultPin, props.columns))
     const previousVisibilitySignature = shallowRef(createTableVisibilitySignature(props.defaultHidden, props.columns))
     const previousOrderSignature = shallowRef(props.columns.map(column => column.key).join('|'))
-    const previousStyleContract = shallowRef(props.styleContract)
+    const previousStyleMarkers = shallowRef(props.styleMarkers)
     const previousPaging = shallowRef(props.paging)
     const tableActionTarget: TableRuntimeActionTarget = {
       setColumnVisibility: async (columnKey, visible) => {
@@ -502,7 +499,7 @@ const SFCRevoGridTable = defineComponent({
 
     onMounted(() => {
       mounted = true
-      schedulePublicSurfaceSync()
+      schedulePublicMarkerSync()
     })
 
     onBeforeUnmount(() => {
@@ -522,7 +519,7 @@ const SFCRevoGridTable = defineComponent({
         currentRenderCell = props.renderCell
         const nextBaseSource = cloneRows(props.source)
         const columnsChanged = !areEquivalentTableColumns(stableColumns.value, props.columns)
-        const styleChanged = !areEquivalentTableStyleContracts(previousStyleContract.value, props.styleContract)
+        const styleChanged = !areEquivalentTableMarkers(previousStyleMarkers.value, props.styleMarkers)
         const pagingChanged = previousPaging.value !== props.paging
         const changedRows = collectChangedRows(baseSource.value, nextBaseSource, props.rowKey)
         if (columnsChanged)
@@ -545,7 +542,7 @@ const SFCRevoGridTable = defineComponent({
           visibilityState.value = resolveInitialVisibilityState()
           previousVisibilitySignature.value = nextVisibilitySignature
         }
-        previousStyleContract.value = props.styleContract
+        previousStyleMarkers.value = props.styleMarkers
         previousPaging.value = props.paging
 
         if (
@@ -579,7 +576,7 @@ const SFCRevoGridTable = defineComponent({
           await resolveGridElement(gridRef.value)?.refresh?.('all')
         previousSource.value = cloneRows(nextSource)
         previousColumnsSignature.value = createColumnsSignature(visibleColumns.value)
-        schedulePublicSurfaceSync()
+        schedulePublicMarkerSync()
       },
     )
 
@@ -592,7 +589,7 @@ const SFCRevoGridTable = defineComponent({
         if (!mounted)
           return
         void resolveGridElement(gridRef.value)?.refresh?.('all')
-        schedulePublicSurfaceSync()
+        schedulePublicMarkerSync()
       })
     }
 
@@ -622,7 +619,7 @@ const SFCRevoGridTable = defineComponent({
         grid.source = nextSource
         await grid.refresh?.('all')
       }
-      schedulePublicSurfaceSync()
+      schedulePublicMarkerSync()
       if (previous !== JSON.stringify(nextSortState)) {
         emitTableEvent('sortChanged', {
           tableId: effectiveTableId(),
@@ -637,7 +634,7 @@ const SFCRevoGridTable = defineComponent({
       persistTableState('pin', pinState.value)
       await nextTick()
       await resolveGridElement(gridRef.value)?.refresh?.('all')
-      schedulePublicSurfaceSync()
+      schedulePublicMarkerSync()
       if (previous !== JSON.stringify(pinState.value)) {
         emitTableEvent('columnPinChanged', {
           tableId: effectiveTableId(),
@@ -654,7 +651,7 @@ const SFCRevoGridTable = defineComponent({
       await nextTick()
       await resolveGridElement(gridRef.value)?.refresh?.('all')
       previousColumnsSignature.value = createColumnsSignature(visibleColumns.value)
-      schedulePublicSurfaceSync()
+      schedulePublicMarkerSync()
       if (previous !== JSON.stringify(visibilityState.value)) {
         emitTableEvent('columnVisibilityChanged', {
           tableId: effectiveTableId(),
@@ -670,11 +667,7 @@ const SFCRevoGridTable = defineComponent({
       const visibleRows = props.paging === 'virtual'
         ? sorted
         : sorted.slice(start, start + pageSize.value)
-      return decorateSFCTableRows(
-        visibleRows,
-        props.columns.length,
-        props.styleContract,
-      )
+      return visibleRows
     }
 
     async function commitPagination(nextPageIndex: number, nextPageSize = pageSize.value): Promise<void> {
@@ -695,7 +688,7 @@ const SFCRevoGridTable = defineComponent({
         grid.source = nextSource
         await grid.refresh?.('all')
       }
-      schedulePublicSurfaceSync()
+      schedulePublicMarkerSync()
       if (previousPageIndex !== pageIndex.value || previousPageSize !== pageSize.value) {
         emitTableEvent('pageChanged', {
           tableId: effectiveTableId(),
@@ -714,10 +707,10 @@ const SFCRevoGridTable = defineComponent({
       persistTableState('pagination', { pageIndex: pageIndex.value, pageSize: pageSize.value })
     }
 
-    function schedulePublicSurfaceSync(): void {
+    function schedulePublicMarkerSync(): void {
       void nextTick(() => {
         const grid = resolveGridHTMLElement(gridRef.value)
-        if (grid) syncSFCTableDOMSurfaces(grid, props.styleContract)
+        if (grid) syncSFCTableDOMMarkers(grid, props.styleMarkers)
       })
     }
 
@@ -865,7 +858,7 @@ const SFCRevoGridTable = defineComponent({
       grid.source = nextSource
       await grid.refresh?.('all')
       previousSource.value = cloneRows(nextSource)
-      schedulePublicSurfaceSync()
+      schedulePublicMarkerSync()
       return true
     }
 
@@ -1074,12 +1067,10 @@ const SFCRevoGridTable = defineComponent({
     }, [
       vueH(RevoGrid as any, {
         ref: gridRef,
-        part: props.styleContract.grid.attrs.part,
-        'data-endge-part': props.styleContract.grid.attrs['data-endge-part'],
-        class: ['endge-sfc-table-grid', props.styleContract.grid.attrs.class],
+        ...props.styleMarkers.grid,
+        class: ['endge-sfc-table-grid', props.styleMarkers.grid.class],
         columns: revoColumns.value,
         source: currentSource.value,
-        rowClass: SFC_TABLE_ROW_CLASS_FIELD,
         rowSize: props.rowSize,
         exporting: true,
         theme: props.theme,
@@ -1089,8 +1080,8 @@ const SFCRevoGridTable = defineComponent({
         readonly: true,
         useAutofill: false,
         style: 'height:100%;min-height:0;flex:1 1 0%;',
-        onAfterrender: schedulePublicSurfaceSync,
-        onAfterheaderrender: schedulePublicSurfaceSync,
+        onAfterrender: schedulePublicMarkerSync,
+        onAfterheaderrender: schedulePublicMarkerSync,
         onAftercolumnresize: handleColumnResize,
         onAftercolumnsset: handleColumnsSet,
       }),
@@ -1114,15 +1105,15 @@ function collectTableColumns(
   context: SFCVueRenderContext,
   sortDescriptor: ReturnType<typeof normalizeComponentSFCTableSort>,
   pinDescriptor: ReturnType<typeof normalizeComponentSFCTableColumnPin>,
-  styleContract: SFCTableStyleContract,
+  styleMarkers: SFCTableMarkers,
 ): SFCTableColumn[] {
   const columnNodes = tableNode.children
     .filter(isElementNode)
     .filter(node => node.tag === 'Column')
-  const styleSurfaces = createSFCTableColumnStyleSurfaces(styleContract, columnNodes.length)
+  const columnMarkers = createSFCTableColumnMarkers(styleMarkers, columnNodes.length)
 
   return columnNodes.map((node, index) => {
-    return createTableColumn(node, context, index, sortDescriptor, pinDescriptor, styleSurfaces[index])
+    return createTableColumn(node, context, index, sortDescriptor, pinDescriptor, columnMarkers[index])
   })
 }
 
@@ -1132,7 +1123,7 @@ function createTableColumn(
   index: number,
   sortDescriptor: ReturnType<typeof normalizeComponentSFCTableSort>,
   pinDescriptor: ReturnType<typeof normalizeComponentSFCTableColumnPin>,
-  styleSurfaces: SFCTableColumnStyleSurfaces,
+  markers: SFCTableColumnMarkers,
 ): SFCTableColumn {
   const props = evaluateSFCProps(columnNode.props, context)
   const key = normalizeColumnKey(columnNode, context, props.key, `column_${index}`)
@@ -1154,7 +1145,7 @@ function createTableColumn(
       : null,
     cellNodes: resolveCellNodes(columnNode),
     rowDependencies: extractRowDependencies(resolveCellNodes(columnNode), key),
-    styleSurfaces,
+    markers,
     metadata: resolveTableColumnMetadata(columnNode, context),
   }
 }
@@ -1231,7 +1222,7 @@ function createRevoColumn(
     autoSize: column.width == null,
     size: column.width ?? 150,
     pin: toRevoGridPinSide(pinSide),
-    columnProperties: () => toRevoGridSurfaceProps(column.styleSurfaces.headerCell.attrs),
+    columnProperties: () => toRevoGridMarkerProps(column.markers.headerCell),
     cellProperties: (cellProps: Record<string, unknown>) => {
       const row = cellProps.model
       if (!isPlainObject(row)) {
@@ -1241,17 +1232,11 @@ function createRevoColumn(
         }
       }
 
-      const surfaces = getSFCTableCellStyleSurfaces(row, column.index)
-      return surfaces
-        ? toRevoGridSurfaceProps(surfaces.cell.attrs)
-        : {
-            part: 'cell',
-            'data-endge-part': 'cell',
-          }
+      return toRevoGridMarkerProps(column.markers.cell)
     },
     columnTemplate: VGridVueTemplate(SFCRevoGridColumnHeader, {
       title: column.title,
-      headerContentAttrs: column.styleSurfaces.headerContent.attrs,
+      headerContentAttrs: column.markers.headerContent,
       isSortable: column.sort?.sortable === true,
       sortEnabled: sortMeta.enabled,
       sortDirection: sortMeta.direction,
@@ -1272,7 +1257,7 @@ const SFCRevoGridColumnHeader = defineComponent({
       required: true,
     },
     headerContentAttrs: {
-      type: Object as PropType<SFCTablePublicPartAttrs>,
+      type: Object as PropType<SFCTableMarkerAttrs>,
       required: true,
     },
     isSortable: {
@@ -1912,18 +1897,16 @@ function renderTableCell(input: SFCTableCellRenderInput & {
     value: row[input.column.key],
   }, input.context.iteration, `${input.context.consumerScope}/row:${String(rowIdentity)}/column:${input.column.key}`)
   const children = renderSFCNodes(h, input.column.cellNodes, cellContext)
-  const styleSurfaces = getSFCTableCellStyleSurfaces(row, input.column.index)
-  const contentAttrs = styleSurfaces?.cellContent.attrs
+  const contentAttrs = input.column.markers.cellContent
 
   return h('div', {
-    part: contentAttrs?.part ?? 'cell-content',
-    'data-endge-part': contentAttrs?.['data-endge-part'] ?? 'cell-content',
+    ...contentAttrs,
     class: [
       'endge-sfc-table-cell-content',
       input.selected(row, rowIndex)
         ? 'endge-sfc-table-cell-content--selected'
         : '',
-      contentAttrs?.class,
+      contentAttrs.class,
     ],
     tabindex: 0,
     'aria-selected': input.selected(row, rowIndex),
@@ -2136,21 +2119,22 @@ function areEquivalentTableColumns(left: SFCTableColumn[], right: SFCTableColumn
       return false
     if (!haveSameSerializableValue(column.metadata, candidate.metadata))
       return false
-    return haveSameSerializableValue(column.styleSurfaces.headerCell.attrs, candidate.styleSurfaces.headerCell.attrs)
-      && haveSameSerializableValue(column.styleSurfaces.headerContent.attrs, candidate.styleSurfaces.headerContent.attrs)
+    return haveSameSerializableValue(column.markers.headerCell, candidate.markers.headerCell)
+      && haveSameSerializableValue(column.markers.headerContent, candidate.markers.headerContent)
   })
 }
 
-function areEquivalentTableStyleContracts(left: SFCTableStyleContract, right: SFCTableStyleContract): boolean {
+function areEquivalentTableMarkers(left: SFCTableMarkers, right: SFCTableMarkers): boolean {
   if (left === right)
     return true
   if (!haveSameReferences(left.context.styleArtifacts, right.context.styleArtifacts))
     return false
 
-  return haveSameSerializableValue(left.grid.attrs, right.grid.attrs)
-    && haveSameSerializableValue(left.header.attrs, right.header.attrs)
-    && haveSameSerializableValue(left.body.attrs, right.body.attrs)
-    && haveSameSerializableValue(left.groupRow.attrs, right.groupRow.attrs)
+  return haveSameSerializableValue(left.grid, right.grid)
+    && haveSameSerializableValue(left.header, right.header)
+    && haveSameSerializableValue(left.body, right.body)
+    && haveSameSerializableValue(left.row, right.row)
+    && haveSameSerializableValue(left.groupRow, right.groupRow)
 }
 
 function haveSameReferences<T>(left: readonly T[], right: readonly T[]): boolean {
@@ -2234,14 +2218,14 @@ function isRevoGridElement(value: unknown): value is SFCRevoGridElement {
     )
 }
 
-function normalizeRows(value: unknown): Record<string, unknown>[] {
+export function normalizeSFCTableRows(value: unknown): Record<string, unknown>[] {
   if (!Array.isArray(value))
     return []
 
-  return value.map((item) => {
+  return value.map((item, index) => {
     return isPlainObject(item)
       ? item
-      : { value: item }
+      : { id: index, value: item }
   })
 }
 

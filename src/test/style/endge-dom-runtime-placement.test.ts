@@ -67,11 +67,11 @@ describe('DOM style runtime placements', () => {
       state: 'active',
       referenceCount: 1,
     }
-    const className = materializeEndgeCSSForDOM([placement]).classes[0].className
     const boundary = document.createElement('section')
     boundary.dataset.endgeRuntimeScope = 'scope:page'
     const cell = document.createElement('div')
-    cell.className = className
+    cell.className = 'cell'
+    cell.dataset.endgeNode = 'cell'
     boundary.append(cell)
     document.body.append(boundary)
     const runtime = new EndgeDOMStyleRuntime()

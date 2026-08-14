@@ -37,8 +37,6 @@ export function createSFCVueRenderContext(
     variant,
     styleArtifacts,
     styleParent: undefined,
-    styleSiblings: [],
-    styleSiblingCount: 0,
     styleOwnerScopeId: ir?.style?.scopeId,
     runtimeScopeIds,
     eventBoundary: inheritedEventBoundary ?? (ir
@@ -74,8 +72,6 @@ export function extendSFCVueRenderContext(
     variant: context.variant,
     styleArtifacts: context.styleArtifacts,
     styleParent: context.styleParent,
-    styleSiblings: context.styleSiblings,
-    styleSiblingCount: context.styleSiblingCount,
     styleOwnerScopeId: context.styleOwnerScopeId,
     runtimeScopeIds: context.runtimeScopeIds,
     eventBoundary: context.eventBoundary,
@@ -93,8 +89,6 @@ export function extendSFCVueStyleContext(
   return {
     ...context,
     styleParent: parent,
-    styleSiblings: [],
-    styleSiblingCount: 0,
   }
 }
 

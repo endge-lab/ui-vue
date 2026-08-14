@@ -1,12 +1,8 @@
 import postcss from 'postcss'
 import { describe, expect, it } from 'vitest'
-import { compileEndgeCSS, type EndgeStyleMatchNode } from '@endge/core'
+import { compileEndgeCSS } from '@endge/core'
 
-import { getEndgeDOMStyleClasses, materializeEndgeCSSForDOM } from '@/model/style/endge-dom-style'
-
-function node(input: Partial<EndgeStyleMatchNode> & Pick<EndgeStyleMatchNode, 'tag'>): EndgeStyleMatchNode {
-  return { classes: new Set(), attributes: {}, states: new Set(), parts: new Set(), index: 1, siblingCount: 1, ...input }
-}
+import { materializeEndgeCSSForDOM } from '@/model/style/endge-dom-style'
 
 describe('EndgeCSS DOM materializer', () => {
   it('emits parseable CSS in neutral cascade order', () => {
@@ -23,13 +19,14 @@ describe('EndgeCSS DOM materializer', () => {
     expect(result.css.lastIndexOf('!important')).toBeGreaterThan(result.css.lastIndexOf('color:blue'))
   })
 
-  it('uses uniform non-zero class specificity to override renderer defaults', () => {
+  it('uses native semantic selectors with uniform non-zero specificity', () => {
     const artifact = compileEndgeCSS('Table::part(header-content) { color: white; }').artifact!
     const result = materializeEndgeCSSForDOM([artifact])
-    const generatedClass = result.classes[0].className
 
-    expect(result.css).toContain(`.${generatedClass}{color:white;}`)
-    expect(result.css).not.toContain(`:where(.${generatedClass})`)
+    expect(result.classes).toEqual([])
+    expect(result.css).toContain('[data-endge-tag="Table"]')
+    expect(result.css).toContain('[data-endge-part~="header-content"]')
+    expect(result.css).toContain(':is([data-endge-node],[data-endge-part])')
   })
 
   it('includes dom rules, excludes canvas rules and warns for unknown capabilities', () => {
@@ -45,10 +42,9 @@ describe('EndgeCSS DOM materializer', () => {
     expect(result.diagnostics).toContainEqual(expect.objectContaining({ code: 'ENDGECSS_CAPABILITY_UNAVAILABLE' }))
   })
 
-  it('attaches classes from logical nth-child and state matching', () => {
+  it('translates combinators, structural pseudos and state markers for the browser', () => {
     const artifact = compileEndgeCSS('Flex > Text:nth-child(even):state(delayed) { color: red; }').artifact!
-    const parent = node({ tag: 'Flex' })
-    const target = node({ tag: 'Text', parent, index: 2, siblingCount: 3, states: new Set(['delayed']) })
-    expect(getEndgeDOMStyleClasses([artifact], target)).toHaveLength(1)
+    const css = materializeEndgeCSSForDOM([artifact]).css
+    expect(css).toContain('[data-endge-tag="Flex"] > [data-endge-tag="Text"]:nth-child(even)[data-endge-state~="delayed"]')
   })
 })
