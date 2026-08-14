@@ -110,7 +110,7 @@ async function runItem(item: ContextMenuItemDescriptor): Promise<void> {
     await executeEndgeContextMenuItem(item)
   }
   catch (error) {
-    console.error('[EndgeContextMenu] Action failed.', { action: item.action, error })
+    console.error(`[EndgeContextMenu] Action "${item.action}" failed: ${error instanceof Error ? error.message : String(error)}`)
   }
   finally {
     executing.value = false

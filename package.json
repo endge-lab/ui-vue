@@ -1,7 +1,7 @@
 {
   "name": "@endge/ui-vue",
   "private": false,
-  "version": "0.23.7",
+  "version": "0.23.8",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/vue.js",
@@ -38,8 +38,8 @@
     "uuid": "^11.1.0"
   },
   "peerDependencies": {
-    "@endge/core": "^1.2.11",
-    "@endge/utils": "^0.24.6",
+    "@endge/core": "^1.2.12",
+    "@endge/utils": "^0.24.7",
     "@endge/raph": "^3.0.5",
     "@primevue/themes": "^4.0.0-rc.1",
     "class-transformer": "^0.5.1",
@@ -53,8 +53,8 @@
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.7.0",
     "@typescript-eslint/parser": "^8.7.0",
-    "@endge/core": "^1.2.11",
-    "@endge/utils": "^0.24.6",
+    "@endge/core": "^1.2.12",
+    "@endge/utils": "^0.24.7",
     "@types/lodash": "^4.14.202",
     "@vitejs/plugin-vue": "^6.0.7",
     "@vitejs/plugin-vue-jsx": "^5.1.6",

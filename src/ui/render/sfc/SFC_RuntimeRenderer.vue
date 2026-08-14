@@ -8,6 +8,13 @@ import {
 } from '@/ui/render/sfc/SFCRender_BoundaryRegistry'
 import SFC_Renderer from '@/ui/render/sfc/SFC_Renderer.vue'
 
+defineOptions({
+  name: 'EndgeSFCRuntimeRenderer',
+  // The renderer intentionally has no DOM root: arbitrary SFC templates can
+  // have multiple roots. Consumers own layout attributes on their boundary.
+  inheritAttrs: false,
+})
+
 const props = defineProps<SFCVueRuntimeRendererProps>()
 
 const renderProps = shallowRef<Record<string, unknown>>({})

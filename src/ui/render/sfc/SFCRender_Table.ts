@@ -762,9 +762,7 @@ const SFCRevoGridTable = defineComponent({
         return
 
       missingTableIdWarned.value = true
-      console.warn('[SFC Table] Runtime state persistence requires stable <Table id="...">.', {
-        boundaryId: props.boundaryId,
-      })
+      console.warn(`[SFC Table] Runtime state persistence requires stable <Table id="..."> (boundary "${props.boundaryId}").`)
     }
 
     function openColumnMenu(column: SFCTableColumn, columnIndex: number, event: MouseEvent): void {
