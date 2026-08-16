@@ -8,14 +8,20 @@ export const SFCRender_Select: SFCVueRenderAdapterFunction = (input) => {
   const multiple = input.props.multiple === true
   const options = normalizeOptions(input.props.options)
   const selectedValues = normalizeSelectedValues(input.props.value, multiple)
+  const autoOptimize = options.length > 10
+  const searchable = typeof input.props.searchable === 'boolean' ? input.props.searchable : autoOptimize
+  const virtualized = typeof input.props.virtualized === 'boolean' ? input.props.virtualized : autoOptimize
 
-  if (multiple) {
+  if (multiple || searchable || virtualized) {
     return input.h(NativeMultiSelect, {
       ...input.attrs,
       class: ['endge-sfc-select', input.props.class],
       options,
       selectedValues: [...selectedValues],
       placeholder: input.props.placeholder == null ? undefined : String(input.props.placeholder),
+      multiple,
+      searchable,
+      virtualized,
       readonly: input.props.readonly === true,
       disabled: input.props.disabled === true,
     })

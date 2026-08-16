@@ -26,6 +26,7 @@ import type {
   TableEventMap,
   TableEventName,
   TableSelectionMode,
+  TableSelectionTrigger,
   TableSortDirection,
 } from '@endge/core'
 import {
@@ -90,6 +91,8 @@ interface SFCTableColumnSort {
   comparator: ComponentSFCTableSortComparator
   paths: string[]
 }
+
+const SFC_TABLE_SELECTION_COLUMN_KEY = '__endge_selection__'
 
 interface SFCRevoGridElement {
   source?: Record<string, unknown>[]
@@ -257,6 +260,7 @@ export const SFCRender_Table: SFCVueRenderFunction = SFCRender_Base((input) => {
       eventBoundary: input.context.eventBoundary ?? null,
       eventBindings: input.node.events ?? [],
       selectionMode: normalizeSelectionMode(input.props['selection-mode'] ?? input.props.selectionMode),
+      selectionTrigger: normalizeSelectionTrigger(input.props['selection-trigger'] ?? input.props.selectionTrigger),
       runtimeState: input.context.runtimeState,
       columns,
       source,
@@ -320,6 +324,10 @@ const SFCRevoGridTable = defineComponent({
     selectionMode: {
       type: String as PropType<TableSelectionMode>,
       default: 'none',
+    },
+    selectionTrigger: {
+      type: String as PropType<TableSelectionTrigger>,
+      default: 'auto',
     },
     runtimeState: {
       type: Object as PropType<SFCVueRuntimeStateController | null>,
@@ -425,6 +433,11 @@ const SFCRevoGridTable = defineComponent({
     const visibilityState = shallowRef(resolveInitialVisibilityState())
     const selectedRowIds = shallowRef<Set<string>>(new Set())
     const selectionAnchorId = ref<string | null>(null)
+    const resolvedSelectionTrigger = computed(() => resolveSelectionTrigger(props.selectionTrigger, 'row'))
+    const showSelectionControl = computed(() => props.selectionMode !== 'none'
+      && (resolvedSelectionTrigger.value === 'control' || resolvedSelectionTrigger.value === 'both'))
+    const selectOnRow = computed(() => props.selectionMode !== 'none'
+      && (resolvedSelectionTrigger.value === 'row' || resolvedSelectionTrigger.value === 'both'))
     let resizeTimer: ReturnType<typeof setTimeout> | null = null
     let renderRefreshFrame: number | null = null
     let currentRenderCell = props.renderCell
@@ -467,31 +480,137 @@ const SFCRevoGridTable = defineComponent({
       },
     }
 
-    const revoColumns = computed(() => visibleColumns.value.map((column) => {
-      return createRevoColumn(
-        column,
-        column.index,
-        getSortMeta(column.key, sortState.value),
-        getPinSide(column.key, pinState.value),
-        (event?: MouseEvent) => toggleColumnSort(column, event),
-        (event: MouseEvent) => openColumnMenu(column, column.index, event),
-        hasColumnMenu(column),
-        (h, cellProps) => {
-          return currentRenderCell({
-            h,
-            column,
-            cellProps,
-            rows: currentSource.value,
-            rowOffset: props.paging === 'pages' ? pageIndex.value * pageSize.value : 0,
-            selected: (row, rowIndex) => selectedRowIds.value.has(getRowId(row, rowIndex)),
-            onClick: selectRow,
-            onActivate: activateRow,
-            onContextMenu: requestRowContextMenu,
-            onKeydown: handleRowKeydown,
-          })
+    const revoColumns = computed(() => [
+      ...(showSelectionControl.value ? [createSelectionControlColumn()] : []),
+      ...visibleColumns.value.map((column) => {
+        return createRevoColumn(
+          column,
+          column.index,
+          getSortMeta(column.key, sortState.value),
+          getPinSide(column.key, pinState.value),
+          (event?: MouseEvent) => toggleColumnSort(column, event),
+          (event: MouseEvent) => openColumnMenu(column, column.index, event),
+          hasColumnMenu(column),
+          (h, cellProps) => {
+            return currentRenderCell({
+              h,
+              column,
+              cellProps,
+              rows: currentSource.value,
+              rowOffset: props.paging === 'pages' ? pageIndex.value * pageSize.value : 0,
+              selected: (row, rowIndex) => selectedRowIds.value.has(getRowId(row, rowIndex)),
+              onClick: selectRow,
+              onActivate: activateRow,
+              onContextMenu: requestRowContextMenu,
+              onKeydown: handleRowKeydown,
+            })
+          },
+        )
+      }),
+    ])
+
+    function createSelectionControlColumn(): Record<string, unknown> {
+      const rowIds = currentVisibleRowIds()
+      const allSelected = rowIds.length > 0 && rowIds.every(rowId => selectedRowIds.value.has(rowId))
+      const someSelected = !allSelected && rowIds.some(rowId => selectedRowIds.value.has(rowId))
+
+      return {
+        prop: SFC_TABLE_SELECTION_COLUMN_KEY,
+        name: '',
+        sortable: undefined,
+        order: undefined,
+        cellCompare: undefined,
+        autoSize: false,
+        size: 44,
+        pin: toRevoGridPinSide('left'),
+        columnProperties: () => ({
+          part: 'selection-header-cell',
+          'data-endge-part': 'selection-header-cell',
+        }),
+        cellProperties: () => ({
+          part: 'selection-cell',
+          'data-endge-part': 'selection-cell',
+        }),
+        columnTemplate: VGridVueTemplate(SFCRevoGridSelectionHeader, {
+          mode: props.selectionMode,
+          checked: allSelected,
+          indeterminate: someSelected,
+          onChange: toggleCurrentRows,
+        }),
+        cellTemplate: (h: SFCVueRenderH, cellProps: Record<string, unknown>) => renderSelectionControl(h, cellProps),
+      }
+    }
+
+    function renderSelectionControl(
+      h: SFCVueRenderH,
+      cellProps: Record<string, unknown>,
+    ): ReturnType<SFCVueRenderH> {
+      const localRowIndex = normalizeNumber(cellProps.rowIndex, 0)
+      const rowIndex = localRowIndex + (props.paging === 'pages' ? pageIndex.value * pageSize.value : 0)
+      const row = normalizeCellRow(currentSource.value, cellProps, localRowIndex)
+      const rowId = getRowId(row, rowIndex)
+      const selected = selectedRowIds.value.has(rowId)
+
+      return h('div', {
+        class: [
+          'endge-sfc-table-selection-control',
+          selected ? 'endge-sfc-table-selection-control--selected' : '',
+        ],
+        style: {
+          alignItems: 'center',
+          background: selected ? 'var(--endge-table-selection, rgba(59, 130, 246, 0.14))' : undefined,
+          display: 'flex',
+          height: '100%',
+          justifyContent: 'center',
+          width: '100%',
         },
-      )
-    }))
+      }, [
+        h('input', {
+          type: props.selectionMode === 'single' ? 'radio' : 'checkbox',
+          name: props.selectionMode === 'single' ? `endge-table-selection-${effectiveTableId()}` : undefined,
+          checked: selected,
+          'aria-label': 'Select row',
+          style: { accentColor: 'var(--primary, #2563eb)', cursor: 'pointer' },
+          onClick: (event: MouseEvent) => event.stopPropagation(),
+          onChange: (event: Event) => {
+            event.stopPropagation()
+            const checked = (event.target as HTMLInputElement).checked
+            toggleRowSelection(row, rowIndex, checked)
+          },
+        }),
+      ])
+    }
+
+    function currentVisibleRowIds(): string[] {
+      const offset = props.paging === 'pages' ? pageIndex.value * pageSize.value : 0
+      return currentSource.value.map((row, index) => getRowId(row, offset + index))
+    }
+
+    function toggleCurrentRows(checked: boolean): void {
+      if (props.selectionMode !== 'multiple') return
+      const previous = selectedRowIds.value
+      const next = new Set(previous)
+      for (const rowId of currentVisibleRowIds()) {
+        if (checked) next.add(rowId)
+        else next.delete(rowId)
+      }
+      commitSelection(next)
+    }
+
+    function toggleRowSelection(
+      row: Record<string, unknown>,
+      rowIndex: number,
+      checked: boolean,
+    ): void {
+      if (props.selectionMode === 'none') return
+      const rowId = getRowId(row, rowIndex)
+      const next = new Set(selectedRowIds.value)
+      if (props.selectionMode === 'single') next.clear()
+      if (checked) next.add(rowId)
+      else next.delete(rowId)
+      selectionAnchorId.value = rowId
+      commitSelection(next)
+    }
 
     const unregisterBoundary = boundaryRegistry?.register(props.boundaryId, {
       applyPatch: applyRuntimePatch,
@@ -577,6 +696,21 @@ const SFCRevoGridTable = defineComponent({
         previousSource.value = cloneRows(nextSource)
         previousColumnsSignature.value = createColumnsSignature(visibleColumns.value)
         schedulePublicMarkerSync()
+      },
+    )
+
+    watch(
+      () => [props.selectionMode, props.selectionTrigger] as const,
+      async ([selectionMode]) => {
+        if (selectionMode === 'none') {
+          selectedRowIds.value = new Set()
+          selectionAnchorId.value = null
+        }
+        else if (selectionMode === 'single' && selectedRowIds.value.size > 1) {
+          selectedRowIds.value = new Set([...selectedRowIds.value].slice(0, 1))
+        }
+        await nextTick()
+        await resolveGridElement(gridRef.value)?.refresh?.('all')
       },
     )
 
@@ -891,7 +1025,7 @@ const SFCRevoGridTable = defineComponent({
       _columnKey: string,
       event: MouseEvent | KeyboardEvent,
     ): void {
-      if (props.selectionMode === 'none') return
+      if (!selectOnRow.value) return
       const rowId = getRowId(row, rowIndex)
       const next = new Set(selectedRowIds.value)
       if (props.selectionMode === 'single') {
@@ -1035,7 +1169,7 @@ const SFCRevoGridTable = defineComponent({
       const columns = Object.values(event.detail ?? {})
       const sizes = Object.fromEntries(columns
         .map(column => [String(column.prop ?? ''), Number(column.size)] as const)
-        .filter(([key, size]) => key && Number.isFinite(size)))
+        .filter(([key, size]) => key && key !== SFC_TABLE_SELECTION_COLUMN_KEY && Number.isFinite(size)))
       const changedColumnKey = Object.keys(sizes)[0] ?? null
       if (resizeTimer) clearTimeout(resizeTimer)
       resizeTimer = setTimeout(() => {
@@ -1050,7 +1184,7 @@ const SFCRevoGridTable = defineComponent({
       const columnKeys = ['colPinStart', 'rgCol', 'colPinEnd']
         .flatMap(group => groups[group] ?? [])
         .map(column => String(column.prop ?? ''))
-        .filter(Boolean)
+        .filter(key => Boolean(key) && key !== SFC_TABLE_SELECTION_COLUMN_KEY)
       const signature = columnKeys.join('|')
       if (!signature || signature === previousOrderSignature.value) return
       previousOrderSignature.value = signature
@@ -1246,6 +1380,53 @@ function createRevoColumn(
     cellTemplate: (cellH: SFCVueRenderH, cellProps: Record<string, unknown>) => renderCell(cellH, cellProps),
   }
 }
+
+const SFCRevoGridSelectionHeader = defineComponent({
+  name: 'SFCRevoGridSelectionHeader',
+  props: {
+    mode: {
+      type: String as PropType<TableSelectionMode>,
+      required: true,
+    },
+    checked: {
+      type: Boolean,
+      required: true,
+    },
+    indeterminate: {
+      type: Boolean,
+      required: true,
+    },
+    onChange: {
+      type: Function as PropType<(checked: boolean) => void>,
+      required: true,
+    },
+  },
+  setup(props) {
+    return () => vueH('div', {
+      class: 'endge-sfc-table-selection-header',
+      style: {
+        alignItems: 'center',
+        display: 'flex',
+        height: '100%',
+        justifyContent: 'center',
+        width: '100%',
+      },
+    }, props.mode === 'multiple'
+      ? [vueH('input', {
+          type: 'checkbox',
+          checked: props.checked,
+          indeterminate: props.indeterminate,
+          'aria-label': 'Select visible rows',
+          style: { accentColor: 'var(--primary, #2563eb)', cursor: 'pointer' },
+          onClick: (event: MouseEvent) => event.stopPropagation(),
+          onChange: (event: Event) => {
+            event.stopPropagation()
+            props.onChange((event.target as HTMLInputElement).checked)
+          },
+        })]
+      : [])
+  },
+})
 
 const SFCRevoGridColumnHeader = defineComponent({
   name: 'SFCRevoGridColumnHeader',
@@ -2274,6 +2455,17 @@ function normalizeOptionalText(value: unknown): string | null {
 
 function normalizeSelectionMode(value: unknown): TableSelectionMode {
   return value === 'single' || value === 'multiple' ? value : 'none'
+}
+
+function normalizeSelectionTrigger(value: unknown): TableSelectionTrigger {
+  return value === 'control' || value === 'row' || value === 'both' ? value : 'auto'
+}
+
+function resolveSelectionTrigger(
+  value: TableSelectionTrigger,
+  adapterDefault: Exclude<TableSelectionTrigger, 'auto'>,
+): Exclude<TableSelectionTrigger, 'auto'> {
+  return value === 'auto' ? adapterDefault : value
 }
 
 function normalizeNumber(value: unknown, fallback: number): number {

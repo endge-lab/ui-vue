@@ -3,12 +3,12 @@ import type { EndgeFilterRendererProps } from '@/domain/types/filter-renderer.ty
 import type { FilterViewBuiltinProps, FilterViewRenderModel } from '@endge/core'
 
 import { Endge } from '@endge/core'
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 
 import EndgeFilterField from '@/ui/filter/EndgeFilterField.vue'
 
 const props = defineProps<EndgeFilterRendererProps>()
-const model = ref<FilterViewRenderModel>(props.runtime.getRenderModel())
+const model = shallowRef<FilterViewRenderModel>(props.runtime.getRenderModel())
 const adapterVersion = ref(0)
 const fields = computed(() => model.value.fields.filter(field => field.type !== 'Object'))
 const builtinProps = computed<FilterViewBuiltinProps>(() => {
@@ -23,7 +23,6 @@ const unsubscribeAdapter = Endge.uiRegistry.subscribe(() => {
 
 function bind(runtime: EndgeFilterRendererProps['runtime']): void {
   runtime.on('render:change', refresh)
-  refresh()
 }
 
 function unbind(runtime: EndgeFilterRendererProps['runtime']): void {
@@ -31,8 +30,10 @@ function unbind(runtime: EndgeFilterRendererProps['runtime']): void {
 }
 
 watch(() => props.runtime, (next, previous) => {
-  if (previous)
+  if (previous) {
     unbind(previous)
+    model.value = next.getRenderModel()
+  }
   bind(next)
 }, { immediate: true })
 onBeforeUnmount(() => {
