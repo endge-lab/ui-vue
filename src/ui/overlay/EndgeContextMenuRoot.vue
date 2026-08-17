@@ -6,7 +6,7 @@ import {
   closeEndgeContextMenu,
   endgeContextMenuState,
   executeEndgeContextMenuItem,
-  getExecutableContextMenuItems,
+  getContextMenuItems,
   resolveEndgeContextMenuItemLabel,
 } from '@/ui/overlay/context-menu-manager'
 
@@ -17,7 +17,7 @@ let unsubscribeI18n: (() => void) | null = null
 
 const menuItems = computed(() => {
   i18nVersion.value
-  return getExecutableContextMenuItems()
+  return getContextMenuItems()
 })
 const position = computed(() => ({
   left: `${endgeContextMenuState.x}px`,

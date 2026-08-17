@@ -17,7 +17,6 @@ import type {
   RComponentSFC_IR_EventBinding,
   RComponentSFC_IR_Node,
   RuntimeBoundaryPatch,
-  RuntimeActionContext,
   TableColumnActionContext,
   TableRowActionContext,
   TableColumnPinSide,
@@ -910,7 +909,7 @@ const SFCRevoGridTable = defineComponent({
       }
 
       const context = createColumnActionContext(column, columnIndex)
-      if (!hasExecutableMenuItem(menu, context)) {
+      if (!hasMenuItem(menu)) {
         closeEndgeContextMenu(props.boundaryId)
         return
       }
@@ -967,18 +966,18 @@ const SFCRevoGridTable = defineComponent({
     }
 
     async function applyRuntimePatch(patch: RuntimeBoundaryPatch): Promise<boolean> {
-      if (patch.kind !== 'collection-projection-update' || patch.boundaryId !== props.boundaryId)
+      if (patch.boundaryId !== props.boundaryId)
         return false
-      if (patch.itemIndex == null || patch.affectedProjections.length === 0)
+      if (patch.affectedProjections.length === 0)
         return false
 
-      const nextBaseSource = replaceRowSnapshot(
-        baseSource.value,
-        patch.itemIndex,
-        patch.itemSnapshot,
-        props.rowKey,
-      )
+      const items = patch.kind === 'collection-projection-batch'
+        ? patch.items
+        : [patch]
+      const nextBaseSource = applyRowSnapshots(baseSource.value, items, props.rowKey)
       baseSource.value = nextBaseSource
+      reconcileSelection(nextBaseSource)
+      clampPageIndex(nextBaseSource.length)
       const nextSource = createStyledSource(nextBaseSource)
       currentSource.value = nextSource
       await nextTick()
@@ -987,9 +986,16 @@ const SFCRevoGridTable = defineComponent({
       if (!grid)
         return false
 
-      grid.source = nextSource
-      await grid.refresh?.('all')
+      await updateGridCells({
+        grid,
+        previousRows: previousSource.value,
+        nextRows: nextSource,
+        previousColumnsSignature: previousColumnsSignature.value,
+        nextColumns: visibleColumns.value,
+        rowKey: props.rowKey,
+      })
       previousSource.value = cloneRows(nextSource)
+      previousColumnsSignature.value = createColumnsSignature(visibleColumns.value)
       schedulePublicMarkerSync()
       return true
     }
@@ -1134,7 +1140,7 @@ const SFCRevoGridTable = defineComponent({
         columnKey,
         value,
       }
-      if (!menu || !hasExecutableMenuItem(menu, context)) {
+      if (!menu || !hasMenuItem(menu)) {
         closeEndgeContextMenu(props.boundaryId)
         return
       }
@@ -1646,11 +1652,8 @@ function toRevoGridPinSide(side: TableColumnPinSide): 'colPinStart' | 'colPinEnd
   return undefined
 }
 
-function hasExecutableMenuItem(
-  menu: ContextMenuDescriptor,
-  context: RuntimeActionContext,
-): boolean {
-  return menu.items.some(item => item.kind === 'item' && Endge.runtime.actions.canExecute(item.action, context, item.input))
+function hasMenuItem(menu: ContextMenuDescriptor): boolean {
+  return menu.items.some(item => item.kind === 'item')
 }
 
 function createInitialSortState(
@@ -2415,22 +2418,32 @@ function cloneRows(rows: Record<string, unknown>[]): Record<string, unknown>[] {
   return [...rows]
 }
 
-function replaceRowSnapshot(
+export function applyRowSnapshots(
   rows: Record<string, unknown>[],
-  rowIndex: number,
-  nextRow: unknown,
+  patches: Array<{ itemIndex: number | null, itemKey: unknown, itemSnapshot: unknown }>,
   rowKey: string,
 ): Record<string, unknown>[] {
-  if (!isPlainObject(nextRow))
-    return rows
-
   const result = cloneRows(rows)
-  const normalized = { ...nextRow }
-  const nextRowId = normalized[rowKey]
-  const targetIndex = nextRowId == null
-    ? rowIndex
-    : result.findIndex(row => Object.is(row[rowKey], nextRowId))
-  result[targetIndex >= 0 ? targetIndex : rowIndex] = normalized
+  for (const patch of patches) {
+    const targetIndex = patch.itemKey == null
+      ? patch.itemIndex
+      : result.findIndex(row => Object.is(row[rowKey], patch.itemKey))
+    if (!isPlainObject(patch.itemSnapshot)) {
+      if (targetIndex != null && targetIndex >= 0)
+        result.splice(targetIndex, 1)
+      continue
+    }
+
+    const normalized = { ...patch.itemSnapshot }
+    if (targetIndex != null && targetIndex >= 0) {
+      result[targetIndex] = normalized
+      continue
+    }
+    const insertionIndex = patch.itemIndex == null
+      ? result.length
+      : Math.max(0, Math.min(patch.itemIndex, result.length))
+    result.splice(insertionIndex, 0, normalized)
+  }
   return result
 }
 

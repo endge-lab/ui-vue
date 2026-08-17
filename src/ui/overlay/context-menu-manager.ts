@@ -52,19 +52,16 @@ export function closeEndgeContextMenu(ownerId?: string): void {
   endgeContextMenuState.context = null
 }
 
-export function getExecutableContextMenuItems(): ContextMenuNodeDescriptor[] {
+export function getContextMenuItems(): ContextMenuNodeDescriptor[] {
   const menu = endgeContextMenuState.menu
   const context = endgeContextMenuState.context
   if (!menu || !context)
     return []
 
-  return compactSeparators(menu.items.filter((item) => {
-    if (item.kind === 'separator')
-      return true
-
-    return Endge.runtime.actions.canExecute(item.action, context, item.input)
-  }))
+  return compactSeparators(menu.items)
 }
+
+export const getExecutableContextMenuItems = getContextMenuItems
 
 export async function executeEndgeContextMenuItem(item: ContextMenuItemDescriptor): Promise<void> {
   const context = endgeContextMenuState.context
