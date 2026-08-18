@@ -48,11 +48,12 @@ import type {
   SFCVueRenderH,
   SFCVueRuntimeStateController,
 } from '@/domain/types/sfc-render.type'
-import { SFCRender_Base } from '@/ui/render/sfc/SFCRender_Base'
+import { createSFCNodeEventAttrs, SFCRender_Base } from '@/ui/render/sfc/SFCRender_Base'
 import { extendSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { evaluateSFCProps, evaluateSFCValue, readSFCObjectPath } from '@/ui/render/sfc/SFCRender_Evaluator'
 import { resolveSFCTableMenu } from '@/ui/render/sfc/SFCRender_TableMenu'
 import { renderSFCNodes } from '@/ui/render/sfc/SFCRender_Node'
+import { chainSFCEventAttr } from '@/ui/render/sfc/SFCRender_Interaction'
 import {
   normalizeSFCTableCellAlignment,
   type SFCTableCellAlignment,
@@ -79,6 +80,7 @@ interface SFCTableColumn {
   width: number | null
   pinnable: boolean
   sort: SFCTableColumnSort | null
+  cellNode: RComponentSFC_IR_ElementNode | null
   cellNodes: RComponentSFC_IR_Node[]
   rowDependencies: Set<string>
   markers: SFCTableColumnMarkers
@@ -1281,6 +1283,7 @@ function createTableColumn(
           paths: [...sort.paths],
         }
       : null,
+    cellNode: resolveCellNode(columnNode),
     cellNodes: resolveCellNodes(columnNode),
     rowDependencies: extractRowDependencies(resolveCellNodes(columnNode), key),
     markers,
@@ -1316,11 +1319,15 @@ function resolveTableColumnMetadata(
 }
 
 function resolveCellNodes(columnNode: RComponentSFC_IR_ElementNode): RComponentSFC_IR_Node[] {
-  const cell = columnNode.children
-    .filter(isElementNode)
-    .find(node => node.tag === 'Cell')
+  const cell = resolveCellNode(columnNode)
 
   return (cell?.children ?? columnNode.children).filter(node => !isTableMenuNode(node))
+}
+
+function resolveCellNode(columnNode: RComponentSFC_IR_ElementNode): RComponentSFC_IR_ElementNode | null {
+  return columnNode.children
+    .filter(isElementNode)
+    .find(node => node.tag === 'Cell') ?? null
 }
 
 function normalizeColumnKey(
@@ -2080,9 +2087,28 @@ function renderTableCell(input: SFCTableCellRenderInput & {
   }, input.context.iteration, `${input.context.consumerScope}/row:${String(rowIdentity)}/column:${input.column.key}`)
   const children = renderSFCNodes(h, input.column.cellNodes, cellContext)
   const contentAttrs = input.column.markers.cellContent
+  const cellProps = input.column.cellNode ? evaluateSFCProps(input.column.cellNode.props, cellContext) : {}
+  const attrs: Record<string, unknown> = {
+    ...contentAttrs,
+    ...(input.column.cellNode
+      ? createSFCNodeEventAttrs(input.column.cellNode, cellProps, cellContext)
+      : {}),
+  }
+  chainSFCEventAttr(attrs, 'onClick', (event: MouseEvent) => {
+    if (!event.cancelBubble) input.onClick(row, rowIndex, input.column.key, event)
+  })
+  chainSFCEventAttr(attrs, 'onDblclick', (event: MouseEvent) => {
+    if (!event.cancelBubble) input.onActivate(row, rowIndex, input.column.key, event)
+  })
+  chainSFCEventAttr(attrs, 'onContextmenu', (event: MouseEvent) => {
+    if (!event.cancelBubble) input.onContextMenu(row, rowIndex, input.column.key, event)
+  })
+  chainSFCEventAttr(attrs, 'onKeydown', (event: KeyboardEvent) => {
+    if (!event.cancelBubble) input.onKeydown(row, rowIndex, input.column.key, event)
+  })
 
   return h('div', {
-    ...contentAttrs,
+    ...attrs,
     class: [
       'endge-sfc-table-cell-content',
       input.selected(row, rowIndex)
@@ -2101,10 +2127,6 @@ function renderTableCell(input: SFCTableCellRenderInput & {
       background: input.selected(row, rowIndex) ? 'var(--endge-table-selection, rgba(59, 130, 246, 0.14))' : undefined,
       outline: 'none',
     },
-    onClick: (event: MouseEvent) => input.onClick(row, rowIndex, input.column.key, event),
-    onDblclick: (event: MouseEvent) => input.onActivate(row, rowIndex, input.column.key, event),
-    onContextmenu: (event: MouseEvent) => input.onContextMenu(row, rowIndex, input.column.key, event),
-    onKeydown: (event: KeyboardEvent) => input.onKeydown(row, rowIndex, input.column.key, event),
   }, children)
 }
 
@@ -2296,6 +2318,8 @@ function areEquivalentTableColumns(left: SFCTableColumn[], right: SFCTableColumn
     if (!candidate)
       return false
     if (!haveSameReferences(column.cellNodes, candidate.cellNodes))
+      return false
+    if (column.cellNode !== candidate.cellNode)
       return false
     if (!haveSameSetValues(column.rowDependencies, candidate.rowDependencies))
       return false
