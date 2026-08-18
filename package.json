@@ -23,6 +23,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest",
+    "bench:interactions": "vitest bench src/test/sfc/SFCRender_Interactions.bench.ts",
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {

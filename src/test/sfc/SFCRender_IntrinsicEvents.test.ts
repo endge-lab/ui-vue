@@ -80,12 +80,12 @@ describe('SFC intrinsic Events', () => {
         x: 12,
         y: 24,
         button: 0,
-        modifiers: { alt: true, ctrl: false, meta: false, shift: false },
+        modifiers: expect.objectContaining({ alt: true, ctrl: false, meta: false, shift: false }),
       }),
       node.events,
       [],
       0,
-      expect.any(Object),
+      {},
     )
   })
 })
