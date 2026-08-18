@@ -200,6 +200,46 @@ describe('SFC Editable renderer', () => {
     expect(sessions.size).toBe(0)
   })
 
+  it('starts editing from a pointer trigger while ordinary keys are held', () => {
+    const compiled = compileComponentSFC(`<template>
+  <Text
+    value="RUN"
+    editable
+    :edit-on="[{
+      event: 'contextmenu',
+      button: 2,
+      held: { code: ['KeyW'], exact: true },
+      modifiers: { shift: true, meta: true, exact: true },
+    }]"
+  />
+</template>`)
+    const node = compiled.ir!.template.roots[0]!
+    const sessions = new Map<string, any>()
+    const host = {
+      getArtifact: () => null,
+      getEditSession: (key: string) => sessions.get(key) ?? null,
+      beginEditSession: (key: string, value: unknown, baseVariant: string) => {
+        sessions.set(key, { key, originalValue: value, draftValue: value, baseVariant })
+      },
+    }
+    const context = createSFCVueRenderContext({}, 0, host as any, compiled.ir)
+    const display = renderSFCNode(h, node, context)
+    if (!isVNode(display)) throw new Error('Editable display did not render')
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'w', code: 'KeyW', bubbles: true }))
+    display.props?.onContextmenu({
+      button: 2,
+      shiftKey: true,
+      metaKey: true,
+      target: display,
+      currentTarget: display,
+      cancelable: true,
+    })
+    document.dispatchEvent(new KeyboardEvent('keyup', { key: 'w', code: 'KeyW', bubbles: true }))
+
+    expect(sessions.size).toBe(1)
+  })
+
   it.each([
     ['Number', 12, '17', 'number', 17],
     ['DateTime', '2026-08-01T10:30:00.000Z', '2026-08-01T12:00', 'datetime-local', '2026-08-01T12:00'],
