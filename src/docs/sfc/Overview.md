@@ -19,6 +19,11 @@ Computation contracts are optional in v1. Generic types remain in the compiled
 SFC manifest, but runtime does not compare them with persisted computation
 fields. Execution errors are fatal for the current render pass.
 
+Глобальный read-only snapshot Endge Context доступен во всех template-выражениях
+как `$context`. Например, `:timezone="$context.timezone"`. Snapshot не является
+отдельным reactive store: при изменении Context runtime инвалидирует application
+scopes и следующий render pass получает новое значение.
+
 Визуальные primitive-теги рендерятся активным adapter-ом: `Text`, `DateTime`, `Number`, `Icon`, `Badge`, `Dot`, `Box`, `Flex`, `Divider`, `Input`, `Textarea`, `Checkbox`, `Select`.
 
 `Component`, `Table` и структурные table-теги остаются частью Vue render engine: они работают с runtime host и структурой IR, которые не входят в публичный adapter contract.

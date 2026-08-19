@@ -1,15 +1,31 @@
 <script setup lang="ts">
 import type { ProjectRuntimeSession } from '@endge/core'
 
-import { Endge } from '@endge/core'
-import { onBeforeUnmount, ref } from 'vue'
+import { DEFAULT_ENDGE_TOOLTIP_CONFIGURATION, Endge } from '@endge/core'
+import { onBeforeUnmount, provide, ref } from 'vue'
 import EndgeContextMenuRoot from '@/ui/overlay/EndgeContextMenuRoot.vue'
+import EndgeTooltipRoot from '@/ui/overlay/tooltip/EndgeTooltipRoot.vue'
+import {
+  EndgeVueTooltipManager,
+  EndgeVueTooltipManagerKey,
+} from '@/ui/overlay/tooltip/endge-tooltip-manager'
+
+const props = withDefaults(defineProps<{
+  tooltipAdapterId?: string
+}>(), {
+  tooltipAdapterId: 'vue-native',
+})
 
 const status = ref<'initializing' | 'ready' | 'error'>('initializing')
 const error = ref<unknown>(null)
 
 let disposed = false
 let session: ProjectRuntimeSession | null = null
+const tooltipManager = new EndgeVueTooltipManager(
+  props.tooltipAdapterId,
+  resolveTooltipConfiguration(),
+)
+provide(EndgeVueTooltipManagerKey, tooltipManager)
 
 async function initialize(): Promise<void> {
   try {
@@ -35,10 +51,20 @@ void initialize()
 
 onBeforeUnmount(() => {
   disposed = true
+  tooltipManager.dispose()
   const mountedSession = session
   session = null
   void mountedSession?.unmount()
 })
+
+function resolveTooltipConfiguration() {
+  try {
+    return Endge.configuration.current.tooltips
+  }
+  catch {
+    return { ...DEFAULT_ENDGE_TOOLTIP_CONFIGURATION }
+  }
+}
 </script>
 
 <template>
@@ -54,5 +80,6 @@ onBeforeUnmount(() => {
   <template v-else>
     <slot />
     <EndgeContextMenuRoot />
+    <EndgeTooltipRoot :manager="tooltipManager" />
   </template>
 </template>

@@ -26,9 +26,19 @@ const TEST_WORKSPACE: EndgeWorkspaceDefinition = {
       { identity: 'dark', displayName: 'Dark' },
     ],
     defaultTheme: 'light',
+    timezones: [
+      { identity: 'local', displayName: 'Local time' },
+      { identity: 'UTC', displayName: 'UTC' },
+    ],
+    defaultTimezone: 'local',
     defaultAuthProfileIdentity: null,
     sfcAdapterIds: ['vue-native'],
     defaultSfcAdapterId: 'vue-native',
+    sfcEditing: {
+      cancelOn: [{ event: 'keydown', key: ['Escape'] }, { event: 'focusout' }],
+      commitOn: [{ event: 'keydown', key: ['Enter'] }],
+    },
+    tooltips: { side: 'right', align: 'start', openDelay: 250, closeDelay: 100 },
     diagnostics: {
       telemetry: {
         collection: {

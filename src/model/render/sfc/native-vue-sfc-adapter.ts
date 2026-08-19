@@ -21,6 +21,7 @@ import { SFCRender_Select } from '@/ui/render/sfc/SFCRender_Select'
 import { SFCRender_Text } from '@/ui/render/sfc/SFCRender_Text'
 import { SFCRender_Textarea } from '@/ui/render/sfc/SFCRender_Textarea'
 import { SFCRender_Table } from '@/ui/render/sfc/SFCRender_Table'
+import { SFCRender_Tooltip } from '@/ui/render/sfc/SFCRender_Tooltip'
 import EndgeShell from '@/ui/layout/EndgeShell.vue'
 import SFC_Renderer from '@/ui/render/sfc/SFC_Renderer.vue'
 import SFC_RuntimeRenderer from '@/ui/render/sfc/SFC_RuntimeRenderer.vue'
@@ -48,6 +49,7 @@ export const NativeVueSFCAdapter: SFCVueRenderAdapter = {
     Textarea: SFCRender_Textarea,
     Checkbox: SFCRender_Checkbox,
     Select: SFCRender_Select,
+    Tooltip: SFCRender_Tooltip,
     Table: SFCRender_Table,
   },
   roots: {
