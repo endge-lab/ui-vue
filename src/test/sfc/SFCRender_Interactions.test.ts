@@ -77,6 +77,7 @@ describe('SFC :on interactions in Vue renderer', () => {
       'click',
       expect.objectContaining({
         x: 3,
+        occurredAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
         held: expect.objectContaining({ code: ['KeyW'] }),
         modifiers: expect.objectContaining({ shift: true }),
       }),
@@ -89,6 +90,80 @@ describe('SFC :on interactions in Vue renderer', () => {
       [], 0, { rowId: 'row-7', columnKey: 'status', row: { id: 'row-7' } },
     )
     document.dispatchEvent(new KeyboardEvent('keyup', { key: 'w', code: 'KeyW', bubbles: true }))
+  })
+
+  it('resolves a TriggerSet from context and routes the matching Query without editing', async () => {
+    const trigger = {
+      kind: 'expression',
+      source: '$context.config.groundHandling.actualTimeTriggers',
+      reads: [],
+    } as const
+    const reaction = {
+      kind: 'query',
+      identity: 'groundHandling.actualTime.update',
+      input: {
+        value: { kind: 'now' },
+        legId: { kind: 'scope', path: 'row.id' },
+      },
+    } as const
+    const node: RComponentSFC_IR_ElementNode = {
+      id: 'bridge-cell',
+      kind: 'element',
+      tag: 'Cell',
+      props: {},
+      directives: {},
+      children: [],
+      interactions: [{
+        rules: [],
+        triggerSet: {
+          triggers: trigger,
+          events: ['click', 'contextmenu'],
+          modifiers: [],
+          reactions: [reaction],
+        },
+      }],
+    } as any
+    const boundary = {
+      observesChild: vi.fn(() => false),
+      claimLocalOnce: vi.fn(() => true),
+      routeChild: vi.fn(async () => undefined),
+    }
+    const context = createSFCVueRenderContext({})
+    context.context = {
+      ...context.context,
+      config: {
+        ...(context.context.config as Record<string, unknown>),
+        groundHandling: {
+          actualTimeTriggers: [{ event: 'contextmenu', button: 2, prevent: true }],
+        },
+      },
+    }
+    context.locals = { row: { id: 'leg-1' } }
+    context.eventBoundary = boundary as any
+    const rendered = renderSFCNode(h, node, context)
+    if (!isVNode(rendered)) throw new Error('Cell did not render a VNode')
+
+    expect(rendered.props?.onContextmenu).toBeTypeOf('function')
+    expect(rendered.props?.onClick).toBeUndefined()
+    const currentTarget = { id: 'bridge' }
+    const preventDefault = vi.fn()
+    rendered.props?.onContextmenu({
+      type: 'contextmenu', target: currentTarget, currentTarget, cancelable: true,
+      preventDefault, stopPropagation: vi.fn(), button: 2, buttons: 0,
+      clientX: 3, clientY: 7, shiftKey: false, ctrlKey: false, altKey: false, metaKey: false,
+    })
+    await Promise.resolve()
+
+    expect(preventDefault).toHaveBeenCalledOnce()
+    expect(boundary.routeChild).toHaveBeenCalledWith(
+      expect.objectContaining({ nodeId: node.id }),
+      'contextmenu',
+      expect.objectContaining({ occurredAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/) }),
+      [expect.objectContaining({
+        actions: [expect.objectContaining({ kind: 'query', identity: 'groundHandling.actualTime.update' })],
+      })],
+      [], 0, expect.objectContaining({ row: { id: 'leg-1' } }),
+    )
   })
 
   it('uses capture/passive VNode options and keeps :on independent from editable', () => {

@@ -19,6 +19,24 @@ import type { SFCVueRenderContext } from '@/domain/types/sfc-render.type'
 import { evaluateSFCValue } from '@/ui/render/sfc/SFCRender_Evaluator'
 
 const claimedGroups = new WeakMap<Event, Set<string>>()
+const occurredAtByEvent = new WeakMap<Event, string>()
+
+type SFCInteractionGroup = NonNullable<RComponentSFC_IR_ElementNode['interactions']>[number]
+type SFCInteractionTriggerSet = {
+  triggers: RComponentSFC_IR_InteractionRule['trigger']
+  events: string[]
+  modifiers: RComponentSFC_IR_EventModifier[]
+  reactions: RComponentSFC_IR_InteractionRule['reactions']
+  sourceRange?: RComponentSFC_IR_InteractionRule['sourceRange']
+}
+type SFCInteractionGroupWithTriggerSet = SFCInteractionGroup & { triggerSet?: SFCInteractionTriggerSet }
+type EvaluatedSFCInteraction = {
+  trigger: ComponentSFCInteractionTrigger
+  reactions: RComponentSFC_IR_InteractionRule['reactions']
+  sourceRange?: RComponentSFC_IR_InteractionRule['sourceRange']
+  ruleIndex: number
+  triggerIndex: number
+}
 
 /** Adds conditional `:on` listeners to one renderer-owned visual node. */
 export function attachSFCInteractionAttrs(
@@ -41,14 +59,8 @@ export function attachSFCInteractionAttrs(
   }
 
   node.interactions.forEach((group, groupIndex) => {
-    const evaluated = group.rules.flatMap((rule, ruleIndex) => {
-      const trigger = normalizeComponentSFCInteractionTriggers(evaluateSFCValue(rule.trigger, context))[0]
-      if (!trigger) return []
-      const normalized = applySuffixModifiers(trigger, rule.modifiers)
-      if (normalized.held) ensureSFCInteractionKeyState()
-      return [{ rule, ruleIndex, trigger: normalized }]
-    })
-    const listenerKeys = [...new Set(evaluated.map(({ rule }) => listenerKey(rule)))]
+    const evaluated = evaluateSFCInteractionGroup(group, context)
+    const listenerKeys = [...new Set(evaluated.map(({ trigger }) => listenerKey(trigger)))]
     for (const key of listenerKeys) {
       const [eventName, captureToken, passiveToken] = key.split('|')
       const capture = captureToken === '1'
@@ -62,9 +74,9 @@ export function attachSFCInteractionAttrs(
           trigger.event === eventName
           && matchesComponentSFCInteractionTrigger(trigger, snapshot, resolveSFCInteractionPlatform())
         ))
-        if (!selected || listenerKey(selected.rule) !== key) return
+        if (!selected || listenerKey(selected.trigger) !== key) return
         if (selected.trigger.once) {
-          const onceKey = `${claimKey}:${selected.ruleIndex}:${selected.rule.sourceRange?.start ?? 0}`
+          const onceKey = `${claimKey}:${selected.ruleIndex}:${selected.triggerIndex}:${selected.sourceRange?.start ?? 0}`
           if (!boundary.claimLocalOnce(onceKey)) return
         }
         let claims = claimedGroups.get(event)
@@ -88,9 +100,9 @@ export function attachSFCInteractionAttrs(
           [{
             name: eventName,
             modifiers,
-            action: selected.rule.reactions[0]!,
-            actions: selected.rule.reactions,
-            sourceRange: selected.rule.sourceRange,
+            action: selected.reactions[0]!,
+            actions: selected.reactions,
+            sourceRange: selected.sourceRange,
           }],
           [],
           0,
@@ -108,20 +120,18 @@ export function createSFCSemanticInteractionBindings(
 ): RComponentSFC_IR_EventBinding[] {
   return (node.interactions ?? []).flatMap(group => {
     const seenEvents = new Set<string>()
-    return group.rules.flatMap((rule) => {
-      if (seenEvents.has(rule.event)) return []
-      const trigger = normalizeComponentSFCInteractionTriggers(evaluateSFCValue(rule.trigger, context))[0]
-      if (!trigger) return []
-      const normalized = applySuffixModifiers(trigger, rule.modifiers)
-      seenEvents.add(rule.event)
-      const bindingModifiers = interactionBindingModifiers(normalized)
-      if (normalized.once) bindingModifiers.push('once')
+    return evaluateSFCInteractionGroup(group, context).flatMap((evaluated) => {
+      if (seenEvents.has(evaluated.trigger.event)) return []
+      seenEvents.add(evaluated.trigger.event)
+      const trigger = evaluated.trigger
+      const bindingModifiers = interactionBindingModifiers(trigger)
+      if (trigger.once) bindingModifiers.push('once')
       return [{
-        name: rule.event,
+        name: trigger.event,
         modifiers: bindingModifiers,
-        action: rule.reactions[0]!,
-        actions: rule.reactions,
-        sourceRange: rule.sourceRange,
+        action: evaluated.reactions[0]!,
+        actions: evaluated.reactions,
+        sourceRange: evaluated.sourceRange,
       }]
     })
   })
@@ -140,6 +150,51 @@ export function applySuffixModifiers(
     capture: trigger.capture || modifiers.includes('capture'),
     passive: trigger.passive || modifiers.includes('passive'),
   }
+}
+
+function evaluateSFCInteractionGroup(
+  group: SFCInteractionGroup,
+  context: SFCVueRenderContext,
+): EvaluatedSFCInteraction[] {
+  const rules = group.rules.flatMap((rule, ruleIndex) => {
+    const trigger = normalizeComponentSFCInteractionTriggers(evaluateSFCValue(rule.trigger, context))[0]
+    if (!trigger) return []
+    const normalized = normalizeEvaluatedTrigger(trigger, rule.modifiers)
+    return normalized ? [{
+      trigger: normalized,
+      reactions: rule.reactions,
+      sourceRange: rule.sourceRange,
+      ruleIndex,
+      triggerIndex: 0,
+    }] : []
+  })
+
+  const descriptor = (group as SFCInteractionGroupWithTriggerSet).triggerSet
+  if (!descriptor) return rules
+  const supportedEvents = new Set(descriptor.events)
+  const triggerSet = normalizeComponentSFCInteractionTriggers(evaluateSFCValue(descriptor.triggers, context))
+    .flatMap((trigger, triggerIndex): EvaluatedSFCInteraction[] => {
+      if (!supportedEvents.has(trigger.event)) return []
+      const normalized = normalizeEvaluatedTrigger(trigger, descriptor.modifiers)
+      return normalized ? [{
+        trigger: normalized,
+        reactions: descriptor.reactions,
+        sourceRange: descriptor.sourceRange,
+        ruleIndex: group.rules.length,
+        triggerIndex,
+      }] : []
+    })
+  return [...rules, ...triggerSet]
+}
+
+function normalizeEvaluatedTrigger(
+  trigger: ComponentSFCInteractionTrigger,
+  modifiers: readonly RComponentSFC_IR_EventModifier[],
+): ComponentSFCInteractionTrigger | null {
+  const normalized = applySuffixModifiers(trigger, modifiers)
+  if (normalized.passive && normalized.prevent) return null
+  if (normalized.held) ensureSFCInteractionKeyState()
+  return normalized
 }
 
 export function createSFCInteractionTriggerEvent(event: Event): ComponentSFCInteractionTriggerEvent {
@@ -181,6 +236,7 @@ export function normalizeSFCInteractionEvent(
   const target = event.target as { value?: unknown, checked?: unknown, multiple?: boolean, selectedOptions?: Iterable<{ value: string }> } | null
   const payload: Record<string, unknown> = {
     type: event.type,
+    occurredAt: interactionOccurredAt(event),
     held: snapshot.held ?? { key: [], code: [] },
     modifiers: snapshot.modifiers,
   }
@@ -210,6 +266,14 @@ export function normalizeSFCInteractionEvent(
   return payload
 }
 
+function interactionOccurredAt(event: Event): string {
+  const existing = occurredAtByEvent.get(event)
+  if (existing) return existing
+  const value = new Date().toISOString()
+  occurredAtByEvent.set(event, value)
+  return value
+}
+
 export function ensureSFCInteractionKeyState(): KeyboardStateSnapshot | null {
   if (typeof document === 'undefined') return null
   return getKeyboardStateSnapshot(document)
@@ -226,8 +290,8 @@ function sfcInteractionHeldKeys(): NonNullable<ComponentSFCInteractionTriggerEve
   return state ? { key: [...state.held.key], code: [...state.held.code] } : { key: [], code: [] }
 }
 
-function listenerKey(rule: RComponentSFC_IR_InteractionRule): string {
-  return `${rule.event}|${rule.listener.capture ? '1' : '0'}|${rule.listener.passive ? '1' : '0'}`
+function listenerKey(trigger: ComponentSFCInteractionTrigger): string {
+  return `${trigger.event}|${trigger.capture ? '1' : '0'}|${trigger.passive ? '1' : '0'}`
 }
 
 function interactionBindingModifiers(trigger: ComponentSFCInteractionTrigger): RComponentSFC_IR_EventModifier[] {
