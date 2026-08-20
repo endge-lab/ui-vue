@@ -136,6 +136,7 @@ export const EndgeVuePlugin: EndgePlugin = {
     Endge.defineModule({
       key: 'vue',
       module: new EndgeVueModule(),
+      after: ['configuration', 'uiRegistry'],
       before: 'runtime',
     })
   },
