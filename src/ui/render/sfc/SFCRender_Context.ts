@@ -1,4 +1,4 @@
-import type { ComponentSFCEventBoundary, ComponentSFCRuntimeHost, EndgeStyleMatchNode, EndgeStyleSheetArtifact, ProgramMetadata, RComponentSFC_IR, SFCRenderInspectionSessionLike } from '@endge/core'
+import type { ComponentSFCEventBoundary, ComponentSFCRuntimeHost, ComputationResource, EndgeStyleMatchNode, EndgeStyleSheetArtifact, ProgramMetadata, RComponentSFC_IR, SFCRenderInspectionSessionLike } from '@endge/core'
 import { Endge, ComponentSFCEventBoundary as EndgeComponentSFCEventBoundary } from '@endge/core'
 import type { SFCVueRenderContext, SFCVueRenderIteration } from '@/domain/types/sfc-render.type'
 import type { EndgeVueTooltipManager } from '@/ui/overlay/tooltip/endge-tooltip-manager'
@@ -109,9 +109,27 @@ function evaluatePortLocals(
     context.locals = locals
     const input = evaluateSFCValue(call.input, context)
     const consumerKey = `${context.consumerScope}:${context.componentStack.join('>')}:${call.port}:${call.local}`
-    locals[call.local] = context.host
+    const resource = context.host
       ? context.host.getComputationResource(call.defaultIdentity, input, consumerKey, call.port)
       : Endge.runtime.computation.createResource(call.defaultIdentity, input, consumerKey)
+    locals[call.local] = createSFCComputationResourceView(resource)
   }
   return locals
+}
+
+type SFCComputationResourceView = Pick<
+  ComputationResource,
+  'status' | 'loading' | 'value' | 'error'
+>
+
+/** Exposes trusted computation state through own getters readable by the safe SFC evaluator. */
+function createSFCComputationResourceView(
+  resource: ComputationResource,
+): SFCComputationResourceView {
+  return {
+    get status() { return resource.status },
+    get loading() { return resource.loading },
+    get value() { return resource.value },
+    get error() { return resource.error },
+  }
 }
