@@ -3,6 +3,13 @@ import type {
   EndgeTooltipConfiguration,
   EndgeTooltipSide,
 } from '@endge/core'
+import {
+  ENDGE_KEYBOARD_CONTEXT_RAPH_PATH,
+  Endge,
+  matchesComponentSFCInteractionKeyboardCondition,
+  normalizeComponentSFCInteractionKeyboardCondition,
+} from '@endge/core'
+import { Raph } from '@endge/raph'
 import type { InjectionKey, VNodeChild } from 'vue'
 import { shallowReactive } from 'vue'
 
@@ -48,6 +55,7 @@ export class EndgeVueTooltipManager {
   private generation = 0
   private disposed = false
   private readonly defaults: EndgeTooltipConfiguration
+  private readonly disposeKeyboardWatch: () => void
 
   public constructor(adapterId: string, defaults: EndgeTooltipConfiguration) {
     this.adapterId = adapterId
@@ -64,6 +72,10 @@ export class EndgeVueTooltipManager {
       part: null,
       content: null,
     })
+    this.disposeKeyboardWatch = Raph.watch([
+      ENDGE_KEYBOARD_CONTEXT_RAPH_PATH,
+      `${ENDGE_KEYBOARD_CONTEXT_RAPH_PATH}.*`,
+    ], () => this.reconcileActivation())
   }
 
   public activate(request: EndgeVueTooltipRequest, reason: EndgeTooltipActivationReason): void {
@@ -77,18 +89,7 @@ export class EndgeVueTooltipManager {
 
     this.request = request
     this.reasons.add(reason)
-    if (this.state.phase === 'visible' && this.state.ownerId === request.ownerId) return
-
-    this.clearOpenTimer()
-    this.state.phase = 'pending'
-    this.state.ownerId = request.ownerId
-    const generation = ++this.generation
-    const policy = this.resolvePolicy(request.policy)
-    if (policy.openDelay === 0) {
-      this.show(generation, policy)
-      return
-    }
-    this.openTimer = setTimeout(() => this.show(generation, policy), policy.openDelay)
+    this.reconcileActivation()
   }
 
   public deactivate(ownerId: string, reason: EndgeTooltipActivationReason): void {
@@ -117,6 +118,7 @@ export class EndgeVueTooltipManager {
   public dispose(): void {
     if (this.disposed) return
     this.disposed = true
+    this.disposeKeyboardWatch()
     this.reasons.clear()
     this.hideNow()
   }
@@ -130,6 +132,7 @@ export class EndgeVueTooltipManager {
       || !request
       || this.reasons.size === 0
       || !request.anchor.isConnected
+      || !this.matchesKeyboard(policy)
     ) {
       this.hideNow()
       return
@@ -149,12 +152,16 @@ export class EndgeVueTooltipManager {
   }
 
   private hideNow(): void {
+    this.suspend()
+    this.request = null
+  }
+
+  private suspend(): void {
     this.clearOpenTimer()
     this.clearCloseTimer()
     this.generation += 1
     if (this.state.anchor && this.state.domId)
       removeDescribedBy(this.state.anchor, this.state.domId)
-    this.request = null
     this.state.phase = 'idle'
     this.state.ownerId = null
     this.state.domId = null
@@ -165,16 +172,46 @@ export class EndgeVueTooltipManager {
     this.state.content = null
   }
 
+  private reconcileActivation(): void {
+    const request = this.request
+    if (this.disposed || !request || this.reasons.size === 0 || !request.anchor.isConnected)
+      return
+
+    const policy = this.resolvePolicy(request.policy)
+    if (!this.matchesKeyboard(policy)) {
+      this.suspend()
+      return
+    }
+    if ((this.state.phase === 'visible' || this.state.phase === 'pending') && this.state.ownerId === request.ownerId)
+      return
+
+    this.clearOpenTimer()
+    this.state.phase = 'pending'
+    this.state.ownerId = request.ownerId
+    const generation = ++this.generation
+    if (policy.openDelay === 0)
+      this.show(generation, policy)
+    else
+      this.openTimer = setTimeout(() => this.show(generation, policy), policy.openDelay)
+  }
+
+  private matchesKeyboard(policy: EndgeVueTooltipPolicy): boolean {
+    const keyboard = Endge.context.getKeyboardState()
+    return matchesComponentSFCInteractionKeyboardCondition(policy.keyboard, keyboard, keyboard.platform)
+  }
+
   private resolvePolicy(local: Partial<EndgeVueTooltipPolicy> | undefined): EndgeVueTooltipPolicy {
     const next: EndgeTooltipConfiguration = { ...this.defaults }
     for (const [key, value] of Object.entries(local ?? {})) {
       if (value != null) (next as any)[key] = value
     }
+    const keyboard = normalizeComponentSFCInteractionKeyboardCondition(next.keyboard)
     return {
       side: normalizeSide(next.side),
       align: normalizeAlign(next.align),
       openDelay: normalizeDelay(next.openDelay, this.defaults.openDelay),
       closeDelay: normalizeDelay(next.closeDelay, this.defaults.closeDelay),
+      ...(keyboard ? { keyboard } : {}),
     }
   }
 

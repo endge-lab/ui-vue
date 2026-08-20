@@ -2,6 +2,7 @@
 import type { ProjectRuntimeSession } from '@endge/core'
 
 import { DEFAULT_ENDGE_TOOLTIP_CONFIGURATION, Endge } from '@endge/core'
+import { subscribeKeyboardState } from '@endge/utils'
 import { onBeforeUnmount, provide, ref } from 'vue'
 import EndgeContextMenuRoot from '@/ui/overlay/EndgeContextMenuRoot.vue'
 import EndgeTooltipRoot from '@/ui/overlay/tooltip/EndgeTooltipRoot.vue'
@@ -21,6 +22,9 @@ const error = ref<unknown>(null)
 
 let disposed = false
 let session: ProjectRuntimeSession | null = null
+const unsubscribeKeyboard = typeof document === 'undefined'
+  ? null
+  : subscribeKeyboardState(document, state => Endge.context.setKeyboardState(state))
 const tooltipManager = new EndgeVueTooltipManager(
   props.tooltipAdapterId,
   resolveTooltipConfiguration(),
@@ -51,6 +55,7 @@ void initialize()
 
 onBeforeUnmount(() => {
   disposed = true
+  unsubscribeKeyboard?.()
   tooltipManager.dispose()
   const mountedSession = session
   session = null
