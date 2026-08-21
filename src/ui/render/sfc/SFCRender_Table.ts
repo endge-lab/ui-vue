@@ -85,6 +85,7 @@ interface SFCTableColumn {
   rowDependencies: Set<string>
   markers: SFCTableColumnMarkers
   metadata: ProgramMetadataMap
+  cellMenu?: ComponentSFCTableRowMenuDescriptor
 }
 
 interface SFCTableColumnSort {
@@ -235,7 +236,13 @@ export const SFCRender_Table: SFCVueRenderFunction = SFCRender_Base((input) => {
   )
   const tableContext = extendSFCVueRenderContext(
     input.context,
-    {},
+    {
+      $table: {
+        id: tableId || input.node.id,
+        runtimeId: input.context.runtimeState?.runtimeId ?? input.node.id,
+        state: {},
+      },
+    },
     input.context.iteration,
     `${input.context.consumerScope}/table:${input.node.id}`,
   )
@@ -1122,19 +1129,49 @@ const SFCRevoGridTable = defineComponent({
         anchor: { x: event.clientX, y: event.clientY },
       })
 
-      if (props.rowMenu.mode !== 'inline' || !props.rowMenu.menu) return
+      const column = props.columns.find(candidate => candidate.key === columnKey)
+      const menuDescriptor = column?.cellMenu ?? props.rowMenu
+      if (menuDescriptor.mode !== 'inline' || !menuDescriptor.menu || !column) return
+      const table = {
+        id: effectiveTableId(),
+        runtimeId: props.runtimeState?.runtimeId ?? props.boundaryId,
+        state: { selectedRowIds: [...selectedRowIds.value] },
+      }
+      const rowContext = { id: rowId, index: rowIndex, data: row }
+      const columnContext = {
+        key: column.key,
+        index: column.index,
+        title: column.title,
+        metadata: column.metadata,
+      }
+      const cell = { value }
       const menuContext = extendSFCVueRenderContext(
         props.menuContext,
-        { row, rowId, rowIndex, columnKey, value },
+        {
+          $table: table,
+          $row: rowContext,
+          $column: columnContext,
+          $cell: cell,
+          row,
+          rowId,
+          rowIndex,
+          columnKey,
+          columnMeta: column.metadata,
+          value,
+        },
         props.menuContext.iteration,
         `${props.menuContext.consumerScope}/row-menu:${rowId}:${columnKey}`,
       )
-      const menu = resolveSFCTableMenu(props.rowMenu.menu, menuContext)
+      const menu = resolveSFCTableMenu(menuDescriptor.menu, menuContext)
       const context: TableRowActionContext = {
         surface: 'table-row',
         runtimeId: props.runtimeState?.runtimeId ?? props.boundaryId,
         tableRuntimeId: props.runtimeState?.runtimeId ?? props.boundaryId,
         tableId: effectiveTableId(),
+        table,
+        rowContext,
+        column: columnContext,
+        cell,
         target: tableActionTarget,
         row,
         rowId,
@@ -1288,6 +1325,7 @@ function createTableColumn(
     rowDependencies: extractRowDependencies(resolveCellNodes(columnNode), key),
     markers,
     metadata: resolveTableColumnMetadata(columnNode, context),
+    ...(columnNode.cellMenu ? { cellMenu: columnNode.cellMenu } : {}),
   }
 }
 
@@ -2077,13 +2115,24 @@ function renderTableCell(input: SFCTableCellRenderInput & {
   const rowIndex = input.rowOffset + localRowIndex
   const row = normalizeCellRow(input.rows, input.cellProps, localRowIndex)
   const rowIdentity = row[input.rowKey] ?? rowIndex
+  const value = readRowPath(row, input.column.key)
+  const rowContext = { id: String(rowIdentity), index: rowIndex, data: row }
+  const columnContext = {
+    key: input.column.key,
+    index: input.column.index,
+    title: input.column.title,
+    metadata: input.column.metadata,
+  }
   const cellContext = extendSFCVueRenderContext(input.context, {
+    $row: rowContext,
+    $column: columnContext,
+    $cell: { value },
     row,
     rowIndex,
     rowKey: rowIdentity,
     columnKey: input.column.key,
     columnMeta: input.column.metadata,
-    value: row[input.column.key],
+    value,
   }, input.context.iteration, `${input.context.consumerScope}/row:${String(rowIdentity)}/column:${input.column.key}`)
   const children = renderSFCNodes(h, input.column.cellNodes, cellContext)
   const contentAttrs = input.column.markers.cellContent
@@ -2566,6 +2615,7 @@ function isTableMenuNode(node: RComponentSFC_IR_Node): boolean {
   return isElementNode(node)
     && (
       node.tag === 'ColumnMenu'
+      || node.tag === 'CellMenu'
       || node.tag === 'RowMenu'
       || node.tag === 'MenuItem'
       || node.tag === 'MenuSeparator'

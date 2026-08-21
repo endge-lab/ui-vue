@@ -104,7 +104,7 @@ function clampMenuToViewport(): void {
 }
 
 async function runItem(item: ContextMenuItemDescriptor): Promise<void> {
-  if (executing.value) return
+  if (executing.value || item.disabled) return
   executing.value = true
   try {
     await executeEndgeContextMenuItem(item)
@@ -123,7 +123,7 @@ function resolveItemLabel(item: ContextMenuItemDescriptor): string {
 }
 
 function focusItem(direction: 'first' | 'last' | 'next' | 'previous'): void {
-  const items = [...(menuRef.value?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? [])]
+  const items = [...(menuRef.value?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)') ?? [])]
   if (!items.length) return
   const activeIndex = items.indexOf(document.activeElement as HTMLButtonElement)
   const index = direction === 'first'
@@ -178,7 +178,7 @@ function resolveIconPaths(identity: string | undefined): string[] | null {
           type="button"
           role="menuitem"
           class="endge-context-menu-root__item"
-          :disabled="executing"
+          :disabled="executing || item.disabled"
           @click="runItem(item)"
         >
           <svg
