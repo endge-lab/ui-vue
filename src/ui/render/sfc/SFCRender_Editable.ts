@@ -9,7 +9,11 @@ import {
   matchesComponentSFCEditTrigger,
   normalizeComponentSFCEditTriggers,
 } from '@endge/core'
-import { isoToDateTimeLocalInput } from '@endge/utils'
+import {
+  isoDateTimeToTimeInput,
+  isoToDateTimeLocalInput,
+  mergeTimeIntoDateTime,
+} from '@endge/utils'
 
 import type {
   SFCVueRenderContext,
@@ -89,29 +93,50 @@ export function attachSFCEditableAttrs(
   }
 }
 
-/** Renders built-in editors for the three primitive shortcuts. */
+/** Renders built-in editors for the primitive shortcuts. */
 export function renderSFCEditablePrimitive(
   input: SFCVueRenderElementInput & { props: Record<string, unknown>, attrs: Record<string, unknown> },
 ): SFCVueRenderResult | undefined {
-  if (!input.node.editable || !['Text', 'Number', 'DateTime'].includes(input.node.tag)) return undefined
+  if (!input.node.editable || !['Text', 'Number', 'DateTime', 'Checkbox'].includes(input.node.tag)) return undefined
   const host = input.context.host
   if (!host) return undefined
   const key = editableConsumerKey(input.node, input.context)
   const session = host.getEditSession(key)
   if (!session) return undefined
 
+  const timeOnly = input.node.tag === 'DateTime'
+    && (input.props.editMode ?? input.props['edit-mode']) === 'time'
   const type = input.node.tag === 'Number'
     ? 'Number'
     : input.node.tag === 'DateTime'
-      ? 'DateTime'
+      ? timeOnly ? 'Time' : 'DateTime'
       : 'String'
   const value = input.node.tag === 'DateTime'
-    ? isoToDateTimeLocalInput(session.draftValue)
+    ? timeOnly
+      ? isoDateTimeToTimeInput(session.draftValue, input.props.timezone)
+      : isoToDateTimeLocalInput(session.draftValue)
     : session.draftValue == null ? '' : session.draftValue
   const attrs = { ...input.attrs }
   delete attrs.onClick
   delete attrs.onDblclick
   delete attrs.onFocus
+
+  if (input.node.tag === 'Checkbox') {
+    const renderCheckbox = requireSFCAdapterRenderer('Checkbox')
+    return renderCheckbox({
+      ...input,
+      children: [],
+      props: {
+        ...input.props,
+        checked: session.draftValue === true,
+      },
+      attrs: {
+        ...attrs,
+        ref: ((element: unknown) => focusSFCEditableControl(element)) as any,
+        onInput: (event: Event) => host.updateEditDraft(key, readTargetValue(event, input.node.tag)),
+      },
+    })
+  }
 
   const renderInput = requireSFCAdapterRenderer('Input')
   return renderInput({
@@ -188,9 +213,10 @@ async function commitEditable(
   value: unknown,
 ): Promise<void> {
   const key = editableConsumerKey(node, context)
-  const payload = value === undefined
+  const nextValue = normalizePrimitiveEditedValue(node, context, key, value)
+  const payload = nextValue === undefined
     ? context.host?.commitEditSession(key)
-    : context.host?.commitEditSession(key, value)
+    : context.host?.commitEditSession(key, nextValue)
   if (!payload || !context.eventBoundary) return
   const source: ComponentSFCEventRuntimeSource = {
     nodeId: node.id,
@@ -207,9 +233,27 @@ async function commitEditable(
   )
 }
 
+function normalizePrimitiveEditedValue(
+  node: RComponentSFC_IR_ElementNode,
+  context: SFCVueRenderContext,
+  key: string,
+  value: unknown,
+): unknown {
+  const editMode = evaluateSFCValue(node.props.editMode ?? node.props['edit-mode'], context)
+  if (node.tag !== 'DateTime' || editMode !== 'time')
+    return value
+
+  const original = context.host?.getEditSession(key)?.originalValue
+  const originalDate = new Date(String(original ?? '').trim())
+  const base = Number.isNaN(originalDate.getTime()) ? new Date().toISOString() : original
+  const timezone = evaluateSFCValue(node.props.timezone, context)
+  return mergeTimeIntoDateTime(base, value, timezone) ?? value
+}
+
 function readTargetValue(event: Event, tag: string): unknown {
   const target = event.target as HTMLInputElement | HTMLSelectElement | null
   if (!target) return undefined
+  if (tag === 'Checkbox') return (target as HTMLInputElement).checked
   if (tag === 'Number') {
     const value = Number(target.value)
     return target.value === '' || !Number.isFinite(value) ? null : value

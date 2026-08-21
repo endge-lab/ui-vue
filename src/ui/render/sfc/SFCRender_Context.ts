@@ -1,4 +1,4 @@
-import type { ComponentSFCEventBoundary, ComponentSFCRuntimeHost, ComputationResource, EndgeStyleMatchNode, EndgeStyleSheetArtifact, ProgramMetadata, RComponentSFC_IR, SFCRenderInspectionSessionLike } from '@endge/core'
+import type { ComponentSFCEventBoundary, ComponentSFCRequiredPortBinding, ComponentSFCRuntimeHost, ComputationResource, EndgeStyleMatchNode, EndgeStyleSheetArtifact, ProgramMetadata, RComponentSFC_IR, SFCRenderInspectionSessionLike } from '@endge/core'
 import { Endge, ComponentSFCEventBoundary as EndgeComponentSFCEventBoundary } from '@endge/core'
 import type { SFCVueRenderContext, SFCVueRenderIteration } from '@/domain/types/sfc-render.type'
 import type { EndgeVueTooltipManager } from '@/ui/overlay/tooltip/endge-tooltip-manager'
@@ -18,6 +18,7 @@ export function createSFCVueRenderContext(
   metadata?: ProgramMetadata | null,
   variant = 'default',
   tooltipManager: EndgeVueTooltipManager | null = null,
+  portBindings: readonly ComponentSFCRequiredPortBinding[] = [],
 ): SFCVueRenderContext {
   const lifecycleScope = host ? Endge.runtime.getRuntimeScopeByHost(host.id) : null
   const runtimeScopeIds: string[] = []
@@ -37,6 +38,7 @@ export function createSFCVueRenderContext(
     runtimeState: (host as any)?.runtimeState ?? null,
     componentStack,
     consumerScope,
+    portBindings,
     variant,
     styleArtifacts,
     styleParent: undefined,
@@ -74,6 +76,7 @@ export function extendSFCVueRenderContext(
     runtimeState: context.runtimeState,
     componentStack: context.componentStack,
     consumerScope,
+    portBindings: context.portBindings ?? [],
     variant: context.variant,
     styleArtifacts: context.styleArtifacts,
     styleParent: context.styleParent,
@@ -109,9 +112,11 @@ function evaluatePortLocals(
     context.locals = locals
     const input = evaluateSFCValue(call.input, context)
     const consumerKey = `${context.consumerScope}:${context.componentStack.join('>')}:${call.port}:${call.local}`
+    const identity = context.portBindings?.find(binding => binding.port === call.port && binding.kind === 'computation')?.identity
+      ?? call.defaultIdentity
     const resource = context.host
-      ? context.host.getComputationResource(call.defaultIdentity, input, consumerKey, call.port)
-      : Endge.runtime.computation.createResource(call.defaultIdentity, input, consumerKey)
+      ? context.host.getComputationResource(identity, input, consumerKey, call.port)
+      : Endge.runtime.computation.createResource(identity, input, consumerKey)
     locals[call.local] = createSFCComputationResourceView(resource)
   }
   return locals
