@@ -18,9 +18,11 @@ import { evaluateSFCProps, evaluateSFCValue, isTruthySFCValue } from '@/ui/rende
 import { createSFCInspectionAttrs, registerSFCInspectionElement } from '@/model/render/sfc/SFCVueRenderInspection'
 import {
   attachSFCEditableAttrs,
+  editableConsumerKey,
   isSFCEditableActive,
   renderSFCEditablePrimitive,
 } from '@/ui/render/sfc/SFCRender_Editable'
+import { SFC_EditableRenderBoundary } from '@/ui/render/sfc/SFC_EditableRenderBoundary'
 import { attachSFCInteractionAttrs, normalizeSFCInteractionEvent } from '@/ui/render/sfc/SFCRender_Interaction'
 import { attachEndgeTooltipTriggerAttrs } from '@/ui/overlay/tooltip/endge-tooltip-manager'
 
@@ -126,6 +128,24 @@ export function createSFCBaseAttrs(
 }
 
 function renderOnce(
+  input: SFCVueRenderElementInput,
+  renderFn: SFCVueRenderFunction,
+): SFCVueRenderResult {
+  if (input.node.editable && input.context.host) {
+    const sessionKey = editableConsumerKey(input.node, input.context)
+    return input.h(SFC_EditableRenderBoundary, {
+      key: sessionKey,
+      host: input.context.host,
+      sessionKey,
+    }, {
+      default: () => renderOnceContent(input, renderFn),
+    })
+  }
+
+  return renderOnceContent(input, renderFn)
+}
+
+function renderOnceContent(
   input: SFCVueRenderElementInput,
   renderFn: SFCVueRenderFunction,
 ): SFCVueRenderResult {

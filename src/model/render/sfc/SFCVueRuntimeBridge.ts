@@ -7,6 +7,8 @@ import type { ComponentSFCRuntimeHost, RuntimeBoundaryPatch, RuntimeHostUpdateCo
 
 import { Raph } from '@endge/raph'
 
+import { isSFCVueEditableResourceUpdate } from '@/model/render/sfc/SFCVueEditableResource'
+
 /**
  * Связывает runtime-host SFC-компонента с Vue render root.
  * Bridge материализует входные данные в плоский props snapshot.
@@ -33,9 +35,11 @@ export class SFCVueRuntimeBridge {
     if (this._isMounted)
       this._emitResolvedProps()
   }
-  private readonly _resourceDirtyHandler = (): void => {
-    if (this._isMounted)
-      this._emitResolvedProps()
+  private readonly _resourceDirtyHandler = (update: unknown): void => {
+    if (!this._isMounted || isSFCVueEditableResourceUpdate(update))
+      return
+
+    this._emitResolvedProps()
   }
 
   constructor(input: {
