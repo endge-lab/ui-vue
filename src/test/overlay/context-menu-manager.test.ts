@@ -14,16 +14,32 @@ const menu: ContextMenuDescriptor = {
   items: [{ kind: 'item', id: 'test.run', action: 'test.run', label: 'Run', input: { rowId: '42' } }],
 }
 
+let disposeDefinition: VoidFunction | null = null
+let disposeProvider: VoidFunction | null = null
+
 describe('context menu Action execution', () => {
   afterEach(() => {
-    Endge.runtime.actions.unregister('test.run')
+    disposeProvider?.()
+    disposeDefinition?.()
+    disposeProvider = null
+    disposeDefinition = null
     closeEndgeContextMenu()
   })
 
   it('filters and executes items through Endge.runtime.actions', async () => {
     const execute = vi.fn()
     const context: RuntimeActionContext = { surface: 'test' }
-    Endge.runtime.actions.register({ id: 'test.run', surface: 'test', execute })
+    disposeDefinition = Endge.actions.define({
+      identity: 'test.run',
+      origin: { kind: 'local', owner: 'test' },
+      defaultProviderKey: 'test.run.provider',
+    })
+    disposeProvider = Endge.actions.provide({
+      identity: 'test.run',
+      key: 'test.run.provider',
+      origin: { kind: 'local', owner: 'test' },
+      execute: invocation => execute(invocation.context, invocation.input),
+    })
     openEndgeContextMenu({ ownerId: 'owner', x: 0, y: 0, menu, context })
 
     expect(getExecutableContextMenuItems()).toEqual(menu.items)

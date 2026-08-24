@@ -1,7 +1,7 @@
 {
   "name": "@endge/ui-vue",
   "private": false,
-  "version": "0.24.0",
+  "version": "0.25.0",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/vue.js",
@@ -39,7 +39,7 @@
     "uuid": "^11.1.0"
   },
   "peerDependencies": {
-    "@endge/core": "^2.0.3",
+    "@endge/core": "^3.0.0",
     "@endge/utils": "^0.24.12",
     "@endge/raph": "^3.0.10",
     "@primevue/themes": "^4.0.0-rc.1",
