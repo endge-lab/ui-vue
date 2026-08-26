@@ -1,7 +1,7 @@
 {
   "name": "@endge/ui-vue",
   "private": false,
-  "version": "0.26.0",
+  "version": "0.26.1",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/vue.js",
@@ -24,7 +24,9 @@
     "preview": "vite preview",
     "test": "vitest",
     "bench:interactions": "vitest bench src/test/sfc/SFCRender_Interactions.bench.ts",
-    "typecheck": "vue-tsc --noEmit"
+    "typecheck": "vue-tsc --noEmit",
+    "lint-check": "eslint . --cache",
+    "lint-fix": "eslint . --fix --cache"
   },
   "dependencies": {
     "@babel/parser": "^7.29.7",
@@ -52,17 +54,16 @@
     "vue": "^3.3.0"
   },
   "devDependencies": {
+    "@antfu/eslint-config": "9.3.0",
     "@endge/core": "^4.0.0",
     "@endge/utils": "^0.25.0",
     "@types/lodash": "^4.14.202",
-    "@typescript-eslint/eslint-plugin": "^8.67.0",
-    "@typescript-eslint/parser": "^8.67.0",
     "@vitejs/plugin-vue": "^6.0.7",
     "@vitejs/plugin-vue-jsx": "^5.1.6",
     "@vitest/coverage-v8": "^2.1.9",
     "@vue/language-core": "^3.3.11",
     "autoprefixer": "^10.4.20",
-    "eslint": "^9.9.0",
+    "eslint": "10.9.1",
     "jsdom": "^26.1.0",
     "pinia": "^3.0.4",
     "postcss": "8",
