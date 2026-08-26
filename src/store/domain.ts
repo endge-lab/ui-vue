@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed } from 'vue'
 import { Endge } from '@endge/core'
-import { useSubscribableRef } from '@endge/utils'
+import { useSubscribableRef } from '@/reactive/use-subscribable-ref'
 
 export const useDomainStore = defineStore('endge-domain-store', () => {
   const { refObj: domain } = useSubscribableRef(Endge.domain)
