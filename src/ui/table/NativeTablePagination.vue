@@ -10,8 +10,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (event: 'update:page-index', value: number): void
-  (event: 'update:page-size', value: number): void
+  (event: 'update:pageIndex', value: number): void
+  (event: 'update:pageSize', value: number): void
 }>()
 
 const canPrevious = computed(() => props.pageIndex > 0)
@@ -23,7 +23,7 @@ const pageSizeOptions = computed(() => [...new Set([...props.pageSizes, props.pa
 function setPageSize(event: Event): void {
   const target = event.target
   if (target instanceof HTMLSelectElement) {
-    emit('update:page-size', Number(target.value))
+    emit('update:pageSize', Number(target.value))
   }
 }
 </script>
@@ -45,16 +45,16 @@ function setPageSize(event: Event): void {
       <span class="endge-native-table-pagination__label">Page {{ pageIndex + 1 }} of {{ pageCount }}</span>
 
       <div class="endge-native-table-pagination__buttons">
-        <button type="button" aria-label="First page" :disabled="!canPrevious" @click="emit('update:page-index', 0)">
+        <button type="button" aria-label="First page" :disabled="!canPrevious" @click="emit('update:pageIndex', 0)">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m11 18-6-6 6-6M19 18l-6-6 6-6" /></svg>
         </button>
-        <button type="button" aria-label="Previous page" :disabled="!canPrevious" @click="emit('update:page-index', pageIndex - 1)">
+        <button type="button" aria-label="Previous page" :disabled="!canPrevious" @click="emit('update:pageIndex', pageIndex - 1)">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
         </button>
-        <button type="button" aria-label="Next page" :disabled="!canNext" @click="emit('update:page-index', pageIndex + 1)">
+        <button type="button" aria-label="Next page" :disabled="!canNext" @click="emit('update:pageIndex', pageIndex + 1)">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
         </button>
-        <button type="button" aria-label="Last page" :disabled="!canNext" @click="emit('update:page-index', pageCount - 1)">
+        <button type="button" aria-label="Last page" :disabled="!canNext" @click="emit('update:pageIndex', pageCount - 1)">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13 18 6-6-6-6M5 18l6-6-6-6" /></svg>
         </button>
       </div>
