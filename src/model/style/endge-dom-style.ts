@@ -37,10 +37,18 @@ function cssString(value: string): string {
 function collectCapabilities(rule: EndgeStyleRule): string[] {
   const result: string[] = []
   const visit = (condition: EndgeStyleRule['supports']) => {
-    if (!condition) return
-    if (condition.type === 'capability') result.push(condition.capability)
-    else if (condition.type === 'not') visit(condition.operand)
-    else if (condition.type === 'and' || condition.type === 'or') condition.operands.forEach(visit)
+    if (!condition) {
+      return
+    }
+    if (condition.type === 'capability') {
+      result.push(condition.capability)
+    }
+    else if (condition.type === 'not') {
+      visit(condition.operand)
+    }
+    else if (condition.type === 'and' || condition.type === 'or') {
+      condition.operands.forEach(visit)
+    }
   }
   visit(rule.supports)
   return result
@@ -101,7 +109,9 @@ export function materializeEndgeCSSForDOM(
           })
         }
       }
-      if (!evaluateEndgeStyleSupport(rule.supports, target)) continue
+      if (!evaluateEndgeStyleSupport(rule.supports, target)) {
+        continue
+      }
       for (const selector of rule.selectors) {
         const nativeSelector = compileSelector(selector, artifact.scope === 'component' ? artifact.scopeId : undefined)
         for (const declaration of rule.declarations) {
@@ -129,19 +139,24 @@ export function materializeEndgeCSSForDOM(
 
   const css = declarations.map((declaration) => {
     let selector = declaration.nativeSelector
-    if (selector !== ':root' && !selector.startsWith('[data-endge-scope-root='))
+    if (selector !== ':root' && !selector.startsWith('[data-endge-scope-root=')) {
       selector = uniformSpecificitySelector(selector)
-    if (declaration.boundaryId)
+    }
+    if (declaration.boundaryId) {
       selector = applyBoundary(selector, declaration.boundaryId)
-    if (declaration.theme)
+    }
+    if (declaration.theme) {
       selector = selector === ':root'
         ? `:root[data-endge-theme=${cssString(declaration.theme)}]`
         : `:root[data-endge-theme=${cssString(declaration.theme)}] :is(${selector})`
+    }
     const body = declaration.property
       ? `${declaration.property}:${declaration.value}${declaration.important ? '!important' : ''};`
       : declaration.value
     const rule = `${selector}{${body}}`
-    if (!declaration.scope) return rule
+    if (!declaration.scope) {
+      return rule
+    }
     const roots = declaration.scope.root.map(item => compileSelector(item, declaration.artifactScopeId)).join(',')
     const limit = declaration.scope.limit?.map(item => compileSelector(item, declaration.artifactScopeId)).join(',')
     return `@scope (${roots})${limit ? ` to (${limit})` : ''}{${rule}}`
@@ -151,7 +166,9 @@ export function materializeEndgeCSSForDOM(
 }
 
 function compileSelector(selector: EndgeStyleSelector, scopeId?: string): string {
-  if (selector.segments.length === 0) return selector.source
+  if (selector.segments.length === 0) {
+    return selector.source
+  }
   return selector.segments.map((segment, index) => {
     const combinator = index === 0
       ? ''
@@ -172,27 +189,52 @@ function compileCompound(
   scopeId?: string,
 ): string {
   const parts: string[] = []
-  if (compound.tag) parts.push(`[data-endge-tag=${cssString(compound.tag)}]`)
-  for (const id of compound.ids) parts.push(`[data-endge-id=${cssString(id)}]`)
-  for (const className of compound.classes) parts.push(`.${escapeIdentifier(className)}`)
-  for (const attribute of compound.attributes) parts.push(compileAttribute(attribute))
-  for (const pseudo of compound.pseudos) {
-    if (pseudo.name === 'first-child' || pseudo.name === 'last-child') parts.push(`:${pseudo.name}`)
-    else if (pseudo.name === 'nth-child') parts.push(`:nth-child(${pseudo.expression})`)
-    else if (pseudo.name === 'component') parts.push(`[data-endge-component=${cssString(pseudo.value)}]`)
-    else if (pseudo.name === 'identity') parts.push(`[data-endge-identity=${cssString(pseudo.value)}]`)
-    else if (pseudo.name === 'state') parts.push(`[data-endge-state~=${cssString(pseudo.value)}]`)
-    else if (pseudo.name === 'part') parts.push(`[data-endge-part~=${cssString(pseudo.value)}]`)
-    else if ('selectors' in pseudo)
-      parts.push(`:${pseudo.name}(${pseudo.selectors.map(item => compileSelector(item, scopeId)).join(',')})`)
+  if (compound.tag) {
+    parts.push(`[data-endge-tag=${cssString(compound.tag)}]`)
   }
-  if (scopeId) parts.push(`[data-endge-scope=${cssString(scopeId)}]`)
+  for (const id of compound.ids) {
+    parts.push(`[data-endge-id=${cssString(id)}]`)
+  }
+  for (const className of compound.classes) {
+    parts.push(`.${escapeIdentifier(className)}`)
+  }
+  for (const attribute of compound.attributes) {
+    parts.push(compileAttribute(attribute))
+  }
+  for (const pseudo of compound.pseudos) {
+    if (pseudo.name === 'first-child' || pseudo.name === 'last-child') {
+      parts.push(`:${pseudo.name}`)
+    }
+    else if (pseudo.name === 'nth-child') {
+      parts.push(`:nth-child(${pseudo.expression})`)
+    }
+    else if (pseudo.name === 'component') {
+      parts.push(`[data-endge-component=${cssString(pseudo.value)}]`)
+    }
+    else if (pseudo.name === 'identity') {
+      parts.push(`[data-endge-identity=${cssString(pseudo.value)}]`)
+    }
+    else if (pseudo.name === 'state') {
+      parts.push(`[data-endge-state~=${cssString(pseudo.value)}]`)
+    }
+    else if (pseudo.name === 'part') {
+      parts.push(`[data-endge-part~=${cssString(pseudo.value)}]`)
+    }
+    else if ('selectors' in pseudo) {
+      parts.push(`:${pseudo.name}(${pseudo.selectors.map(item => compileSelector(item, scopeId)).join(',')})`)
+    }
+  }
+  if (scopeId) {
+    parts.push(`[data-endge-scope=${cssString(scopeId)}]`)
+  }
   return parts.join('') || '*'
 }
 
 function compileAttribute(attribute: EndgeStyleAttributeSelector): string {
   const name = escapeIdentifier(attribute.name)
-  if (attribute.operator === 'exists') return `[${name}]`
+  if (attribute.operator === 'exists') {
+    return `[${name}]`
+  }
   return `[${name}${attribute.operator}${cssString(attribute.value ?? '')}${attribute.insensitive ? ' i' : ''}]`
 }
 
@@ -202,12 +244,14 @@ function uniformSpecificitySelector(selector: string): string {
 
 function applyBoundary(selector: string, boundaryId: string): string {
   const marker = `[data-endge-runtime-scope~=${cssString(boundaryId)}]`
-  if (selector === ':root') return marker
+  if (selector === ':root') {
+    return marker
+  }
   return `${marker}${selector},${marker} ${selector}`
 }
 
 function escapeIdentifier(value: string): string {
-  return value.replace(/(^-?\d)|[^a-zA-Z0-9_-]/g, match => `\\${match.codePointAt(0)!.toString(16)} `)
+  return value.replace(/(^-?\d)|[^\w-]/g, match => `\\${match.codePointAt(0)!.toString(16)} `)
 }
 
 function isPlacement(input: EndgeDOMStyleInput): input is EndgeStylePlacement {

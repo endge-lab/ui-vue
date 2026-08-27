@@ -1,22 +1,15 @@
+import type { EndgeBootContext, EndgePlugin, EndgeStylePlacement } from '@endge/core'
 import type { PhaseName } from '@endge/raph'
-import type { Ref } from 'vue'
 
-import {
-  ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
-  ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
-  Endge,
-  EndgeModule,
-  type EndgeBootContext,
-  type EndgePlugin,
-} from '@endge/core'
+import type { Ref } from 'vue'
+import { Endge, ENDGE_SFC_RENDER_ADAPTER_PROTOCOL, ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION, EndgeModule } from '@endge/core'
 import { Raph, RaphNode } from '@endge/raph'
 import { randomString } from '@endge/utils'
-import { onBeforeUnmount, ref, watch } from 'vue'
 
+import { onBeforeUnmount, ref, watch } from 'vue'
+import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/model/render/sfc/sfc-vue-render.type'
 import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
-import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/domain/types/sfc-render.type'
 import { EndgeDOMStyleRuntime } from '@/model/style/EndgeDOMStyleRuntime'
-import type { EndgeStylePlacement } from '@endge/core'
 
 export class EndgeVueModule extends EndgeModule {
   private _started = false
@@ -47,8 +40,9 @@ export class EndgeVueModule extends EndgeModule {
       Endge.uiRegistry.adapters.require({ id: selectedId })
       return
     }
-    if (selected.renderer !== 'vue')
+    if (selected.renderer !== 'vue') {
       return
+    }
     Endge.uiRegistry.adapters.activate({
       id: selected.id,
       protocol: ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
@@ -60,8 +54,9 @@ export class EndgeVueModule extends EndgeModule {
   }
 
   public override start(): void {
-    if (this._started)
+    if (this._started) {
       return
+    }
 
     this._started = true
 
@@ -74,8 +69,9 @@ export class EndgeVueModule extends EndgeModule {
       nodes: (node: RaphNode) => node?.meta.type === 'watch',
 
       all: (ctxs) => {
-        if (!ctxs.length)
+        if (!ctxs.length) {
           return
+        }
 
         ctxs.forEach((ctx) => {
           const path = ctx.node?.meta?.path
@@ -127,7 +123,6 @@ export class EndgeVueModule extends EndgeModule {
       .map(scope => scope.id)
     this._styleRuntime.update(artifacts, { renderer: 'dom', capabilities: [] }, hiddenScopeIds)
   }
-
 }
 
 export const EndgeVuePlugin: EndgePlugin = {

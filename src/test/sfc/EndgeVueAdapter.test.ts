@@ -1,10 +1,10 @@
 import type { EndgeWorkspaceDefinition, RComponentSFC_IR_ElementNode } from '@endge/core'
+import type { SFCVueRenderAdapter } from '@/model/render/sfc/sfc-vue-render.type'
 import { Endge } from '@endge/core'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { h, isVNode } from 'vue'
 
-import type { SFCVueRenderAdapter } from '@/domain/types/sfc-render.type'
-import { EndgeVueModule } from '@/domain/core/endge-vue'
+import { h, isVNode } from 'vue'
+import { EndgeVueModule } from '@/model/kernel/endge-vue'
 import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
@@ -64,7 +64,7 @@ const TEST_WORKSPACE: EndgeWorkspaceDefinition = {
   },
 }
 
-describe('EndgeVueModule SFC adapter', () => {
+describe('endgeVueModule SFC adapter', () => {
   beforeEach(() => {
     Endge.uiRegistry.adapters.reset()
     Endge.workspace.apply(TEST_WORKSPACE)
@@ -139,7 +139,9 @@ describe('EndgeVueModule SFC adapter', () => {
     const rendered = renderSFCNode(h, node, createSFCVueRenderContext({}))
 
     expect(isVNode(rendered)).toBe(true)
-    if (!isVNode(rendered)) return
+    if (!isVNode(rendered)) {
+      return
+    }
     expect(rendered.type).toBe('customer-input')
     expect(rendered.props?.value).toBe('SU 1402')
   })

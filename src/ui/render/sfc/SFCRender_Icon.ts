@@ -1,4 +1,4 @@
-import type { SFCVueRenderAdapterFunction } from '@/domain/types/sfc-render.type'
+import type { SFCVueRenderAdapterFunction } from '@/model/render/sfc/sfc-vue-render.type'
 
 /** Рендерит icon placeholder без зависимости от конкретной icon library. */
 export const SFCRender_Icon: SFCVueRenderAdapterFunction = (input) => {
@@ -6,8 +6,8 @@ export const SFCRender_Icon: SFCVueRenderAdapterFunction = (input) => {
 
   return input.h('span', {
     ...input.attrs,
-    class: ['endge-sfc-icon', input.props.class],
+    'class': ['endge-sfc-icon', input.props.class],
     'aria-label': name ? String(name) : undefined,
-    role: 'img',
+    'role': 'img',
   }, String(name))
 }

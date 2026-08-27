@@ -1,4 +1,4 @@
-import type { SFCVueRenderAdapterFunction } from '@/domain/types/sfc-render.type'
+import type { SFCVueRenderAdapterFunction } from '@/model/render/sfc/sfc-vue-render.type'
 
 /** Рендерит flex-контейнер SFC primitive. */
 export const SFCRender_Flex: SFCVueRenderAdapterFunction = (input) => {
@@ -21,12 +21,20 @@ export const SFCRender_Flex: SFCVueRenderAdapterFunction = (input) => {
 }
 
 function normalizeGap(value: unknown): string | undefined {
-  if (value == null || value === false) return undefined
-  if (typeof value === 'number') return `${value * 4}px`
+  if (value == null || value === false) {
+    return undefined
+  }
+  if (typeof value === 'number') {
+    return `${value * 4}px`
+  }
 
   const source = String(value).trim()
-  if (source === '') return undefined
-  if (/^-?\d+(\.\d+)?$/.test(source)) return `${Number(source) * 4}px`
+  if (source === '') {
+    return undefined
+  }
+  if (/^-?\d+(\.\d+)?$/.test(source)) {
+    return `${Number(source) * 4}px`
+  }
 
   return source
 }

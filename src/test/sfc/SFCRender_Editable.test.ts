@@ -1,24 +1,24 @@
 // @vitest-environment jsdom
 
+import type { ComponentSFCProgramPayload, ProgramArtifact } from '@endge/core'
 import {
-  ComponentSFCRuntimeHost,
   compileComponentSFC,
+  ComponentSFCRuntimeHost,
+  Endge,
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
-  Endge,
   RComponentSFC,
 } from '@endge/core'
-import type { ComponentSFCProgramPayload, ProgramArtifact } from '@endge/core'
 import { Raph } from '@endge/raph'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { h, isVNode } from 'vue'
 
-import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/domain/types/sfc-render.type'
+import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/model/render/sfc/sfc-vue-render.type'
 import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode, renderSFCNodes } from '@/ui/render/sfc/SFCRender_Node'
 
-describe('SFC Editable renderer', () => {
+describe('sFC Editable renderer', () => {
   beforeEach(() => {
     Endge.uiRegistry.adapters.reset()
     Endge.uiRegistry.adapters.register(NativeVueSFCAdapter)
@@ -66,11 +66,15 @@ describe('SFC Editable renderer', () => {
     context.eventBoundary = boundary as any
 
     const display = renderSFCNode(h, node, context)
-    if (!isVNode(display)) throw new Error('Editable display did not render')
+    if (!isVNode(display)) {
+      throw new Error('Editable display did not render')
+    }
     display.props?.onDblclick({ target: display, currentTarget: display, cancelable: true })
 
     const editor = renderSFCNode(h, node, context)
-    if (!isVNode(editor)) throw new Error('Editable input did not render')
+    if (!isVNode(editor)) {
+      throw new Error('Editable input did not render')
+    }
     expect(editor.type).toBe('input')
     editor.props?.onInput({ target: { value: 'STOP' } })
     await editor.props?.onChange({ target: { value: 'STOP' } })
@@ -122,11 +126,18 @@ describe('SFC Editable renderer', () => {
     }
     const artifact: ProgramArtifact<ComponentSFCProgramPayload> = {
       ref: { entityType: 'component-sfc', id: 90, identity: model.identity },
-      sourceHash: 'test', compilerVersion: 'test', status: 'valid', diagnostics: [], dependencies: [],
-      capabilities: ['compilable', 'executable', 'renderable'], metadata: { self: {}, nodes: [] }, payload,
+      sourceHash: 'test',
+      compilerVersion: 'test',
+      status: 'valid',
+      diagnostics: [],
+      dependencies: [],
+      capabilities: ['compilable', 'executable', 'renderable'],
+      metadata: { self: {}, nodes: [] },
+      payload,
     }
     const host = ComponentSFCRuntimeHost.createRuntime({
-      id: 'editable-patch-runtime', model,
+      id: 'editable-patch-runtime',
+      model,
       artifactReader: { getArtifact: <T>() => artifact as unknown as ProgramArtifact<T> },
     })
     const received: unknown[] = []
@@ -136,10 +147,14 @@ describe('SFC Editable renderer', () => {
     const node = compiled.ir!.template.roots[0]!
 
     const display = renderSFCNode(h, node, context)
-    if (!isVNode(display)) throw new Error('Editable display did not render')
+    if (!isVNode(display)) {
+      throw new Error('Editable display did not render')
+    }
     display.props?.onClick({ target: display, currentTarget: display, cancelable: true })
     const editor = renderSFCNode(h, node, context)
-    if (!isVNode(editor)) throw new Error('Editable input did not render')
+    if (!isVNode(editor)) {
+      throw new Error('Editable input did not render')
+    }
     await editor.props?.onChange({ target: { value: 'STOP' } })
     await Promise.resolve()
 
@@ -174,30 +189,49 @@ describe('SFC Editable renderer', () => {
     const context = createSFCVueRenderContext({ status: 'RUN' }, 0, host as any, compiled.ir)
     context.eventBoundary = null
     const display = renderSFCNode(h, node, context)
-    if (!isVNode(display)) throw new Error('Editable display did not render')
+    if (!isVNode(display)) {
+      throw new Error('Editable display did not render')
+    }
     const preventDefault = vi.fn()
     const stopPropagation = vi.fn()
     const target = {}
 
     display.props?.onKeydown({
-      key: 'Enter', target, currentTarget: {}, cancelable: true, preventDefault, stopPropagation,
+      key: 'Enter',
+      target,
+      currentTarget: {},
+      cancelable: true,
+      preventDefault,
+      stopPropagation,
     })
     expect(sessions.size).toBe(0)
 
     display.props?.onKeydown({
-      key: 'Space', target, currentTarget: target, cancelable: true, preventDefault, stopPropagation,
+      key: 'Space',
+      target,
+      currentTarget: target,
+      cancelable: true,
+      preventDefault,
+      stopPropagation,
     })
     expect(sessions.size).toBe(0)
 
     display.props?.onKeydown({
-      key: 'F2', target, currentTarget: target, cancelable: true, preventDefault, stopPropagation,
+      key: 'F2',
+      target,
+      currentTarget: target,
+      cancelable: true,
+      preventDefault,
+      stopPropagation,
     })
     expect(sessions.size).toBe(1)
     expect(preventDefault).toHaveBeenCalledOnce()
     expect(stopPropagation).toHaveBeenCalledOnce()
 
     const editor = renderSFCNode(h, node, context)
-    if (!isVNode(editor)) throw new Error('Editable input did not render')
+    if (!isVNode(editor)) {
+      throw new Error('Editable input did not render')
+    }
     editor.props?.onKeydown({ key: 'Escape', preventDefault, stopPropagation })
     expect(sessions.size).toBe(0)
   })
@@ -226,7 +260,9 @@ describe('SFC Editable renderer', () => {
     }
     const context = createSFCVueRenderContext({}, 0, host as any, compiled.ir)
     const display = renderSFCNode(h, node, context)
-    if (!isVNode(display)) throw new Error('Editable display did not render')
+    if (!isVNode(display)) {
+      throw new Error('Editable display did not render')
+    }
 
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'w', code: 'KeyW', bubbles: true }))
     display.props?.onContextmenu({
@@ -269,11 +305,15 @@ describe('SFC Editable renderer', () => {
     const context = createSFCVueRenderContext({ initial }, 0, host as any, compiled.ir)
     context.eventBoundary = null
     const display = renderSFCNode(h, node, context)
-    if (!isVNode(display)) throw new Error('Editable display did not render')
+    if (!isVNode(display)) {
+      throw new Error('Editable display did not render')
+    }
     display.props?.onClick({ target: display, currentTarget: display, cancelable: true })
 
     const editor = renderSFCNode(h, node, context)
-    if (!isVNode(editor)) throw new Error('Editable input did not render')
+    if (!isVNode(editor)) {
+      throw new Error('Editable input did not render')
+    }
     expect(editor.type).toBe('input')
     expect(editor.props?.type).toBe(nativeType)
     await editor.props?.onChange({ target: { value: next } })
@@ -293,17 +333,23 @@ describe('SFC Editable renderer', () => {
     }
     const context = createSFCVueRenderContext({}, 0, host as any, compiled.ir)
     const display = renderSFCNode(h, node, context)
-    if (!isVNode(display)) throw new Error('Editable display did not render')
+    if (!isVNode(display)) {
+      throw new Error('Editable display did not render')
+    }
     display.props?.onClick({ target: display, currentTarget: display, cancelable: true })
 
     const editor = renderSFCNode(h, node, context)
-    if (!isVNode(editor)) throw new Error('Editable input did not render')
+    if (!isVNode(editor)) {
+      throw new Error('Editable input did not render')
+    }
     const focus = vi.fn()
     const elementRef = editor.props?.ref
 
     expect(typeof elementRef).toBe('function')
     expect(() => {
-      if (typeof elementRef === 'function') elementRef({ $el: { focus } } as any, {})
+      if (typeof elementRef === 'function') {
+        elementRef({ $el: { focus } } as any, {})
+      }
     }).not.toThrow()
     expect(focus).toHaveBeenCalledOnce()
   })

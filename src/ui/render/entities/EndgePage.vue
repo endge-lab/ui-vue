@@ -20,11 +20,14 @@ const page = computed<RPage | null>(() =>
 
 const pageRuntime = ref<RuntimeHost | null>(null)
 onBeforeMount(() => {
-  if (!page.value) { return }
+  if (!page.value) {
+    return
+  }
 
   const host = Endge.runtime.execute(page.value, {})
-  if (host)
+  if (host) {
     pageRuntime.value = host
+  }
 })
 
 onUnmounted(() => {

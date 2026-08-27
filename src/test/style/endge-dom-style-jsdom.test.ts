@@ -2,10 +2,10 @@
 import { compileEndgeCSS } from '@endge/core'
 import { afterEach, describe, expect, it } from 'vitest'
 
-import { EndgeDOMStyleRuntime } from '@/model/style/EndgeDOMStyleRuntime'
 import { materializeEndgeCSSForDOM } from '@/model/style/endge-dom-style'
+import { EndgeDOMStyleRuntime } from '@/model/style/EndgeDOMStyleRuntime'
 
-describe('EndgeCSS DOM application', () => {
+describe('endgeCSS DOM application', () => {
   afterEach(() => {
     document.head.querySelectorAll('[data-endge-test-style]').forEach(element => element.remove())
     document.body.replaceChildren()

@@ -5,11 +5,11 @@ import { DEFAULT_ENDGE_TOOLTIP_CONFIGURATION, Endge } from '@endge/core'
 import { subscribeKeyboardState } from '@endge/utils'
 import { onBeforeUnmount, provide, ref } from 'vue'
 import EndgeContextMenuRoot from '@/ui/overlay/EndgeContextMenuRoot.vue'
-import EndgeTooltipRoot from '@/ui/overlay/tooltip/EndgeTooltipRoot.vue'
 import {
   EndgeVueTooltipManager,
   EndgeVueTooltipManagerKey,
 } from '@/ui/overlay/tooltip/endge-tooltip-manager'
+import EndgeTooltipRoot from '@/ui/overlay/tooltip/EndgeTooltipRoot.vue'
 
 const props = withDefaults(defineProps<{
   tooltipAdapterId?: string
@@ -43,8 +43,9 @@ async function initialize(): Promise<void> {
     status.value = 'ready'
   }
   catch (reason) {
-    if (disposed)
+    if (disposed) {
       return
+    }
 
     error.value = reason
     status.value = 'error'

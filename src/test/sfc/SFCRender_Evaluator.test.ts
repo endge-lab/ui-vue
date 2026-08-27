@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import type { RComponentSFC_IR_Value } from '@endge/core'
+import { describe, expect, it } from 'vitest'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import {
   evaluateSFCExpression,
@@ -8,7 +8,7 @@ import {
   readSFCPath,
 } from '@/ui/render/sfc/SFCRender_Evaluator'
 
-describe('SFCRender_Evaluator', () => {
+describe('sFCRender_Evaluator', () => {
   it('returns literal prop values', () => {
     const value: RComponentSFC_IR_Value = {
       kind: 'literal',
@@ -59,9 +59,9 @@ describe('SFCRender_Evaluator', () => {
 
     expect(evaluateSFCExpression('comment?.text', context)).toBe('Memo')
     expect(evaluateSFCExpression('missing?.text', context)).toBeUndefined()
-    expect(evaluateSFCExpression("fresh ? '700' : '400'", context)).toBe('700')
+    expect(evaluateSFCExpression('fresh ? \'700\' : \'400\'', context)).toBe('700')
     expect(
-      evaluateSFCExpression("scheduledTime?.fresh || cancelled?.fresh ? '700' : '600'", context),
+      evaluateSFCExpression('scheduledTime?.fresh || cancelled?.fresh ? \'700\' : \'600\'', context),
     ).toBe('700')
   })
 
@@ -72,7 +72,7 @@ describe('SFCRender_Evaluator', () => {
       count: 2,
     })
 
-    expect(evaluateSFCExpression("delay > 0 && status !== 'cancelled'", context)).toBe(true)
+    expect(evaluateSFCExpression('delay > 0 && status !== \'cancelled\'', context)).toBe(true)
     expect(evaluateSFCExpression('count + 1', context)).toBe(3)
   })
 
@@ -93,11 +93,11 @@ describe('SFCRender_Evaluator', () => {
       },
     }
 
-    expect(evaluateSFCExpression("row.departureLeg.attributes[name='ACTail'].text", context)).toBe(
+    expect(evaluateSFCExpression('row.departureLeg.attributes[name=\'ACTail\'].text', context)).toBe(
       '73151',
     )
     expect(readSFCObjectPath(
-      "departureLeg.attributes[name='ACTail'].text",
+      'departureLeg.attributes[name=\'ACTail\'].text',
       context.locals.row,
     )).toBe('73151')
   })
@@ -120,7 +120,7 @@ describe('SFCRender_Evaluator', () => {
 
     expect(
       readSFCPath(
-        "rows[0].groundHandling[code='Bridge On'].target.points[code='value'].value",
+        'rows[0].groundHandling[code=\'Bridge On\'].target.points[code=\'value\'].value',
         context,
       ),
     ).toBe('2026-07-14T11:52:00Z')
@@ -132,7 +132,7 @@ describe('SFCRender_Evaluator', () => {
       attributes: [{ name: 'ACTail', text: '73151' }],
     }
 
-    expect(evaluateSFCExpression("row.attributes[name='ACTail']?.text || '—'", context)).toBe(
+    expect(evaluateSFCExpression('row.attributes[name=\'ACTail\']?.text || \'—\'', context)).toBe(
       '73151',
     )
   })
@@ -143,8 +143,8 @@ describe('SFCRender_Evaluator', () => {
       stations: ['SVO', 'LED'],
     })
 
-    expect(evaluateSFCExpression("status.trim().toLowerCase() === 'ready'", context)).toBe(true)
-    expect(evaluateSFCExpression("stations.includes('SVO')", context)).toBe(true)
+    expect(evaluateSFCExpression('status.trim().toLowerCase() === \'ready\'', context)).toBe(true)
+    expect(evaluateSFCExpression('stations.includes(\'SVO\')', context)).toBe(true)
     expect(evaluateSFCExpression('Math.max(1, 5, 3)', context)).toBe(5)
   })
 
@@ -162,7 +162,7 @@ describe('SFCRender_Evaluator', () => {
     expect(evaluateSFCExpression('dangerous()', context)).toBeUndefined()
     expect(evaluateSFCExpression('ready = true', context)).toBeUndefined()
     expect(
-      evaluateSFCExpression("value.constructor.constructor('return globalThis')()", context),
+      evaluateSFCExpression('value.constructor.constructor(\'return globalThis\')()', context),
     ).toBeUndefined()
     expect(context.props.ready).toBe(false)
     expect(called).toBe(false)

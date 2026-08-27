@@ -1,4 +1,4 @@
-import type { SFCVueRenderAdapterFunction } from '@/domain/types/sfc-render.type'
+import type { SFCVueRenderAdapterFunction } from '@/model/render/sfc/sfc-vue-render.type'
 
 /** Рендерит базовый блочный контейнер SFC. */
 export const SFCRender_Box: SFCVueRenderAdapterFunction = (input) => {

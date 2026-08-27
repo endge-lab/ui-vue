@@ -1,10 +1,10 @@
 import { Endge } from '@endge/core'
-import { reactive } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
+import { reactive } from 'vue'
 
 import { registerVueUIRenderer } from '@/model/render/register-vue-ui-renderer'
 
-describe('Регистрация Vue renderer', () => {
+describe('регистрация Vue renderer', () => {
   /** Проверяет, что Vue component помечается raw до передачи в Core. */
   it('изолирует component от Vue reactivity на границе adapter', () => {
     const component = { name: 'TestRenderer' }

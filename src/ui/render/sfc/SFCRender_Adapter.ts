@@ -1,14 +1,14 @@
-import {
-  ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
-  ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
-  Endge,
-} from '@endge/core'
-
 import type {
   SFCVueRenderAdapterKey,
   SFCVueRenderFunction,
-} from '@/domain/types/sfc-render.type'
-import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/domain/types/sfc-render.type'
+} from '@/model/render/sfc/sfc-vue-render.type'
+
+import {
+  Endge,
+  ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
+  ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
+} from '@endge/core'
+import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/model/render/sfc/sfc-vue-render.type'
 
 /** Resolves one renderer from the active Vue adapter without coupling structural renderers to it. */
 export function requireSFCAdapterRenderer(tag: SFCVueRenderAdapterKey): SFCVueRenderFunction {

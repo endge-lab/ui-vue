@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { EndgeVueTooltipManager } from '@/ui/overlay/tooltip/endge-tooltip-manager'
 
-describe('EndgeVueTooltipManager', () => {
+describe('endgeVueTooltipManager', () => {
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => {
     vi.useRealTimers()
@@ -15,10 +15,17 @@ describe('EndgeVueTooltipManager', () => {
     document.body.append(anchor)
     const renderContent = vi.fn(() => 'Lazy content')
     const manager = new EndgeVueTooltipManager('vue-native', {
-      side: 'right', align: 'start', openDelay: 50, closeDelay: 20,
+      side: 'right',
+      align: 'start',
+      openDelay: 50,
+      closeDelay: 20,
     })
     const request = {
-      ownerId: 'row-1:status', domId: 'tooltip-1', anchor, kind: 'text' as const, renderContent,
+      ownerId: 'row-1:status',
+      domId: 'tooltip-1',
+      anchor,
+      kind: 'text' as const,
+      renderContent,
     }
 
     manager.activate(request, 'pointer')
@@ -44,7 +51,10 @@ describe('EndgeVueTooltipManager', () => {
     document.body.append(anchor)
     const renderContent = vi.fn(() => 'never')
     const manager = new EndgeVueTooltipManager('ramax-aodb', {
-      side: 'bottom', align: 'center', openDelay: 100, closeDelay: 0,
+      side: 'bottom',
+      align: 'center',
+      openDelay: 100,
+      closeDelay: 0,
     })
 
     manager.activate({ ownerId: 'owner', domId: 'tooltip', anchor, kind: 'rich', renderContent }, 'focus')

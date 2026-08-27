@@ -1,20 +1,20 @@
+import type { SFCTableMarkers } from '@/ui/render/sfc/SFCRender_TableStyle'
 import {
   compileComponentSFC,
+  Endge,
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
   ENDGE_SFC_RENDER_ADAPTER_REQUIRED_KEYS,
-  Endge,
 } from '@endge/core'
 import { beforeAll, describe, expect, it } from 'vitest'
-import { h, isVNode } from 'vue'
 
+import { h, isVNode } from 'vue'
 import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
 import { normalizeSFCTableRows } from '@/ui/render/sfc/SFCRender_Table'
-import type { SFCTableMarkers } from '@/ui/render/sfc/SFCRender_TableStyle'
 
-describe('SFC EndgeCSS runtime markers', () => {
+describe('sFC EndgeCSS runtime markers', () => {
   beforeAll(() => {
     Endge.uiRegistry.adapters.register(NativeVueSFCAdapter)
     Endge.uiRegistry.adapters.activate({
@@ -37,7 +37,9 @@ describe('SFC EndgeCSS runtime markers', () => {
     const rendered = renderSFCNode(h, ir.template.roots[0], createSFCVueRenderContext({}, 0, null, ir))
 
     expect(isVNode(rendered)).toBe(true)
-    if (!isVNode(rendered)) return
+    if (!isVNode(rendered)) {
+      return
+    }
     expect(rendered.props?.['data-endge-id']).toBe('status')
     expect(rendered.props?.['data-endge-state']).toBe('delayed selected')
     expect(rendered.props?.part).toBe('status')
@@ -67,35 +69,39 @@ describe('SFC EndgeCSS runtime markers', () => {
     const rendered = renderSFCNode(h, ir.template.roots[0], createSFCVueRenderContext({}, 0, null, ir))
 
     expect(isVNode(rendered)).toBe(true)
-    if (!isVNode(rendered) || !Array.isArray(rendered.children)) return
+    if (!isVNode(rendered) || !Array.isArray(rendered.children)) {
+      return
+    }
 
     const grid = rendered.children[0]
     expect(isVNode(grid)).toBe(true)
-    if (!isVNode(grid)) return
+    if (!isVNode(grid)) {
+      return
+    }
 
     const markers = grid.props?.styleMarkers as SFCTableMarkers
     const column = (grid.props?.columns as any[])[0]
-    expect(markers.grid).toMatchObject({ part: 'grid', 'data-endge-part': 'grid' })
+    expect(markers.grid).toMatchObject({ 'part': 'grid', 'data-endge-part': 'grid' })
     expect(markers.grid['data-endge-id']).toBe('groundhandling-control')
     expect(markers.grid.id).toBeUndefined()
-    expect(markers.header).toMatchObject({ part: 'header', 'data-endge-part': 'header' })
-    expect(markers.body).toMatchObject({ part: 'body', 'data-endge-part': 'body' })
-    expect(markers.groupRow).toMatchObject({ part: 'group-row', 'data-endge-part': 'group-row' })
+    expect(markers.header).toMatchObject({ 'part': 'header', 'data-endge-part': 'header' })
+    expect(markers.body).toMatchObject({ 'part': 'body', 'data-endge-part': 'body' })
+    expect(markers.groupRow).toMatchObject({ 'part': 'group-row', 'data-endge-part': 'group-row' })
     expect(column.markers.headerCell).toMatchObject({
-      part: 'header-cell',
+      'part': 'header-cell',
       'data-endge-part': 'header-cell',
     })
     expect(column.markers.headerContent).toMatchObject({
-      part: 'header-content',
+      'part': 'header-content',
       'data-endge-part': 'header-content',
     })
 
     expect(column.markers.cell).toMatchObject({
-      part: 'cell',
+      'part': 'cell',
       'data-endge-part': 'cell',
     })
     expect(column.markers.cellContent).toMatchObject({
-      part: 'cell-content',
+      'part': 'cell-content',
       'data-endge-part': 'cell-content',
     })
     expect(markers.grid.class).toEqual([])
@@ -121,10 +127,14 @@ describe('SFC EndgeCSS runtime markers', () => {
     const rendered = renderSFCNode(h, ir.template.roots[0], createSFCVueRenderContext({}, 0, null, ir))
 
     expect(isVNode(rendered)).toBe(true)
-    if (!isVNode(rendered) || !Array.isArray(rendered.children)) return
+    if (!isVNode(rendered) || !Array.isArray(rendered.children)) {
+      return
+    }
     const grid = rendered.children[0]
     expect(isVNode(grid)).toBe(true)
-    if (!isVNode(grid)) return
+    if (!isVNode(grid)) {
+      return
+    }
 
     const source = Array.from({ length: 10_000 }, (_, index) => ({ id: index }))
     const rows = normalizeSFCTableRows(source)

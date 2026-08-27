@@ -1,10 +1,10 @@
 import { Subscribable } from '@endge/core'
-import { effectScope, watch } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
+import { effectScope, watch } from 'vue'
 
 import { useSubscribableRef, useSubscribableRefAuto } from '@/reactive/use-subscribable-ref'
 
-describe('Vue adapter для Subscribable', () => {
+describe('vue adapter для Subscribable', () => {
   /** Проверяет преобразование core-уведомления в обновление shallow ref. */
   it('обновляет ref после notify владельца', () => {
     const owner = new Subscribable()

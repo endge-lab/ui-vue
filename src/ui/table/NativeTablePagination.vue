@@ -22,8 +22,9 @@ const pageSizeOptions = computed(() => [...new Set([...props.pageSizes, props.pa
 
 function setPageSize(event: Event): void {
   const target = event.target
-  if (target instanceof HTMLSelectElement)
+  if (target instanceof HTMLSelectElement) {
     emit('update:page-size', Number(target.value))
+  }
 }
 </script>
 

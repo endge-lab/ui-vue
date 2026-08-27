@@ -1,4 +1,4 @@
-import type { SFCVueRenderAdapterFunction } from '@/domain/types/sfc-render.type'
+import type { SFCVueRenderAdapterFunction } from '@/model/render/sfc/sfc-vue-render.type'
 
 /** Рендерит числовое значение SFC primitive. */
 export const SFCRender_Number: SFCVueRenderAdapterFunction = (input) => {
@@ -11,10 +11,14 @@ export const SFCRender_Number: SFCVueRenderAdapterFunction = (input) => {
 }
 
 function formatNumber(value: unknown, props: Record<string, unknown>): string {
-  if (value == null) return props.empty == null ? '' : String(props.empty)
+  if (value == null) {
+    return props.empty == null ? '' : String(props.empty)
+  }
 
   const numberValue = Number(value)
-  if (!Number.isFinite(numberValue)) return String(value)
+  if (!Number.isFinite(numberValue)) {
+    return String(value)
+  }
 
   const minimumFractionDigits = toOptionalNumber(props.minFractionDigits)
   const maximumFractionDigits = toOptionalNumber(props.maxFractionDigits ?? props.decimals)
@@ -27,7 +31,9 @@ function formatNumber(value: unknown, props: Record<string, unknown>): string {
 }
 
 function toOptionalNumber(value: unknown): number | undefined {
-  if (value == null || value === '') return undefined
+  if (value == null || value === '') {
+    return undefined
+  }
 
   const numberValue = Number(value)
   return Number.isFinite(numberValue) ? numberValue : undefined

@@ -1,9 +1,42 @@
-import { defineStore } from 'pinia'
-import { computed } from 'vue'
 import { Endge } from '@endge/core'
+import { computed, reactive } from 'vue'
 import { useSubscribableRef } from '@/reactive/use-subscribable-ref'
 
-export const useDomainStore = defineStore('endge-domain-store', () => {
+/** Публичная Vue-проекция domain/program/events модулей Endge. */
+export interface DomainView {
+  readonly domain: typeof Endge.domain
+  readonly projects: ReturnType<typeof Endge.domain.getProjects>
+  readonly types: ReturnType<typeof Endge.domain.getTypes>
+  readonly typesPrimitives: ReturnType<typeof Endge.domain.getTypes>
+  readonly typesComplex: ReturnType<typeof Endge.domain.getTypes>
+  readonly typeCatalog: ReturnType<typeof Endge.program.getTypeCatalog>
+  readonly queries: ReturnType<typeof Endge.domain.getQueries>
+  readonly components: ReturnType<typeof Endge.domain.getComponents>
+  readonly componentSFCs: ReturnType<typeof Endge.domain.getComponentSFCs>
+  readonly actions: ReturnType<typeof Endge.domain.getActions>
+  readonly converters: ReturnType<typeof Endge.domain.getConverters>
+  readonly integrations: ReturnType<typeof Endge.domain.getIntegrations>
+  readonly pageTemplates: ReturnType<typeof Endge.domain.getPageTemplates>
+  readonly pages: ReturnType<typeof Endge.domain.getPages>
+  readonly navigations: ReturnType<typeof Endge.domain.getNavigations>
+  readonly folders: ReturnType<typeof Endge.domain.getFolders>
+  readonly queriesNames: readonly string[]
+  readonly parameters: ReturnType<typeof Endge.domain.getParameters>
+  readonly filters: ReturnType<typeof Endge.domain.getFilters>
+  readonly compositions: ReturnType<typeof Endge.domain.getCompositions>
+  readonly environments: ReturnType<typeof Endge.domain.getEnvironments>
+  readonly tenants: ReturnType<typeof Endge.domain.getTenants>
+  readonly policies: ReturnType<typeof Endge.domain.getPolicies>
+  readonly styles: ReturnType<typeof Endge.domain.getStyles>
+  readonly vocabs: ReturnType<typeof Endge.domain.getVocabs>
+  readonly i18nBundles: ReturnType<typeof Endge.domain.getI18nBundles>
+  readonly mocks: ReturnType<typeof Endge.domain.getMocks>
+  readonly authProfiles: ReturnType<typeof Endge.domain.getAuthProfiles>
+  readonly events: typeof Endge.events.lastEvents
+}
+
+/** Создаёт единственную Vue-проекцию framework-independent модулей Endge. */
+function createDomainView(): DomainView {
   const { refObj: domain } = useSubscribableRef(Endge.domain)
   const { refObj: program } = useSubscribableRef(Endge.program)
   const { refObj: eventsRef } = useSubscribableRef(Endge.events)
@@ -16,17 +49,18 @@ export const useDomainStore = defineStore('endge-domain-store', () => {
 
   // Примитивные типы домена
   const typesPrimitives = computed(() =>
-    types.value.filter((x) => x.isPrimitive),
+    types.value.filter(x => x.isPrimitive),
   )
 
   // Сложные типы домена
-  const typesComplex = computed(() => types.value.filter((x) => !x.isPrimitive))
+  const typesComplex = computed(() => types.value.filter(x => !x.isPrimitive))
 
   // Editor-facing projection of the source-backed Type Registry.
   const typeCatalog = computed(() => {
     const compiled = program.value.getTypeCatalog()
-    if (compiled.length)
+    if (compiled.length) {
       return compiled
+    }
     return types.value.map((type) => {
       const primitiveKind = String(type.meta?.primitiveKind ?? '').trim()
       const category = primitiveKind === 'reference'
@@ -125,7 +159,7 @@ export const useDomainStore = defineStore('endge-domain-store', () => {
     return ['query-gql', 'query-rest']
   })
 
-  return {
+  return reactive({
     domain,
     projects,
     types,
@@ -155,5 +189,13 @@ export const useDomainStore = defineStore('endge-domain-store', () => {
     mocks,
     authProfiles,
     events,
-  }
-})
+  }) as DomainView
+}
+
+let domainView: DomainView | null = null
+
+/** Возвращает общую readonly-проекцию состояния модулей Endge для Vue UI. */
+export function useDomainStore(): DomainView {
+  domainView ??= createDomainView()
+  return domainView
+}

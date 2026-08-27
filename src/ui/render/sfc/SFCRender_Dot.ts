@@ -1,4 +1,4 @@
-import type { SFCVueRenderAdapterFunction } from '@/domain/types/sfc-render.type'
+import type { SFCVueRenderAdapterFunction } from '@/model/render/sfc/sfc-vue-render.type'
 
 /** Рендерит status dot primitive. */
 export const SFCRender_Dot: SFCVueRenderAdapterFunction = (input) => {
@@ -6,9 +6,9 @@ export const SFCRender_Dot: SFCVueRenderAdapterFunction = (input) => {
 
   return input.h('span', {
     ...input.attrs,
-    class: ['endge-sfc-dot', input.props.class],
+    'class': ['endge-sfc-dot', input.props.class],
     'data-tone': input.props.tone == null ? undefined : String(input.props.tone),
-    style: {
+    'style': {
       ...(input.attrs.style as Record<string, string> | undefined),
       display: 'inline-block',
       width: `${Number.isFinite(size) ? size : 8}px`,

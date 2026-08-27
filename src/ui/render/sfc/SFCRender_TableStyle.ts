@@ -1,4 +1,4 @@
-import type { SFCVueRenderContext } from '@/domain/types/sfc-render.type'
+import type { SFCVueRenderContext } from '@/model/render/sfc/sfc-vue-render.type'
 
 export type SFCTablePublicPart
   = 'grid'
@@ -12,9 +12,9 @@ export type SFCTablePublicPart
     | 'group-row'
 
 export interface SFCTableMarkerAttrs extends Record<string, unknown> {
-  part: SFCTablePublicPart
+  'part': SFCTablePublicPart
   'data-endge-part': SFCTablePublicPart
-  class: string[]
+  'class': string[]
 }
 
 export interface SFCTableMarkers {
@@ -71,10 +71,12 @@ export function syncSFCTableDOMMarkers(grid: HTMLElement, markers: SFCTableMarke
   grid.querySelectorAll<HTMLElement>('revogr-data')
     .forEach((element) => {
       const rowType = element.getAttribute('type') ?? (element as HTMLElement & { type?: string }).type
-      if (rowType === 'rgRow') applyMarkerAttrs(element, markers.body)
+      if (rowType === 'rgRow') {
+        applyMarkerAttrs(element, markers.body)
+      }
     })
   grid.querySelectorAll<HTMLElement>('.rgRow')
-    .forEach((element) => applyMarkerAttrs(
+    .forEach(element => applyMarkerAttrs(
       element,
       element.classList.contains('groupingRow') ? markers.groupRow : markers.row,
     ))
@@ -85,18 +87,29 @@ function createMarkerAttrs(context: SFCVueRenderContext, part: SFCTablePublicPar
   const attrs: SFCTableMarkerAttrs = {
     part,
     'data-endge-part': part,
-    class: [...(host?.classes ?? [])],
+    'class': [...(host?.classes ?? [])],
     'data-endge-tag': host?.tag ?? 'Table',
   }
   appendAuthoredAttributes(attrs, host?.attributes)
-  if (host?.id) attrs['data-endge-id'] = host.id
-  if (host?.states.size) attrs['data-endge-state'] = [...host.states].join(' ')
-  if (host?.component) attrs['data-endge-component'] = host.component
-  if (host?.identity) attrs['data-endge-identity'] = host.identity
+  if (host?.id) {
+    attrs['data-endge-id'] = host.id
+  }
+  if (host?.states.size) {
+    attrs['data-endge-state'] = [...host.states].join(' ')
+  }
+  if (host?.component) {
+    attrs['data-endge-component'] = host.component
+  }
+  if (host?.identity) {
+    attrs['data-endge-identity'] = host.identity
+  }
   const scopeId = host?.ownerScopeId ?? context.styleOwnerScopeId
-  if (scopeId) attrs['data-endge-scope'] = scopeId
-  if (context.runtimeScopeIds.length)
+  if (scopeId) {
+    attrs['data-endge-scope'] = scopeId
+  }
+  if (context.runtimeScopeIds.length) {
     attrs['data-endge-runtime-scope'] = context.runtimeScopeIds.join(' ')
+  }
   return attrs
 }
 
@@ -108,17 +121,21 @@ function appendAuthoredAttributes(
     if (
       ['class', 'style', 'part', 'id', 'state', 'component', 'identity', 'ref', 'key'].includes(name)
       || name.startsWith('on')
-    )
+    ) {
       continue
-    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
+    }
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
       target[name] = value
+    }
   }
 }
 
 function applyMarkerAttrs(element: HTMLElement, attrs: SFCTableMarkerAttrs): void {
   for (const [key, value] of Object.entries(attrs)) {
     if (key === 'class') {
-      for (const className of attrs.class) element.classList.add(className)
+      for (const className of attrs.class) {
+        element.classList.add(className)
+      }
     }
     else if (value != null) {
       element.setAttribute(key, String(value))

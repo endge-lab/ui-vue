@@ -7,7 +7,9 @@ export interface SFCVueEditableResourceUpdate {
 
 /** Narrows generic runtime resource notifications to editable-session updates. */
 export function isSFCVueEditableResourceUpdate(value: unknown): value is SFCVueEditableResourceUpdate {
-  if (!value || typeof value !== 'object') return false
+  if (!value || typeof value !== 'object') {
+    return false
+  }
   const update = value as Partial<SFCVueEditableResourceUpdate>
   return update.kind === 'editable'
     && (update.action === 'begin' || update.action === 'commit' || update.action === 'cancel')

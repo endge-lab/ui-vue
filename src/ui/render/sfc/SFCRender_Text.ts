@@ -1,4 +1,4 @@
-import type { SFCVueRenderAdapterFunction } from '@/domain/types/sfc-render.type'
+import type { SFCVueRenderAdapterFunction } from '@/model/render/sfc/sfc-vue-render.type'
 
 /** Рендерит текстовый SFC primitive. */
 export const SFCRender_Text: SFCVueRenderAdapterFunction = (input) => {

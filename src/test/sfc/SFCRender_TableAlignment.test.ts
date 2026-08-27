@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { normalizeSFCTableCellAlignment } from '@/ui/render/sfc/SFCRender_TableAlignment'
 
-describe('SFC Table cell alignment', () => {
+describe('sFC Table cell alignment', () => {
   it('normalizes explicit center and middle alignment', () => {
     expect(normalizeSFCTableCellAlignment('center', 'middle')).toEqual({
       horizontal: 'center',

@@ -1,8 +1,8 @@
-import { defineConfig } from 'vite'
-import path from 'path'
+import path from 'node:path'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import dts from 'unplugin-dts/vite'
+import { defineConfig } from 'vite'
 
 export default defineConfig({
   build: {
@@ -19,7 +19,6 @@ export default defineConfig({
         '@endge/utils',
         '@endge/raph',
         'vue',
-        'pinia',
         'primevue',
         '@primevue/themes',
         'primeicons',

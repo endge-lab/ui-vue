@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { EndgeTooltipAlign, EndgeTooltipSide } from '@endge/core'
-import { computed, defineComponent, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-
 import type { EndgeVueTooltipManager } from './endge-tooltip-manager'
+
+import { computed, defineComponent, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
 const props = defineProps<{ manager: EndgeVueTooltipManager }>()
 const tooltipRef = ref<HTMLElement | null>(null)
@@ -27,7 +27,9 @@ watch(
   () => state.phase,
   async (phase) => {
     cleanupPlacement()
-    if (phase !== 'visible') return
+    if (phase !== 'visible') {
+      return
+    }
     await nextTick()
     if (!state.anchor?.isConnected) {
       props.manager.close(state.ownerId ?? undefined)
@@ -38,8 +40,12 @@ watch(
     window.addEventListener('scroll', updatePosition, { passive: true, capture: true })
     if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(updatePosition)
-      if (state.anchor) resizeObserver.observe(state.anchor)
-      if (tooltipRef.value) resizeObserver.observe(tooltipRef.value)
+      if (state.anchor) {
+        resizeObserver.observe(state.anchor)
+      }
+      if (tooltipRef.value) {
+        resizeObserver.observe(tooltipRef.value)
+      }
     }
   },
   { flush: 'post' },
@@ -58,7 +64,9 @@ function updatePosition(): void {
   const anchor = state.anchor
   const tooltip = tooltipRef.value
   if (!anchor?.isConnected || !tooltip) {
-    if (state.phase === 'visible') props.manager.close(state.ownerId ?? undefined)
+    if (state.phase === 'visible') {
+      props.manager.close(state.ownerId ?? undefined)
+    }
     return
   }
   const placement = placeTooltip(
@@ -113,9 +121,15 @@ function coordinates(
     : align === 'end'
       ? crossStart + crossSize - tooltipCrossSize
       : crossStart + (crossSize - tooltipCrossSize) / 2
-  if (side === 'top') return { side, left: cross, top: anchor.top - tooltip.height - gap }
-  if (side === 'bottom') return { side, left: cross, top: anchor.bottom + gap }
-  if (side === 'left') return { side, left: anchor.left - tooltip.width - gap, top: cross }
+  if (side === 'top') {
+    return { side, left: cross, top: anchor.top - tooltip.height - gap }
+  }
+  if (side === 'bottom') {
+    return { side, left: cross, top: anchor.bottom + gap }
+  }
+  if (side === 'left') {
+    return { side, left: anchor.left - tooltip.width - gap, top: cross }
+  }
   return { side, left: anchor.right + gap, top: cross }
 }
 

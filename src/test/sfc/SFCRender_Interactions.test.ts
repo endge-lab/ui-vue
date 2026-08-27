@@ -2,21 +2,21 @@
 
 import type { RComponentSFC_IR_ElementNode } from '@endge/core'
 import {
+  compileComponentSFC,
+  Endge,
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
-  Endge,
-  compileComponentSFC,
 } from '@endge/core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { h, isVNode } from 'vue'
 
-import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/domain/types/sfc-render.type'
+import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/model/render/sfc/sfc-vue-render.type'
 import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
-import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
 import { createSFCSemanticInteractionBindings } from '@/ui/render/sfc/SFCRender_Interaction'
+import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
 
-describe('SFC :on interactions in Vue renderer', () => {
+describe('sFC :on interactions in Vue renderer', () => {
   beforeEach(() => {
     Endge.uiRegistry.adapters.reset()
     Endge.uiRegistry.adapters.register(NativeVueSFCAdapter)
@@ -45,27 +45,62 @@ describe('SFC :on interactions in Vue renderer', () => {
     context.locals = { rowId: 'row-7', columnKey: 'status', row: { id: 'row-7' } }
     context.eventBoundary = boundary as any
     const rendered = renderSFCNode(h, node, context)
-    if (!isVNode(rendered)) throw new Error('Text did not render a VNode')
+    if (!isVNode(rendered)) {
+      throw new Error('Text did not render a VNode')
+    }
 
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'w', code: 'KeyW', bubbles: true }))
     const preventDefault = vi.fn()
     const stopPropagation = vi.fn()
     const currentTarget = { id: 'title' }
     rendered.props?.onClick({
-      type: 'click', target: { id: 'child' }, currentTarget, cancelable: true,
-      preventDefault, stopPropagation, button: 0, buttons: 1,
-      clientX: 1, clientY: 1, shiftKey: true, ctrlKey: false, altKey: false, metaKey: false,
+      type: 'click',
+      target: { id: 'child' },
+      currentTarget,
+      cancelable: true,
+      preventDefault,
+      stopPropagation,
+      button: 0,
+      buttons: 1,
+      clientX: 1,
+      clientY: 1,
+      shiftKey: true,
+      ctrlKey: false,
+      altKey: false,
+      metaKey: false,
     })
     expect(boundary.routeChild).not.toHaveBeenCalled()
     rendered.props?.onClick({
-      type: 'click', target: currentTarget, currentTarget, cancelable: true,
-      preventDefault, stopPropagation, button: 0, buttons: 1,
-      clientX: 3, clientY: 7, shiftKey: true, ctrlKey: false, altKey: false, metaKey: false,
+      type: 'click',
+      target: currentTarget,
+      currentTarget,
+      cancelable: true,
+      preventDefault,
+      stopPropagation,
+      button: 0,
+      buttons: 1,
+      clientX: 3,
+      clientY: 7,
+      shiftKey: true,
+      ctrlKey: false,
+      altKey: false,
+      metaKey: false,
     })
     rendered.props?.onClick({
-      type: 'click', target: currentTarget, currentTarget, cancelable: true,
-      preventDefault, stopPropagation, button: 0, buttons: 1,
-      clientX: 3, clientY: 7, shiftKey: true, ctrlKey: false, altKey: false, metaKey: false,
+      type: 'click',
+      target: currentTarget,
+      currentTarget,
+      cancelable: true,
+      preventDefault,
+      stopPropagation,
+      button: 0,
+      buttons: 1,
+      clientX: 3,
+      clientY: 7,
+      shiftKey: true,
+      ctrlKey: false,
+      altKey: false,
+      metaKey: false,
     })
     await Promise.resolve()
 
@@ -87,7 +122,9 @@ describe('SFC :on interactions in Vue renderer', () => {
           expect.objectContaining({ identity: 'second' }),
         ],
       })],
-      [], 0, { rowId: 'row-7', columnKey: 'status', row: { id: 'row-7' } },
+      [],
+      0,
+      { rowId: 'row-7', columnKey: 'status', row: { id: 'row-7' } },
     )
     document.dispatchEvent(new KeyboardEvent('keyup', { key: 'w', code: 'KeyW', bubbles: true }))
   })
@@ -141,16 +178,29 @@ describe('SFC :on interactions in Vue renderer', () => {
     context.locals = { row: { id: 'leg-1' } }
     context.eventBoundary = boundary as any
     const rendered = renderSFCNode(h, node, context)
-    if (!isVNode(rendered)) throw new Error('Cell did not render a VNode')
+    if (!isVNode(rendered)) {
+      throw new Error('Cell did not render a VNode')
+    }
 
     expect(rendered.props?.onContextmenu).toBeTypeOf('function')
     expect(rendered.props?.onClick).toBeUndefined()
     const currentTarget = { id: 'bridge' }
     const preventDefault = vi.fn()
     rendered.props?.onContextmenu({
-      type: 'contextmenu', target: currentTarget, currentTarget, cancelable: true,
-      preventDefault, stopPropagation: vi.fn(), button: 2, buttons: 0,
-      clientX: 3, clientY: 7, shiftKey: false, ctrlKey: false, altKey: false, metaKey: false,
+      type: 'contextmenu',
+      target: currentTarget,
+      currentTarget,
+      cancelable: true,
+      preventDefault,
+      stopPropagation: vi.fn(),
+      button: 2,
+      buttons: 0,
+      clientX: 3,
+      clientY: 7,
+      shiftKey: false,
+      ctrlKey: false,
+      altKey: false,
+      metaKey: false,
     })
     await Promise.resolve()
 
@@ -162,7 +212,9 @@ describe('SFC :on interactions in Vue renderer', () => {
       [expect.objectContaining({
         actions: [expect.objectContaining({ kind: 'query', identity: 'groundHandling.actualTime.update' })],
       })],
-      [], 0, expect.objectContaining({ row: { id: 'leg-1' } }),
+      [],
+      0,
+      expect.objectContaining({ row: { id: 'leg-1' } }),
     )
   })
 
@@ -181,20 +233,38 @@ describe('SFC :on interactions in Vue renderer', () => {
     context.eventBoundary = boundary as any
     context.host = host as any
     const rendered = renderSFCNode(h, node, context)
-    if (!isVNode(rendered)) throw new Error('Text did not render a VNode')
+    if (!isVNode(rendered)) {
+      throw new Error('Text did not render a VNode')
+    }
 
     expect(rendered.props?.onClickCapturePassive).toBeTypeOf('function')
     expect(rendered.props?.onClick).toBeTypeOf('function')
     const currentTarget = { id: 'title' }
     rendered.props?.onClickCapturePassive({
-      type: 'click', target: currentTarget, currentTarget, cancelable: true,
-      preventDefault: vi.fn(), stopPropagation: vi.fn(), button: 0,
-      shiftKey: false, ctrlKey: false, altKey: false, metaKey: false,
+      type: 'click',
+      target: currentTarget,
+      currentTarget,
+      cancelable: true,
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+      button: 0,
+      shiftKey: false,
+      ctrlKey: false,
+      altKey: false,
+      metaKey: false,
     })
     rendered.props?.onClick({
-      type: 'click', target: currentTarget, currentTarget, cancelable: true,
-      preventDefault: vi.fn(), stopPropagation: vi.fn(), button: 0,
-      shiftKey: false, ctrlKey: false, altKey: false, metaKey: false,
+      type: 'click',
+      target: currentTarget,
+      currentTarget,
+      cancelable: true,
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+      button: 0,
+      shiftKey: false,
+      ctrlKey: false,
+      altKey: false,
+      metaKey: false,
     })
     expect(boundary.routeChild).toHaveBeenCalledOnce()
     expect(host.beginEditSession).toHaveBeenCalledOnce()
@@ -202,7 +272,12 @@ describe('SFC :on interactions in Vue renderer', () => {
 
   it('projects nested component :on rules to the semantic Event boundary', () => {
     const node: RComponentSFC_IR_ElementNode = {
-      id: 'child', kind: 'element', tag: 'Component', props: {}, directives: {}, children: [],
+      id: 'child',
+      kind: 'element',
+      tag: 'Component',
+      props: {},
+      directives: {},
+      children: [],
       interactions: [{ rules: [{
         event: 'saved',
         trigger: { kind: 'literal', value: { event: 'saved', once: true } },
@@ -223,7 +298,9 @@ describe('SFC :on interactions in Vue renderer', () => {
   it('attaches Cell interactions to the RevoGrid cell surface with row and column locals', async () => {
     const result = compileComponentSFC(`<template><Table :rows="rows" row-key="id"><Column key="status"><Cell :on.stop="{ event: 'click', modifiers: { shift: true }, held: { code: ['KeyW'] }, reaction: action({ identity: 'cell.inspect' }) }"><Text>{{ value }}</Text></Cell></Column></Table></template>`)
     const node = result.ir?.template?.roots[0]
-    if (!node || node.kind !== 'element') throw new Error(JSON.stringify(result.diagnostics))
+    if (!node || node.kind !== 'element') {
+      throw new Error(JSON.stringify(result.diagnostics))
+    }
     const boundary = {
       observesChild: vi.fn(() => false),
       claimLocalOnce: vi.fn(() => true),
@@ -232,7 +309,9 @@ describe('SFC :on interactions in Vue renderer', () => {
     const context = createSFCVueRenderContext({ rows: [{ id: 7, status: 'ready' }] })
     context.eventBoundary = boundary as any
     const rendered = renderSFCNode(h, node, context)
-    if (!isVNode(rendered)) throw new Error('Table did not render a VNode')
+    if (!isVNode(rendered)) {
+      throw new Error('Table did not render a VNode')
+    }
     const table = (rendered.children as any[])[0]
     const column = table.props.columns[0]
     const row = { id: 7, status: 'ready' }
@@ -249,7 +328,9 @@ describe('SFC :on interactions in Vue renderer', () => {
       onContextMenu: vi.fn(),
       onKeydown: vi.fn(),
     })
-    if (!isVNode(cell)) throw new Error('Cell did not render a VNode')
+    if (!isVNode(cell)) {
+      throw new Error('Cell did not render a VNode')
+    }
 
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'w', code: 'KeyW', bubbles: true }))
     cell.props?.onClick(new MouseEvent('click', { bubbles: true, shiftKey: true, button: 0 }))
@@ -272,8 +353,12 @@ describe('SFC :on interactions in Vue renderer', () => {
 function compileText(template: string): RComponentSFC_IR_ElementNode {
   const result = compileComponentSFC(`<template>${template}</template>`)
   const errors = result.diagnostics.filter(item => item.severity === 'error')
-  if (errors.length) throw new Error(JSON.stringify(errors))
+  if (errors.length) {
+    throw new Error(JSON.stringify(errors))
+  }
   const node = result.ir?.template?.roots[0]
-  if (!node || node.kind !== 'element') throw new Error('Text root was not compiled')
+  if (!node || node.kind !== 'element') {
+    throw new Error('Text root was not compiled')
+  }
   return node
 }

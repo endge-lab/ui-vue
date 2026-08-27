@@ -3,18 +3,19 @@ import type {
   RComponentSFC_IR_Tag,
   RComponentSFC_IR_Value,
 } from '@endge/core'
+import type { VNode } from 'vue'
 import {
+  Endge,
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
   ENDGE_SFC_RENDER_ADAPTER_REQUIRED_KEYS,
-  Endge,
 } from '@endge/core'
 import { beforeAll, describe, expect, it } from 'vitest'
-import { h, isVNode, type VNode } from 'vue'
+import { h, isVNode } from 'vue'
 
+import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
-import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
 
 describe('display-only SFC form controls', () => {
   beforeAll(() => {
@@ -137,8 +138,9 @@ function renderControl(
   }
   const result = renderSFCNode(h, node, createSFCVueRenderContext({}))
 
-  if (!isVNode(result))
+  if (!isVNode(result)) {
     throw new Error(`${tag} did not render a VNode`)
+  }
   return result
 }
 

@@ -1,17 +1,17 @@
 import type {
   ComponentSFCProgramPayload,
+  ComputationProgramPayload,
   ProgramArtifact,
   RComponentSFC_IR_ElementNode,
-  ComputationProgramPayload,
 } from '@endge/core'
 import {
   compileComponentSFC,
+  compileComputation,
+  ComponentSFCRuntimeHost,
+  Endge,
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
   ENDGE_SFC_RENDER_ADAPTER_REQUIRED_KEYS,
-  Endge,
-  compileComputation,
-  ComponentSFCRuntimeHost,
   RComponentSFC,
 } from '@endge/core'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
@@ -21,10 +21,11 @@ import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
 
-describe('SFCRender_Component', () => {
+describe('sFCRender_Component', () => {
   beforeAll(() => {
-    if (!Endge.uiRegistry.adapters.has(NativeVueSFCAdapter.id))
+    if (!Endge.uiRegistry.adapters.has(NativeVueSFCAdapter.id)) {
       Endge.uiRegistry.adapters.register(NativeVueSFCAdapter)
+    }
     Endge.uiRegistry.adapters.activate({
       id: NativeVueSFCAdapter.id,
       protocol: ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
@@ -65,7 +66,9 @@ defineProps<{ label: string }>()
     const rendered = renderSFCNode(h, node, createSFCVueRenderContext({ tail: 'RA-89001' }))
 
     expect(isVNode(rendered)).toBe(true)
-    if (!isVNode(rendered)) return
+    if (!isVNode(rendered)) {
+      return
+    }
     expect(rendered.type).toBe('span')
     expect(rendered.children).toEqual(['RA-89001'])
   })
@@ -85,7 +88,9 @@ defineProps<{ label: string }>()
     const rendered = renderSFCNode(h, node, createSFCVueRenderContext({}))
 
     expect(isVNode(rendered)).toBe(true)
-    if (!isVNode(rendered)) return
+    if (!isVNode(rendered)) {
+      return
+    }
     expect(rendered.props?.class).toContain('endge-sfc-component-placeholder')
     expect(String(rendered.children)).toContain('component cycle')
   })
@@ -122,7 +127,9 @@ const state = ports.require.state({ value: props.value })
 
     const rendered = renderSFCNode(h, ir.template.roots[0]!, firstContext)
     expect(isVNode(rendered)).toBe(true)
-    if (!isVNode(rendered)) return
+    if (!isVNode(rendered)) {
+      return
+    }
     expect(rendered.children).toEqual(['A'])
   })
 
@@ -235,7 +242,10 @@ const state = ports.require.state({ value: props.value })
     Endge.program.addArtifact(parentArtifact)
     const model = RComponentSFC.fromPlain({ id: 100, identity: 'status-owner', name: 'Status owner', source: parentSource })
     const host = new ComponentSFCRuntimeHost({
-      id: 'status-owner-runtime', model, entityIdentity: model.identity, artifactReader: Endge.program,
+      id: 'status-owner-runtime',
+      model,
+      entityIdentity: model.identity,
+      artifactReader: Endge.program,
     })
     const received: unknown[] = []
     host.onEventPort('edited', occurrence => received.push(occurrence.payload))
@@ -244,15 +254,25 @@ const state = ports.require.state({ value: props.value })
     const node = ir.template.roots[0]!
 
     const display = renderSFCNode(h, node, context)
-    if (!isVNode(display)) throw new Error('Custom editable display did not render')
+    if (!isVNode(display)) {
+      throw new Error('Custom editable display did not render')
+    }
     display.props?.onClick({ target: display, currentTarget: display, cancelable: true })
     const edit = renderSFCNode(h, node, context)
-    if (!isVNode(edit)) throw new Error('Custom editable edit variant did not render')
+    if (!isVNode(edit)) {
+      throw new Error('Custom editable edit variant did not render')
+    }
     const select = (edit.children as any[]).find(child => isVNode(child) && child.type === 'select')
     expect(select).toBeTruthy()
     select.props?.onChange({
-      type: 'change', target: { value: 'STOP' }, currentTarget: { value: 'STOP' },
-      cancelable: true, altKey: false, ctrlKey: false, metaKey: false, shiftKey: false,
+      type: 'change',
+      target: { value: 'STOP' },
+      currentTarget: { value: 'STOP' },
+      cancelable: true,
+      altKey: false,
+      ctrlKey: false,
+      metaKey: false,
+      shiftKey: false,
     })
     await vi.waitFor(() => expect(received).toEqual([{ value: 'STOP', previousValue: 'RUN' }]))
     host.destroy()
@@ -277,7 +297,7 @@ function createArtifact(identity: string, source: string): ProgramArtifact<Compo
 
 function createComputationArtifact(identity: string): ProgramArtifact<ComputationProgramPayload> {
   const compiled = compileComputation({
-    source: "defineComputation({ input: field(Input), output: field(Output), outputs: { result: { value: input('value') } }, result: output('result') })",
+    source: 'defineComputation({ input: field(Input), output: field(Output), outputs: { result: { value: input(\'value\') } }, result: output(\'result\') })',
   })
   return {
     ref: { entityType: 'computation', id: identity, identity },

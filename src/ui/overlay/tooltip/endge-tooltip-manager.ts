@@ -3,14 +3,14 @@ import type {
   EndgeTooltipConfiguration,
   EndgeTooltipSide,
 } from '@endge/core'
+import type { InjectionKey, VNodeChild } from 'vue'
 import {
-  ENDGE_KEYBOARD_CONTEXT_RAPH_PATH,
   Endge,
+  ENDGE_KEYBOARD_CONTEXT_RAPH_PATH,
   matchesComponentSFCInteractionKeyboardCondition,
   normalizeComponentSFCInteractionKeyboardCondition,
 } from '@endge/core'
 import { Raph } from '@endge/raph'
-import type { InjectionKey, VNodeChild } from 'vue'
 import { shallowReactive } from 'vue'
 
 export type EndgeTooltipContentKind = 'text' | 'markdown' | 'rich'
@@ -79,7 +79,9 @@ export class EndgeVueTooltipManager {
   }
 
   public activate(request: EndgeVueTooltipRequest, reason: EndgeTooltipActivationReason): void {
-    if (this.disposed || !request.anchor.isConnected) return
+    if (this.disposed || !request.anchor.isConnected) {
+      return
+    }
     this.clearCloseTimer()
 
     if (this.request?.ownerId !== request.ownerId) {
@@ -93,9 +95,13 @@ export class EndgeVueTooltipManager {
   }
 
   public deactivate(ownerId: string, reason: EndgeTooltipActivationReason): void {
-    if (this.request?.ownerId !== ownerId) return
+    if (this.request?.ownerId !== ownerId) {
+      return
+    }
     this.reasons.delete(reason)
-    if (this.reasons.size > 0) return
+    if (this.reasons.size > 0) {
+      return
+    }
     this.clearOpenTimer()
     const delay = this.resolvePolicy(this.request.policy).closeDelay
     if (delay === 0) {
@@ -105,18 +111,24 @@ export class EndgeVueTooltipManager {
     this.clearCloseTimer()
     const generation = ++this.generation
     this.closeTimer = setTimeout(() => {
-      if (generation === this.generation && this.reasons.size === 0) this.hideNow()
+      if (generation === this.generation && this.reasons.size === 0) {
+        this.hideNow()
+      }
     }, delay)
   }
 
   public close(ownerId?: string): void {
-    if (ownerId && this.request?.ownerId !== ownerId) return
+    if (ownerId && this.request?.ownerId !== ownerId) {
+      return
+    }
     this.reasons.clear()
     this.hideNow()
   }
 
   public dispose(): void {
-    if (this.disposed) return
+    if (this.disposed) {
+      return
+    }
     this.disposed = true
     this.disposeKeyboardWatch()
     this.reasons.clear()
@@ -160,8 +172,9 @@ export class EndgeVueTooltipManager {
     this.clearOpenTimer()
     this.clearCloseTimer()
     this.generation += 1
-    if (this.state.anchor && this.state.domId)
+    if (this.state.anchor && this.state.domId) {
       removeDescribedBy(this.state.anchor, this.state.domId)
+    }
     this.state.phase = 'idle'
     this.state.ownerId = null
     this.state.domId = null
@@ -174,25 +187,27 @@ export class EndgeVueTooltipManager {
 
   private reconcileActivation(): void {
     const request = this.request
-    if (this.disposed || !request || this.reasons.size === 0 || !request.anchor.isConnected)
+    if (this.disposed || !request || this.reasons.size === 0 || !request.anchor.isConnected) {
       return
+    }
 
     const policy = this.resolvePolicy(request.policy)
     if (!this.matchesKeyboard(policy)) {
       this.suspend()
       return
     }
-    if ((this.state.phase === 'visible' || this.state.phase === 'pending') && this.state.ownerId === request.ownerId)
+    if ((this.state.phase === 'visible' || this.state.phase === 'pending') && this.state.ownerId === request.ownerId) {
       return
+    }
 
     this.clearOpenTimer()
     this.state.phase = 'pending'
     this.state.ownerId = request.ownerId
     const generation = ++this.generation
-    if (policy.openDelay === 0)
+    if (policy.openDelay === 0) {
       this.show(generation, policy)
-    else
-      this.openTimer = setTimeout(() => this.show(generation, policy), policy.openDelay)
+    }
+    else { this.openTimer = setTimeout(() => this.show(generation, policy), policy.openDelay) }
   }
 
   private matchesKeyboard(policy: EndgeVueTooltipPolicy): boolean {
@@ -203,7 +218,9 @@ export class EndgeVueTooltipManager {
   private resolvePolicy(local: Partial<EndgeVueTooltipPolicy> | undefined): EndgeVueTooltipPolicy {
     const next: EndgeTooltipConfiguration = { ...this.defaults }
     for (const [key, value] of Object.entries(local ?? {})) {
-      if (value != null) (next as any)[key] = value
+      if (value != null) {
+        (next as any)[key] = value
+      }
     }
     const keyboard = normalizeComponentSFCInteractionKeyboardCondition(next.keyboard)
     return {
@@ -216,12 +233,16 @@ export class EndgeVueTooltipManager {
   }
 
   private clearOpenTimer(): void {
-    if (this.openTimer != null) clearTimeout(this.openTimer)
+    if (this.openTimer != null) {
+      clearTimeout(this.openTimer)
+    }
     this.openTimer = null
   }
 
   private clearCloseTimer(): void {
-    if (this.closeTimer != null) clearTimeout(this.closeTimer)
+    if (this.closeTimer != null) {
+      clearTimeout(this.closeTimer)
+    }
     this.closeTimer = null
   }
 }
@@ -233,7 +254,9 @@ export function attachEndgeTooltipTriggerAttrs(
   manager: EndgeVueTooltipManager | null,
   createRequest: (anchor: HTMLElement) => EndgeVueTooltipRequest,
 ): void {
-  if (!manager) return
+  if (!manager) {
+    return
+  }
   let ownerId = ''
   appendHandler(attrs, 'onMouseenter', (event: MouseEvent) => {
     const anchor = event.currentTarget as HTMLElement
@@ -250,7 +273,9 @@ export function attachEndgeTooltipTriggerAttrs(
   })
   appendHandler(attrs, 'onFocusout', () => ownerId && manager.deactivate(ownerId, 'focus'))
   appendHandler(attrs, 'onKeydown', (event: KeyboardEvent) => {
-    if (event.key !== 'Escape' || !ownerId) return
+    if (event.key !== 'Escape' || !ownerId) {
+      return
+    }
     event.stopPropagation()
     manager.close(ownerId)
   })
@@ -284,6 +309,8 @@ function addDescribedBy(anchor: HTMLElement, id: string): void {
 
 function removeDescribedBy(anchor: HTMLElement, id: string): void {
   const ids = (anchor.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(value => value && value !== id)
-  if (ids.length) anchor.setAttribute('aria-describedby', ids.join(' '))
-  else anchor.removeAttribute('aria-describedby')
+  if (ids.length) {
+    anchor.setAttribute('aria-describedby', ids.join(' '))
+  }
+  else { anchor.removeAttribute('aria-describedby') }
 }

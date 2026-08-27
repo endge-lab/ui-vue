@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Endge, type ContextMenuItemDescriptor } from '@endge/core'
+import type { ContextMenuItemDescriptor } from '@endge/core'
+import { Endge } from '@endge/core'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import {
@@ -67,8 +68,9 @@ function removeGlobalListeners(): void {
 }
 
 function onDocumentMouseDown(event: MouseEvent): void {
-  if (menuRef.value?.contains(event.target as Node))
+  if (menuRef.value?.contains(event.target as Node)) {
     return
+  }
 
   closeEndgeContextMenu()
 }
@@ -91,8 +93,9 @@ function closeOnWindowChange(): void {
 
 function clampMenuToViewport(): void {
   const menu = menuRef.value
-  if (!menu)
+  if (!menu) {
     return
+  }
 
   const rect = menu.getBoundingClientRect()
   const margin = 8
@@ -104,7 +107,9 @@ function clampMenuToViewport(): void {
 }
 
 async function runItem(item: ContextMenuItemDescriptor): Promise<void> {
-  if (executing.value || item.disabled) return
+  if (executing.value || item.disabled) {
+    return
+  }
   executing.value = true
   try {
     await executeEndgeContextMenuItem(item)
@@ -124,7 +129,9 @@ function resolveItemLabel(item: ContextMenuItemDescriptor): string {
 
 function focusItem(direction: 'first' | 'last' | 'next' | 'previous'): void {
   const items = [...(menuRef.value?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)') ?? [])]
-  if (!items.length) return
+  if (!items.length) {
+    return
+  }
   const activeIndex = items.indexOf(document.activeElement as HTMLButtonElement)
   const index = direction === 'first'
     ? 0

@@ -1,18 +1,18 @@
 import type { RComponentSFC_IR_ElementNode } from '@endge/core'
 import {
+  Endge,
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
-  Endge,
 } from '@endge/core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { h, isVNode } from 'vue'
 
-import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/domain/types/sfc-render.type'
+import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/model/render/sfc/sfc-vue-render.type'
 import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
 
-describe('SFC intrinsic Events', () => {
+describe('sFC intrinsic Events', () => {
   beforeEach(() => {
     Endge.uiRegistry.adapters.reset()
     Endge.uiRegistry.adapters.register(NativeVueSFCAdapter)
@@ -48,7 +48,9 @@ describe('SFC intrinsic Events', () => {
       children: [],
     }
     const rendered = renderSFCNode(h, node, context)
-    if (!isVNode(rendered)) throw new Error('Text did not render a VNode')
+    if (!isVNode(rendered)) {
+      throw new Error('Text did not render a VNode')
+    }
     const preventDefault = vi.fn()
     const stopPropagation = vi.fn()
     const currentTarget = { id: 'title' }

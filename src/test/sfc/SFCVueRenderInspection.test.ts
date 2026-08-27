@@ -9,7 +9,7 @@ import {
 } from '@/model/render/sfc/SFCVueRenderInspection'
 import { createSFCVueRenderContext, extendSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 
-describe('SFCVueRenderInspection', () => {
+describe('sFCVueRenderInspection', () => {
   it('keeps one table template branch and isolates concrete row instances', () => {
     const session = new SFCRenderInspectionSession()
     const context = createSFCVueRenderContext(

@@ -26,9 +26,13 @@ export const SFC_EditableRenderBoundary = defineComponent({
     let active = false
 
     const resourceDirtyHandler = (update: unknown): void => {
-      if (!isSFCVueEditableResourceUpdate(update)) return
+      if (!isSFCVueEditableResourceUpdate(update)) {
+        return
+      }
       const nextActive = Boolean(props.host.getEditSession(props.sessionKey))
-      if (update.key !== props.sessionKey && nextActive === active) return
+      if (update.key !== props.sessionKey && nextActive === active) {
+        return
+      }
       active = nextActive
       version.value++
     }

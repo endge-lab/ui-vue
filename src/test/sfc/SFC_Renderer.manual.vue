@@ -7,12 +7,12 @@ const ir: RComponentSFC_IR = {
   script: {
     props: [],
     locals: [],
-      ports: {
-        require: { computations: [], components: [], actions: [], queries: [] },
-        provides: { actions: [] },
-        emits: { events: [] },
-        forward: { rules: [] },
-      },
+    ports: {
+      require: { computations: [], components: [], actions: [], queries: [] },
+      provides: { actions: [] },
+      emits: { events: [] },
+      forward: { rules: [] },
+    },
     portCalls: [],
   },
   template: {

@@ -8,7 +8,7 @@ import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { SFCRender_Grid } from '@/ui/render/sfc/SFCRender_Grid'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
 
-describe('SFCRender_Grid', () => {
+describe('sFCRender_Grid', () => {
   beforeEach(() => {
     Endge.uiRegistry.adapters.reset()
     Endge.uiRegistry.adapters.register(NativeVueSFCAdapter)
@@ -32,7 +32,9 @@ describe('SFCRender_Grid', () => {
     })
 
     expect(isVNode(rendered)).toBe(true)
-    if (!isVNode(rendered)) return
+    if (!isVNode(rendered)) {
+      return
+    }
     expect(rendered.props?.style).toMatchObject({
       display: 'grid',
       gridTemplateColumns: 'repeat(12, minmax(0, 1fr))',
@@ -59,7 +61,9 @@ describe('SFCRender_Grid', () => {
     const rendered = renderSFCNode(h, node, createSFCVueRenderContext({}))
 
     expect(isVNode(rendered)).toBe(true)
-    if (!isVNode(rendered)) return
+    if (!isVNode(rendered)) {
+      return
+    }
     expect(rendered.props?.style).toMatchObject({
       gridColumn: '2 / span 5',
       gridRow: '3 / span 2',

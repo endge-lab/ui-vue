@@ -1,4 +1,4 @@
-import type { SFCVueRenderAdapterFunction } from '@/domain/types/sfc-render.type'
+import type { SFCVueRenderAdapterFunction } from '@/model/render/sfc/sfc-vue-render.type'
 
 /** Рендерит разделитель SFC primitive. */
 export const SFCRender_Divider: SFCVueRenderAdapterFunction = (input) => {
@@ -6,10 +6,10 @@ export const SFCRender_Divider: SFCVueRenderAdapterFunction = (input) => {
 
   return input.h('div', {
     ...input.attrs,
-    class: ['endge-sfc-divider', input.props.class],
-    role: 'separator',
+    'class': ['endge-sfc-divider', input.props.class],
+    'role': 'separator',
     'aria-orientation': vertical ? 'vertical' : 'horizontal',
-    style: {
+    'style': {
       ...(input.attrs.style as Record<string, string> | undefined),
       alignSelf: vertical ? 'stretch' : undefined,
       borderLeft: vertical ? '1px solid currentColor' : undefined,

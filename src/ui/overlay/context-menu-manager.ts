@@ -43,8 +43,9 @@ export function openEndgeContextMenu(input: EndgeContextMenuOpenInput): void {
 }
 
 export function closeEndgeContextMenu(ownerId?: string): void {
-  if (ownerId && endgeContextMenuState.ownerId !== ownerId)
+  if (ownerId && endgeContextMenuState.ownerId !== ownerId) {
     return
+  }
 
   endgeContextMenuState.open = false
   endgeContextMenuState.ownerId = null
@@ -55,8 +56,9 @@ export function closeEndgeContextMenu(ownerId?: string): void {
 export function getContextMenuItems(): ContextMenuNodeDescriptor[] {
   const menu = endgeContextMenuState.menu
   const context = endgeContextMenuState.context
-  if (!menu || !context)
+  if (!menu || !context) {
     return []
+  }
 
   return compactSeparators(menu.items)
 }
@@ -65,8 +67,9 @@ export const getExecutableContextMenuItems = getContextMenuItems
 
 export async function executeEndgeContextMenuItem(item: ContextMenuItemDescriptor): Promise<void> {
   const context = endgeContextMenuState.context
-  if (!context)
+  if (!context) {
     return
+  }
 
   try {
     await Endge.runtime.actions.execute(item.action, context, item.input)
@@ -79,11 +82,13 @@ export async function executeEndgeContextMenuItem(item: ContextMenuItemDescripto
 export function resolveEndgeContextMenuItemLabel(item: ContextMenuItemDescriptor): string {
   const fallback = item.label
 
-  if (Endge.i18n.te(item.label))
+  if (Endge.i18n.te(item.label)) {
     return Endge.i18n.t(item.label, { defaultValue: fallback })
+  }
 
-  if (item.action !== item.label && Endge.i18n.te(item.action))
+  if (item.action !== item.label && Endge.i18n.te(item.action)) {
     return Endge.i18n.t(item.action, { defaultValue: fallback })
+  }
 
   return fallback
 }
@@ -97,14 +102,16 @@ function compactSeparators(items: ContextMenuNodeDescriptor[]): ContextMenuNodeD
       continue
     }
 
-    if (result.length === 0 || result[result.length - 1]?.kind === 'separator')
+    if (result.length === 0 || result[result.length - 1]?.kind === 'separator') {
       continue
+    }
 
     result.push(item)
   }
 
-  if (result[result.length - 1]?.kind === 'separator')
+  if (result[result.length - 1]?.kind === 'separator') {
     result.pop()
+  }
 
   return result
 }

@@ -5,7 +5,7 @@ import {
   filterVisibleTableColumns,
 } from '@/ui/render/sfc/SFCRender_Table'
 
-describe('SFC RevoGrid table visibility', () => {
+describe('sFC RevoGrid table visibility', () => {
   const columns = [
     { key: 'flight' },
     { key: 'gate' },

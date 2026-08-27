@@ -1,7 +1,7 @@
 import type { SourceFieldType } from '@endge/core'
-import { isoToDateInput, isoToDateTimeLocalInput, timeToTimeInput } from '@endge/utils'
+import type { SFCVueRenderAdapterFunction } from '@/model/render/sfc/sfc-vue-render.type'
 
-import type { SFCVueRenderAdapterFunction } from '@/domain/types/sfc-render.type'
+import { isoToDateInput, isoToDateTimeLocalInput, timeToTimeInput } from '@endge/utils'
 
 type SFCInputType = Extract<SourceFieldType, 'String' | 'Number' | 'Date' | 'Time' | 'DateTime'>
 
@@ -24,39 +24,49 @@ export const SFCRender_Input: SFCVueRenderAdapterFunction = (input) => {
 }
 
 function normalizeInputType(value: unknown): SFCInputType {
-  if (value === 'Number' || value === 'Date' || value === 'Time' || value === 'DateTime')
+  if (value === 'Number' || value === 'Date' || value === 'Time' || value === 'DateTime') {
     return value
+  }
 
   return 'String'
 }
 
 function toNativeInputType(type: SFCInputType): string {
-  if (type === 'Number')
+  if (type === 'Number') {
     return 'number'
-  if (type === 'Date')
+  }
+  if (type === 'Date') {
     return 'date'
-  if (type === 'Time')
+  }
+  if (type === 'Time') {
     return 'time'
-  if (type === 'DateTime')
+  }
+  if (type === 'DateTime') {
     return 'datetime-local'
+  }
   return 'text'
 }
 
 function normalizeInputValue(type: SFCInputType, value: unknown): string | number {
-  if (value == null)
+  if (value == null) {
     return ''
+  }
   if (type === 'Number') {
-    if (typeof value === 'string' && value.trim() === '')
+    if (typeof value === 'string' && value.trim() === '') {
       return ''
+    }
     const numberValue = Number(value)
     return Number.isFinite(numberValue) ? numberValue : ''
   }
-  if (type === 'Date')
+  if (type === 'Date') {
     return isoToDateInput(value)
-  if (type === 'Time')
+  }
+  if (type === 'Time') {
     return timeToTimeInput(value)
-  if (type === 'DateTime')
+  }
+  if (type === 'DateTime') {
     return isoToDateTimeLocalInput(value)
+  }
   return String(value)
 }
 

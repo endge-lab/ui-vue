@@ -1,10 +1,10 @@
+import { compileEndgeCSS } from '@endge/core'
 import postcss from 'postcss'
 import { describe, expect, it } from 'vitest'
-import { compileEndgeCSS } from '@endge/core'
 
 import { materializeEndgeCSSForDOM } from '@/model/style/endge-dom-style'
 
-describe('EndgeCSS DOM materializer', () => {
+describe('endgeCSS DOM materializer', () => {
   it('emits parseable CSS in neutral cascade order', () => {
     const artifact = compileEndgeCSS(`
       .status { color: blue; }

@@ -1,4 +1,4 @@
-import type { SFCVueRenderAdapterFunction } from '@/domain/types/sfc-render.type'
+import type { SFCVueRenderAdapterFunction } from '@/model/render/sfc/sfc-vue-render.type'
 
 /** Рендерит renderer-neutral Grid через нативный CSS Grid. */
 export const SFCRender_Grid: SFCVueRenderAdapterFunction = (input) => {
@@ -30,13 +30,17 @@ function normalizeTracks(value: unknown, fallback: number): string {
 }
 
 function normalizeOptionalTracks(value: unknown): string | undefined {
-  if (value == null || value === false) return undefined
+  if (value == null || value === false) {
+    return undefined
+  }
   if (typeof value === 'number' && Number.isInteger(value) && value > 0) {
     return `repeat(${value}, minmax(0, 1fr))`
   }
 
   const source = String(value).trim()
-  if (source === '') return undefined
+  if (source === '') {
+    return undefined
+  }
   if (/^\d+$/.test(source) && Number(source) > 0) {
     return `repeat(${Number(source)}, minmax(0, 1fr))`
   }
@@ -45,12 +49,20 @@ function normalizeOptionalTracks(value: unknown): string | undefined {
 }
 
 function normalizeLength(value: unknown, numericUnit = 1): string | undefined {
-  if (value == null || value === false) return undefined
-  if (typeof value === 'number') return `${value * numericUnit}px`
+  if (value == null || value === false) {
+    return undefined
+  }
+  if (typeof value === 'number') {
+    return `${value * numericUnit}px`
+  }
 
   const source = String(value).trim()
-  if (source === '') return undefined
-  if (/^-?\d+(\.\d+)?$/.test(source)) return `${Number(source) * numericUnit}px`
+  if (source === '') {
+    return undefined
+  }
+  if (/^-?\d+(\.\d+)?$/.test(source)) {
+    return `${Number(source) * numericUnit}px`
+  }
 
   return source
 }

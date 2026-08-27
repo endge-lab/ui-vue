@@ -1,6 +1,6 @@
 import type { SourceFieldOption } from '@endge/core'
 
-import type { SFCVueRenderAdapterFunction, SFCVueRenderH } from '@/domain/types/sfc-render.type'
+import type { SFCVueRenderAdapterFunction, SFCVueRenderH } from '@/model/render/sfc/sfc-vue-render.type'
 import NativeMultiSelect from '@/ui/render/sfc/NativeMultiSelect.vue'
 
 /** Рендерит одиночный или множественный display-only select. */
@@ -50,12 +50,14 @@ export const SFCRender_Select: SFCVueRenderAdapterFunction = (input) => {
 }
 
 function normalizeOptions(value: unknown): SourceFieldOption[] {
-  if (!Array.isArray(value))
+  if (!Array.isArray(value)) {
     return []
+  }
 
   return value.filter((item): item is SourceFieldOption => {
-    if (!item || typeof item !== 'object' || !Object.prototype.hasOwnProperty.call(item, 'value'))
+    if (!item || typeof item !== 'object' || !Object.hasOwn(item, 'value')) {
       return false
+    }
     const optionValue = (item as SourceFieldOption).value
     return typeof optionValue === 'string' || typeof optionValue === 'number' || typeof optionValue === 'boolean'
   })

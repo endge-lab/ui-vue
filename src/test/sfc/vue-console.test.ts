@@ -1,10 +1,10 @@
-import { describe, expect, it, vi } from 'vitest'
 import type { App } from 'vue'
+import { describe, expect, it, vi } from 'vitest'
 
 import { installEndgeVueWarnHandler } from '@/model/debug/vue-console'
 import SFC_RuntimeRenderer from '@/ui/render/sfc/SFC_RuntimeRenderer.vue'
 
-describe('Vue console memory safety', () => {
+describe('vue console memory safety', () => {
   it('does not inherit DOM attributes through the fragment runtime renderer', () => {
     expect((SFC_RuntimeRenderer as { inheritAttrs?: boolean }).inheritAttrs).toBe(false)
   })

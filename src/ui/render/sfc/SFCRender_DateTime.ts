@@ -1,4 +1,4 @@
-import type { SFCVueRenderAdapterFunction } from '@/domain/types/sfc-render.type'
+import type { SFCVueRenderAdapterFunction } from '@/model/render/sfc/sfc-vue-render.type'
 
 /** Рендерит дату или время через базовые форматы SFC v1. */
 export const SFCRender_DateTime: SFCVueRenderAdapterFunction = (input) => {
@@ -23,17 +23,22 @@ export function formatSFCDateTime(
   timezone: unknown,
   empty: unknown,
 ): string {
-  if (value == null || value === '') return empty == null ? '' : String(empty)
+  if (value == null || value === '') {
+    return empty == null ? '' : String(empty)
+  }
 
   const text = String(value).trim()
   const timeOnly = format === 'HH:mm'
     ? text.match(/^(\d{2}):(\d{2})(?::\d{2})?$/)
     : null
-  if (timeOnly)
+  if (timeOnly) {
     return `${timeOnly[1]}:${timeOnly[2]}`
+  }
 
   const date = new Date(text)
-  if (Number.isNaN(date.getTime())) return String(value)
+  if (Number.isNaN(date.getTime())) {
+    return String(value)
+  }
   const timeZone = normalizeTimezone(timezone)
 
   if (format === 'HH:mm') {

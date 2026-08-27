@@ -1,11 +1,12 @@
+import type { EndgeStylePlacement } from '@endge/core'
+import { compileEndgeCSS } from '@endge/core'
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
-import { compileEndgeCSS, type EndgeStylePlacement } from '@endge/core'
 
 import { materializeEndgeCSSForDOM } from '@/model/style/endge-dom-style'
 import { EndgeDOMStyleRuntime } from '@/model/style/EndgeDOMStyleRuntime'
 
-describe('DOM style runtime placements', () => {
+describe('dOM style runtime placements', () => {
   afterEach(() => {
     document.head.querySelectorAll('style[data-endge-styles]').forEach(element => element.remove())
     document.body.replaceChildren()

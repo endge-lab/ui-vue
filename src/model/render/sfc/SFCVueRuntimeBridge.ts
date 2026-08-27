@@ -1,9 +1,9 @@
+import type { ComponentSFCRuntimeHost, RuntimeBoundaryPatch, RuntimeHostUpdateContext } from '@endge/core'
 import type {
   SFCVueRuntimeBridgeBoundaryPatch,
   SFCVueRuntimeBridgeUpdate,
   SFCVueRuntimeInputSource,
-} from '@/domain/types/sfc-render.type'
-import type { ComponentSFCRuntimeHost, RuntimeBoundaryPatch, RuntimeHostUpdateContext } from '@endge/core'
+} from '@/model/render/sfc/sfc-vue-render.type'
 
 import { Raph } from '@endge/raph'
 
@@ -20,24 +20,32 @@ export class SFCVueRuntimeBridge {
   private _input: SFCVueRuntimeInputSource
   private _isMounted = false
   private readonly _propsDirtyHandler = (_ctx: RuntimeHostUpdateContext): void => {
-    if (this._isMounted)
+    if (this._isMounted) {
       this._emitResolvedProps()
+    }
   }
+
   private readonly _boundaryDirtyHandler = async (patch: RuntimeBoundaryPatch): Promise<void> => {
-    if (!this._isMounted)
+    if (!this._isMounted) {
       return
+    }
 
     const applied = await this._onBoundaryPatch?.(patch)
-    if (!applied)
+    if (!applied) {
       this._emitResolvedProps()
+    }
   }
+
   private readonly _computationDirtyHandler = (): void => {
-    if (this._isMounted)
+    if (this._isMounted) {
       this._emitResolvedProps()
+    }
   }
+
   private readonly _resourceDirtyHandler = (update: unknown): void => {
-    if (!this._isMounted || isSFCVueEditableResourceUpdate(update))
+    if (!this._isMounted || isSFCVueEditableResourceUpdate(update)) {
       return
+    }
 
     this._emitResolvedProps()
   }
@@ -58,8 +66,9 @@ export class SFCVueRuntimeBridge {
    * Запускает bridge и сразу передает первый props snapshot в render root.
    */
   public mount(): void {
-    if (this._isMounted)
+    if (this._isMounted) {
       return
+    }
 
     this._isMounted = true
     this._host.setInputSource(this._input)
@@ -77,8 +86,9 @@ export class SFCVueRuntimeBridge {
     this._input = input
     this._host.setInputSource(input)
 
-    if (this._isMounted)
+    if (this._isMounted) {
       this._emitResolvedProps()
+    }
   }
 
   /**
@@ -94,8 +104,9 @@ export class SFCVueRuntimeBridge {
 
   /** Принудительно перечитывает props из текущего input source. */
   public refresh(): void {
-    if (this._isMounted)
+    if (this._isMounted) {
       this._emitResolvedProps()
+    }
   }
 
   /**
@@ -110,15 +121,17 @@ export class SFCVueRuntimeBridge {
   }
 
   private _resolveProps(): Record<string, unknown> {
-    if (this._input.kind === 'local')
+    if (this._input.kind === 'local') {
       return { ...this._input.props }
+    }
 
     return this._resolveRaphProps()
   }
 
   private _resolveRaphProps(): Record<string, unknown> {
-    if (this._input.kind !== 'raph')
+    if (this._input.kind !== 'raph') {
       return {}
+    }
 
     const props: Record<string, unknown> = { ...(this._input.props ?? {}) }
     for (const [prop, binding] of Object.entries(this._input.bindings)) {

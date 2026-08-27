@@ -1,18 +1,19 @@
 import type { RComponentSFC_IR_ElementNode, RComponentSFC_IR_Value } from '@endge/core'
+import type { VNode } from 'vue'
 import {
+  Endge,
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
-  Endge,
 } from '@endge/core'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { h, isVNode, type VNode } from 'vue'
+import { h, isVNode } from 'vue'
 
+import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/model/render/sfc/sfc-vue-render.type'
+import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
-import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/domain/types/sfc-render.type'
-import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
 
-describe('SFC Table layout', () => {
+describe('sFC Table layout', () => {
   beforeEach(() => {
     Endge.uiRegistry.adapters.reset()
     Endge.uiRegistry.adapters.register(NativeVueSFCAdapter)
@@ -76,7 +77,7 @@ describe('SFC Table layout', () => {
   })
 
   it('forwards Table Event boundary and selection mode to the native renderer', () => {
-    const table = renderTable({ 'selection-mode': 'multiple', ref: 'table' })
+    const table = renderTable({ 'selection-mode': 'multiple', 'ref': 'table' })
     const grid = table.children as VNode[]
 
     expect(grid[0]?.props).toMatchObject({
@@ -132,8 +133,9 @@ describe('SFC Table layout', () => {
     } as any
 
     const rendered = renderSFCNode(h, tableNode, context)
-    if (!isVNode(rendered))
+    if (!isVNode(rendered)) {
       throw new Error('Table did not render a VNode')
+    }
 
     const grid = (rendered.children as VNode[])[0]
     expect(grid?.props?.columns[0]?.metadata).toEqual({
@@ -156,8 +158,9 @@ function renderTable(props: Record<string, unknown> = {}): VNode {
   }
   const result = renderSFCNode(h, node, createSFCVueRenderContext({}))
 
-  if (!isVNode(result))
+  if (!isVNode(result)) {
     throw new Error('Table did not render a VNode')
+  }
   return result
 }
 
