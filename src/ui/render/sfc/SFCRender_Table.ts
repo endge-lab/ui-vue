@@ -2962,7 +2962,7 @@ function normalizeCssSize(value: unknown, fallback: string): string {
   }
 
   const source = String(value).trim()
-  if (/^\d+(\.\d+)?$/.test(source)) {
+  if (/^\d+(?:\.\d+)?$/.test(source)) {
     return `${Number(source)}px`
   }
 

@@ -60,7 +60,7 @@ function normalizeLength(value: unknown, numericUnit = 1): string | undefined {
   if (source === '') {
     return undefined
   }
-  if (/^-?\d+(\.\d+)?$/.test(source)) {
+  if (/^-?\d+(?:\.\d+)?$/.test(source)) {
     return `${Number(source) * numericUnit}px`
   }
 
