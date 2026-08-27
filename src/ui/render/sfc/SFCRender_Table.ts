@@ -2673,9 +2673,7 @@ function collectRowDependencies(
 
 function collectRowDependenciesFromSource(source: string, result: Set<string>, columnKey: string): void {
   const rowFieldPattern = /\brow\.([A-Za-z_$][\w$]*)/g
-  let match: RegExpExecArray | null
-
-  while ((match = rowFieldPattern.exec(source))) {
+  for (let match = rowFieldPattern.exec(source); match !== null; match = rowFieldPattern.exec(source)) {
     result.add(match[1])
   }
 

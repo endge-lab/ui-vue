@@ -48,18 +48,18 @@ export class EndgeVueTooltipManager {
   public readonly state: EndgeVueTooltipState
   public readonly adapterId: string
 
-  private request: EndgeVueTooltipRequest | null = null
-  private reasons = new Set<EndgeTooltipActivationReason>()
-  private openTimer: ReturnType<typeof setTimeout> | null = null
-  private closeTimer: ReturnType<typeof setTimeout> | null = null
-  private generation = 0
-  private disposed = false
-  private readonly defaults: EndgeTooltipConfiguration
-  private readonly disposeKeyboardWatch: () => void
+  private _request: EndgeVueTooltipRequest | null = null
+  private _reasons = new Set<EndgeTooltipActivationReason>()
+  private _openTimer: ReturnType<typeof setTimeout> | null = null
+  private _closeTimer: ReturnType<typeof setTimeout> | null = null
+  private _generation = 0
+  private _disposed = false
+  private readonly _defaults: EndgeTooltipConfiguration
+  private readonly _disposeKeyboardWatch: () => void
 
   public constructor(adapterId: string, defaults: EndgeTooltipConfiguration) {
     this.adapterId = adapterId
-    this.defaults = { ...defaults }
+    this._defaults = { ...defaults }
     this.state = shallowReactive({
       phase: 'idle',
       ownerId: null,
@@ -72,81 +72,81 @@ export class EndgeVueTooltipManager {
       part: null,
       content: null,
     })
-    this.disposeKeyboardWatch = Raph.watch([
+    this._disposeKeyboardWatch = Raph.watch([
       ENDGE_KEYBOARD_CONTEXT_RAPH_PATH,
       `${ENDGE_KEYBOARD_CONTEXT_RAPH_PATH}.*`,
-    ], () => this.reconcileActivation())
+    ], () => this._reconcileActivation())
   }
 
   public activate(request: EndgeVueTooltipRequest, reason: EndgeTooltipActivationReason): void {
-    if (this.disposed || !request.anchor.isConnected) {
+    if (this._disposed || !request.anchor.isConnected) {
       return
     }
-    this.clearCloseTimer()
+    this._clearCloseTimer()
 
-    if (this.request?.ownerId !== request.ownerId) {
-      this.hideNow()
-      this.reasons.clear()
+    if (this._request?.ownerId !== request.ownerId) {
+      this._hideNow()
+      this._reasons.clear()
     }
 
-    this.request = request
-    this.reasons.add(reason)
-    this.reconcileActivation()
+    this._request = request
+    this._reasons.add(reason)
+    this._reconcileActivation()
   }
 
   public deactivate(ownerId: string, reason: EndgeTooltipActivationReason): void {
-    if (this.request?.ownerId !== ownerId) {
+    if (this._request?.ownerId !== ownerId) {
       return
     }
-    this.reasons.delete(reason)
-    if (this.reasons.size > 0) {
+    this._reasons.delete(reason)
+    if (this._reasons.size > 0) {
       return
     }
-    this.clearOpenTimer()
-    const delay = this.resolvePolicy(this.request.policy).closeDelay
+    this._clearOpenTimer()
+    const delay = this._resolvePolicy(this._request.policy).closeDelay
     if (delay === 0) {
-      this.hideNow()
+      this._hideNow()
       return
     }
-    this.clearCloseTimer()
-    const generation = ++this.generation
-    this.closeTimer = setTimeout(() => {
-      if (generation === this.generation && this.reasons.size === 0) {
-        this.hideNow()
+    this._clearCloseTimer()
+    const generation = ++this._generation
+    this._closeTimer = setTimeout(() => {
+      if (generation === this._generation && this._reasons.size === 0) {
+        this._hideNow()
       }
     }, delay)
   }
 
   public close(ownerId?: string): void {
-    if (ownerId && this.request?.ownerId !== ownerId) {
+    if (ownerId && this._request?.ownerId !== ownerId) {
       return
     }
-    this.reasons.clear()
-    this.hideNow()
+    this._reasons.clear()
+    this._hideNow()
   }
 
   public dispose(): void {
-    if (this.disposed) {
+    if (this._disposed) {
       return
     }
-    this.disposed = true
-    this.disposeKeyboardWatch()
-    this.reasons.clear()
-    this.hideNow()
+    this._disposed = true
+    this._disposeKeyboardWatch()
+    this._reasons.clear()
+    this._hideNow()
   }
 
-  private show(generation: number, policy: EndgeVueTooltipPolicy): void {
-    this.openTimer = null
-    const request = this.request
+  private _show(generation: number, policy: EndgeVueTooltipPolicy): void {
+    this._openTimer = null
+    const request = this._request
     if (
-      this.disposed
-      || generation !== this.generation
+      this._disposed
+      || generation !== this._generation
       || !request
-      || this.reasons.size === 0
+      || this._reasons.size === 0
       || !request.anchor.isConnected
-      || !this.matchesKeyboard(policy)
+      || !this._matchesKeyboard(policy)
     ) {
-      this.hideNow()
+      this._hideNow()
       return
     }
 
@@ -163,15 +163,15 @@ export class EndgeVueTooltipManager {
     addDescribedBy(request.anchor, request.domId)
   }
 
-  private hideNow(): void {
-    this.suspend()
-    this.request = null
+  private _hideNow(): void {
+    this._suspend()
+    this._request = null
   }
 
-  private suspend(): void {
-    this.clearOpenTimer()
-    this.clearCloseTimer()
-    this.generation += 1
+  private _suspend(): void {
+    this._clearOpenTimer()
+    this._clearCloseTimer()
+    this._generation += 1
     if (this.state.anchor && this.state.domId) {
       removeDescribedBy(this.state.anchor, this.state.domId)
     }
@@ -185,38 +185,38 @@ export class EndgeVueTooltipManager {
     this.state.content = null
   }
 
-  private reconcileActivation(): void {
-    const request = this.request
-    if (this.disposed || !request || this.reasons.size === 0 || !request.anchor.isConnected) {
+  private _reconcileActivation(): void {
+    const request = this._request
+    if (this._disposed || !request || this._reasons.size === 0 || !request.anchor.isConnected) {
       return
     }
 
-    const policy = this.resolvePolicy(request.policy)
-    if (!this.matchesKeyboard(policy)) {
-      this.suspend()
+    const policy = this._resolvePolicy(request.policy)
+    if (!this._matchesKeyboard(policy)) {
+      this._suspend()
       return
     }
     if ((this.state.phase === 'visible' || this.state.phase === 'pending') && this.state.ownerId === request.ownerId) {
       return
     }
 
-    this.clearOpenTimer()
+    this._clearOpenTimer()
     this.state.phase = 'pending'
     this.state.ownerId = request.ownerId
-    const generation = ++this.generation
+    const generation = ++this._generation
     if (policy.openDelay === 0) {
-      this.show(generation, policy)
+      this._show(generation, policy)
     }
-    else { this.openTimer = setTimeout(() => this.show(generation, policy), policy.openDelay) }
+    else { this._openTimer = setTimeout(() => this._show(generation, policy), policy.openDelay) }
   }
 
-  private matchesKeyboard(policy: EndgeVueTooltipPolicy): boolean {
+  private _matchesKeyboard(policy: EndgeVueTooltipPolicy): boolean {
     const keyboard = Endge.context.getKeyboardState()
     return matchesComponentSFCInteractionKeyboardCondition(policy.keyboard, keyboard, keyboard.platform)
   }
 
-  private resolvePolicy(local: Partial<EndgeVueTooltipPolicy> | undefined): EndgeVueTooltipPolicy {
-    const next: EndgeTooltipConfiguration = { ...this.defaults }
+  private _resolvePolicy(local: Partial<EndgeVueTooltipPolicy> | undefined): EndgeVueTooltipPolicy {
+    const next: EndgeTooltipConfiguration = { ...this._defaults }
     for (const [key, value] of Object.entries(local ?? {})) {
       if (value != null) {
         (next as any)[key] = value
@@ -226,24 +226,24 @@ export class EndgeVueTooltipManager {
     return {
       side: normalizeSide(next.side),
       align: normalizeAlign(next.align),
-      openDelay: normalizeDelay(next.openDelay, this.defaults.openDelay),
-      closeDelay: normalizeDelay(next.closeDelay, this.defaults.closeDelay),
+      openDelay: normalizeDelay(next.openDelay, this._defaults.openDelay),
+      closeDelay: normalizeDelay(next.closeDelay, this._defaults.closeDelay),
       ...(keyboard ? { keyboard } : {}),
     }
   }
 
-  private clearOpenTimer(): void {
-    if (this.openTimer != null) {
-      clearTimeout(this.openTimer)
+  private _clearOpenTimer(): void {
+    if (this._openTimer != null) {
+      clearTimeout(this._openTimer)
     }
-    this.openTimer = null
+    this._openTimer = null
   }
 
-  private clearCloseTimer(): void {
-    if (this.closeTimer != null) {
-      clearTimeout(this.closeTimer)
+  private _clearCloseTimer(): void {
+    if (this._closeTimer != null) {
+      clearTimeout(this._closeTimer)
     }
-    this.closeTimer = null
+    this._closeTimer = null
   }
 }
 

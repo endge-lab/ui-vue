@@ -17,7 +17,7 @@ const executing = ref(false)
 let unsubscribeI18n: (() => void) | null = null
 
 const menuItems = computed(() => {
-  i18nVersion.value
+  void i18nVersion.value
   return getContextMenuItems()
 })
 const position = computed(() => ({
@@ -123,7 +123,7 @@ async function runItem(item: ContextMenuItemDescriptor): Promise<void> {
 }
 
 function resolveItemLabel(item: ContextMenuItemDescriptor): string {
-  i18nVersion.value
+  void i18nVersion.value
   return resolveEndgeContextMenuItemLabel(item)
 }
 
