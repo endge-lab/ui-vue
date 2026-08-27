@@ -213,96 +213,51 @@ const DEFAULT_TABLE_COLUMN_MENU: ContextMenuDescriptor = {
   ],
 }
 
-/** Рендерит SFC Table primitive через RevoGrid, не раскрывая RevoGrid в SFC-синтаксис. */
-export const SFCRender_Table: SFCVueRenderFunction = SFCRender_Base((input) => {
-  const rows = normalizeSFCTableRows(input.props.rows)
-  const explicitHeight = input.props.height ?? input.props.h
-  const fillsAvailableHeight = explicitHeight == null || explicitHeight === ''
-  const rowKey = normalizeText(input.props['row-key'] ?? input.props.rowKey, 'id')
-  const sortDescriptor = normalizeComponentSFCTableSort(input.node)
-  const pinDescriptor = normalizeComponentSFCTableColumnPin(input.node)
-  const visibilityDescriptor = normalizeComponentSFCTableColumnVisibility(input.node)
-  const columnMenuDescriptor = input.node.tableMenus?.column ?? normalizeComponentSFCTableColumnMenu(input.node)
-  const rowMenuDescriptor = input.node.tableMenus?.row ?? normalizeComponentSFCTableRowMenu(input.node)
-  const styleMarkers = createSFCTableMarkers(input.context)
-  const columns = collectTableColumns(input.node, input.context, sortDescriptor, pinDescriptor, styleMarkers)
-  const source = rows
-  const sortMode = normalizeComponentSFCTableSortMode(input.props['sort-mode'] ?? input.props.sortMode ?? sortDescriptor.mode)
-  const pinMode = normalizeComponentSFCTableColumnPinMode(input.props['column-pin'] ?? input.props.columnPin ?? pinDescriptor.mode)
-  const tableId = normalizeText(input.props.id ?? input.props.tableId ?? input.attrs.id, '')
-  const cellAlignmentStyle = createCellAlignmentStyle(
-    normalizeSFCTableCellAlignment(
-      input.props['cell-align'] ?? input.props.cellAlign,
-      input.props['cell-vertical-align'] ?? input.props.cellVerticalAlign,
-    ),
-  )
-  const tableContext = extendSFCVueRenderContext(
-    input.context,
-    {
-      $table: {
-        id: tableId || input.node.id,
-        runtimeId: input.context.runtimeState?.runtimeId ?? input.node.id,
-        state: {},
-      },
+const SFCRevoGridSelectionHeader = defineComponent({
+  name: 'SFCRevoGridSelectionHeader',
+  props: {
+    mode: {
+      type: String as PropType<TableSelectionMode>,
+      required: true,
     },
-    input.context.iteration,
-    `${input.context.consumerScope}/table:${input.node.id}`,
-  )
-
-  return input.h('div', {
-    ...input.attrs,
-    'data-endge-layout-fill-height': fillsAvailableHeight ? '' : undefined,
-    'class': ['endge-sfc-table', input.props.class],
-    'style': {
-      ...(isPlainObject(input.attrs.style) ? input.attrs.style : {}),
-      width: normalizeCssSize(input.props.width ?? input.props.w, '100%'),
-      height: normalizeCssSize(explicitHeight, '100%'),
-      minHeight: normalizeCssSize(input.props.minHeight ?? input.props.minH, '180px'),
-      flex: fillsAvailableHeight ? '1 1 0%' : undefined,
-      overflow: 'hidden',
+    checked: {
+      type: Boolean,
+      required: true,
     },
-  }, [
-    input.h(SFCRevoGridTable as any, {
-      boundaryId: input.node.id,
-      nodeId: input.node.id,
-      tableRef: normalizeOptionalText(input.props.ref ?? input.attrs.ref),
-      tableId,
-      eventBoundary: input.context.eventBoundary ?? null,
-      eventBindings: input.node.events ?? [],
-      selectionMode: normalizeSelectionMode(input.props['selection-mode'] ?? input.props.selectionMode),
-      selectionTrigger: normalizeSelectionTrigger(input.props['selection-trigger'] ?? input.props.selectionTrigger),
-      cellSelectionMode: normalizeCellSelectionMode(input.props['cell-selection-mode'] ?? input.props.cellSelectionMode),
-      runtimeState: input.context.runtimeState,
-      columns,
-      source,
-      styleMarkers,
-      rowKey,
-      sortMode,
-      pinMode,
-      columnMenu: columnMenuDescriptor,
-      rowMenu: rowMenuDescriptor,
-      menuContext: tableContext,
-      defaultSort: sortDescriptor.defaultSort,
-      defaultPin: pinDescriptor.defaultPin,
-      defaultHidden: visibilityDescriptor.defaultHidden,
-      rowSize: normalizeNumber(input.props.rowSize, 40),
-      paging: normalizeTablePaging(input.props.paging),
-      pageSize: normalizePositiveInteger(input.props['page-size'] ?? input.props.pageSize, 10),
-      pageSizes: normalizePageSizes(input.props['page-sizes'] ?? input.props.pageSizes),
-      lazy: input.props.lazy === true,
-      theme: normalizeText(input.props.theme, 'compact'),
-      renderVersion: input.context.renderVersion,
-      renderCell: (cellInput: SFCTableCellRenderInput) => {
-        return renderTableCell({
-          ...cellInput,
-          fallbackH: input.h,
-          context: tableContext,
-          cellAlignmentStyle,
-          rowKey,
-        })
+    indeterminate: {
+      type: Boolean,
+      required: true,
+    },
+    onChange: {
+      type: Function as PropType<(checked: boolean) => void>,
+      required: true,
+    },
+  },
+  setup(props) {
+    return () => vueH('div', {
+      class: 'endge-sfc-table-selection-header',
+      style: {
+        alignItems: 'center',
+        display: 'flex',
+        height: '100%',
+        justifyContent: 'center',
+        width: '100%',
       },
-    }),
-  ])
+    }, props.mode === 'multiple'
+      ? [vueH('input', {
+          'type': 'checkbox',
+          'checked': props.checked,
+          'indeterminate': props.indeterminate,
+          'aria-label': 'Select visible rows',
+          'style': { accentColor: 'var(--primary, #2563eb)', cursor: 'pointer' },
+          'onClick': (event: MouseEvent) => event.stopPropagation(),
+          'onChange': (event: Event) => {
+            event.stopPropagation()
+            props.onChange((event.target as HTMLInputElement).checked)
+          },
+        })]
+      : [])
+  },
 })
 
 const SFCRevoGridTable = defineComponent({
@@ -1485,6 +1440,97 @@ const SFCRevoGridTable = defineComponent({
   },
 })
 
+/** Рендерит SFC Table primitive через RevoGrid, не раскрывая RevoGrid в SFC-синтаксис. */
+export const SFCRender_Table: SFCVueRenderFunction = SFCRender_Base((input) => {
+  const rows = normalizeSFCTableRows(input.props.rows)
+  const explicitHeight = input.props.height ?? input.props.h
+  const fillsAvailableHeight = explicitHeight == null || explicitHeight === ''
+  const rowKey = normalizeText(input.props['row-key'] ?? input.props.rowKey, 'id')
+  const sortDescriptor = normalizeComponentSFCTableSort(input.node)
+  const pinDescriptor = normalizeComponentSFCTableColumnPin(input.node)
+  const visibilityDescriptor = normalizeComponentSFCTableColumnVisibility(input.node)
+  const columnMenuDescriptor = input.node.tableMenus?.column ?? normalizeComponentSFCTableColumnMenu(input.node)
+  const rowMenuDescriptor = input.node.tableMenus?.row ?? normalizeComponentSFCTableRowMenu(input.node)
+  const styleMarkers = createSFCTableMarkers(input.context)
+  const columns = collectTableColumns(input.node, input.context, sortDescriptor, pinDescriptor, styleMarkers)
+  const source = rows
+  const sortMode = normalizeComponentSFCTableSortMode(input.props['sort-mode'] ?? input.props.sortMode ?? sortDescriptor.mode)
+  const pinMode = normalizeComponentSFCTableColumnPinMode(input.props['column-pin'] ?? input.props.columnPin ?? pinDescriptor.mode)
+  const tableId = normalizeText(input.props.id ?? input.props.tableId ?? input.attrs.id, '')
+  const cellAlignmentStyle = createCellAlignmentStyle(
+    normalizeSFCTableCellAlignment(
+      input.props['cell-align'] ?? input.props.cellAlign,
+      input.props['cell-vertical-align'] ?? input.props.cellVerticalAlign,
+    ),
+  )
+  const tableContext = extendSFCVueRenderContext(
+    input.context,
+    {
+      $table: {
+        id: tableId || input.node.id,
+        runtimeId: input.context.runtimeState?.runtimeId ?? input.node.id,
+        state: {},
+      },
+    },
+    input.context.iteration,
+    `${input.context.consumerScope}/table:${input.node.id}`,
+  )
+
+  return input.h('div', {
+    ...input.attrs,
+    'data-endge-layout-fill-height': fillsAvailableHeight ? '' : undefined,
+    'class': ['endge-sfc-table', input.props.class],
+    'style': {
+      ...(isPlainObject(input.attrs.style) ? input.attrs.style : {}),
+      width: normalizeCssSize(input.props.width ?? input.props.w, '100%'),
+      height: normalizeCssSize(explicitHeight, '100%'),
+      minHeight: normalizeCssSize(input.props.minHeight ?? input.props.minH, '180px'),
+      flex: fillsAvailableHeight ? '1 1 0%' : undefined,
+      overflow: 'hidden',
+    },
+  }, [
+    input.h(SFCRevoGridTable as any, {
+      boundaryId: input.node.id,
+      nodeId: input.node.id,
+      tableRef: normalizeOptionalText(input.props.ref ?? input.attrs.ref),
+      tableId,
+      eventBoundary: input.context.eventBoundary ?? null,
+      eventBindings: input.node.events ?? [],
+      selectionMode: normalizeSelectionMode(input.props['selection-mode'] ?? input.props.selectionMode),
+      selectionTrigger: normalizeSelectionTrigger(input.props['selection-trigger'] ?? input.props.selectionTrigger),
+      cellSelectionMode: normalizeCellSelectionMode(input.props['cell-selection-mode'] ?? input.props.cellSelectionMode),
+      runtimeState: input.context.runtimeState,
+      columns,
+      source,
+      styleMarkers,
+      rowKey,
+      sortMode,
+      pinMode,
+      columnMenu: columnMenuDescriptor,
+      rowMenu: rowMenuDescriptor,
+      menuContext: tableContext,
+      defaultSort: sortDescriptor.defaultSort,
+      defaultPin: pinDescriptor.defaultPin,
+      defaultHidden: visibilityDescriptor.defaultHidden,
+      rowSize: normalizeNumber(input.props.rowSize, 40),
+      paging: normalizeTablePaging(input.props.paging),
+      pageSize: normalizePositiveInteger(input.props['page-size'] ?? input.props.pageSize, 10),
+      pageSizes: normalizePageSizes(input.props['page-sizes'] ?? input.props.pageSizes),
+      lazy: input.props.lazy === true,
+      theme: normalizeText(input.props.theme, 'compact'),
+      renderVersion: input.context.renderVersion,
+      renderCell: (cellInput: SFCTableCellRenderInput) => {
+        return renderTableCell({
+          ...cellInput,
+          fallbackH: input.h,
+          context: tableContext,
+          cellAlignmentStyle,
+          rowKey,
+        })
+      },
+    }),
+  ])
+})
 function collectTableColumns(
   tableNode: RComponentSFC_IR_ElementNode,
   context: SFCVueRenderContext,
@@ -1597,116 +1643,6 @@ function normalizeColumnKey(
 
   return fallback
 }
-
-function createRevoColumn(
-  column: SFCTableColumn,
-  columnIndex: number,
-  sortMeta: SFCTableSortMeta,
-  pinSide: TableColumnPinSide,
-  onSortClick: (event?: MouseEvent) => void,
-  onMenuOpen: (event: MouseEvent) => void,
-  hasMenu: boolean,
-  getStates: (cellProps: Record<string, unknown>) => string[],
-  renderCell: (h: SFCVueRenderH, cellProps: Record<string, unknown>) => ReturnType<SFCVueRenderH>,
-): Record<string, unknown> {
-  return {
-    prop: column.key,
-    name: column.title,
-    __sfcColumnIndex: columnIndex,
-    sortable: undefined,
-    order: undefined,
-    cellCompare: undefined,
-    autoSize: column.width == null,
-    size: column.width ?? 150,
-    pin: toRevoGridPinSide(pinSide),
-    columnProperties: () => toRevoGridMarkerProps(column.markers.headerCell),
-    cellProperties: (cellProps: Record<string, unknown>) => {
-      const row = cellProps.model
-      if (!isPlainObject(row)) {
-        return {
-          'part': 'cell',
-          'data-endge-part': 'cell',
-        }
-      }
-
-      return toRevoGridMarkerProps(withMarkerStates(column.markers.cell, getStates(cellProps)))
-    },
-    columnTemplate: VGridVueTemplate(SFCRevoGridColumnHeader, {
-      title: column.title,
-      headerContentAttrs: column.markers.headerContent,
-      isSortable: column.sort?.sortable === true,
-      sortEnabled: sortMeta.enabled,
-      sortDirection: sortMeta.direction,
-      sortIndex: sortMeta.index,
-      onSortClick,
-      onMenuOpen,
-      hasMenu,
-    }),
-    cellTemplate: (cellH: SFCVueRenderH, cellProps: Record<string, unknown>) => renderCell(cellH, cellProps),
-  }
-}
-
-function withMarkerStates(
-  attrs: SFCTableMarkerAttrs,
-  addedStates: string[],
-): SFCTableMarkerAttrs {
-  if (addedStates.length === 0) {
-    return attrs
-  }
-  const states = String(attrs['data-endge-state'] ?? '').split(/\s+/).filter(Boolean)
-  return {
-    ...attrs,
-    'class': [...attrs.class, ...addedStates.map(state => `endge-sfc-table-cell--${state}`)],
-    'data-endge-state': [...new Set([...states, ...addedStates])].join(' '),
-  }
-}
-
-const SFCRevoGridSelectionHeader = defineComponent({
-  name: 'SFCRevoGridSelectionHeader',
-  props: {
-    mode: {
-      type: String as PropType<TableSelectionMode>,
-      required: true,
-    },
-    checked: {
-      type: Boolean,
-      required: true,
-    },
-    indeterminate: {
-      type: Boolean,
-      required: true,
-    },
-    onChange: {
-      type: Function as PropType<(checked: boolean) => void>,
-      required: true,
-    },
-  },
-  setup(props) {
-    return () => vueH('div', {
-      class: 'endge-sfc-table-selection-header',
-      style: {
-        alignItems: 'center',
-        display: 'flex',
-        height: '100%',
-        justifyContent: 'center',
-        width: '100%',
-      },
-    }, props.mode === 'multiple'
-      ? [vueH('input', {
-          'type': 'checkbox',
-          'checked': props.checked,
-          'indeterminate': props.indeterminate,
-          'aria-label': 'Select visible rows',
-          'style': { accentColor: 'var(--primary, #2563eb)', cursor: 'pointer' },
-          'onClick': (event: MouseEvent) => event.stopPropagation(),
-          'onChange': (event: Event) => {
-            event.stopPropagation()
-            props.onChange((event.target as HTMLInputElement).checked)
-          },
-        })]
-      : [])
-  },
-})
 
 const SFCRevoGridColumnHeader = defineComponent({
   name: 'SFCRevoGridColumnHeader',
@@ -1872,6 +1808,68 @@ const SFCRevoGridColumnHeader = defineComponent({
   },
 })
 
+function createRevoColumn(
+  column: SFCTableColumn,
+  columnIndex: number,
+  sortMeta: SFCTableSortMeta,
+  pinSide: TableColumnPinSide,
+  onSortClick: (event?: MouseEvent) => void,
+  onMenuOpen: (event: MouseEvent) => void,
+  hasMenu: boolean,
+  getStates: (cellProps: Record<string, unknown>) => string[],
+  renderCell: (h: SFCVueRenderH, cellProps: Record<string, unknown>) => ReturnType<SFCVueRenderH>,
+): Record<string, unknown> {
+  return {
+    prop: column.key,
+    name: column.title,
+    __sfcColumnIndex: columnIndex,
+    sortable: undefined,
+    order: undefined,
+    cellCompare: undefined,
+    autoSize: column.width == null,
+    size: column.width ?? 150,
+    pin: toRevoGridPinSide(pinSide),
+    columnProperties: () => toRevoGridMarkerProps(column.markers.headerCell),
+    cellProperties: (cellProps: Record<string, unknown>) => {
+      const row = cellProps.model
+      if (!isPlainObject(row)) {
+        return {
+          'part': 'cell',
+          'data-endge-part': 'cell',
+        }
+      }
+
+      return toRevoGridMarkerProps(withMarkerStates(column.markers.cell, getStates(cellProps)))
+    },
+    columnTemplate: VGridVueTemplate(SFCRevoGridColumnHeader, {
+      title: column.title,
+      headerContentAttrs: column.markers.headerContent,
+      isSortable: column.sort?.sortable === true,
+      sortEnabled: sortMeta.enabled,
+      sortDirection: sortMeta.direction,
+      sortIndex: sortMeta.index,
+      onSortClick,
+      onMenuOpen,
+      hasMenu,
+    }),
+    cellTemplate: (cellH: SFCVueRenderH, cellProps: Record<string, unknown>) => renderCell(cellH, cellProps),
+  }
+}
+
+function withMarkerStates(
+  attrs: SFCTableMarkerAttrs,
+  addedStates: string[],
+): SFCTableMarkerAttrs {
+  if (addedStates.length === 0) {
+    return attrs
+  }
+  const states = String(attrs['data-endge-state'] ?? '').split(/\s+/).filter(Boolean)
+  return {
+    ...attrs,
+    'class': [...attrs.class, ...addedStates.map(state => `endge-sfc-table-cell--${state}`)],
+    'data-endge-state': [...new Set([...states, ...addedStates])].join(' '),
+  }
+}
 function renderSortDirectionIcon(direction: ComponentSFCTableSortDirection): ReturnType<SFCVueRenderH> {
   return vueH('svg', {
     'width': 15,
