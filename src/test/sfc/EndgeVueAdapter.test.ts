@@ -18,6 +18,7 @@ const TEST_WORKSPACE: EndgeWorkspaceDefinition = {
   installedIntegrations: [],
   configuration: {
     vars: [],
+    values: {},
     locales: [{ code: 'en', displayName: 'English', shortLabel: 'EN', direction: 'ltr' }],
     defaultLocale: 'en',
     fallbackLocale: 'en',

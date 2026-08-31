@@ -51,4 +51,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  test: {
+    setupFiles: [path.resolve(__dirname, 'src/test/setup.ts')],
+  },
 })

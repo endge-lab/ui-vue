@@ -18,6 +18,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { h, isVNode } from 'vue'
 
 import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
+import { renderEditableBoundaryContent } from '@/test/setup'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
 
@@ -253,12 +254,12 @@ const state = ports.require.state({ value: props.value })
     const context = createSFCVueRenderContext({ value: 'RUN' }, 0, host, ir)
     const node = ir.template.roots[0]!
 
-    const display = renderSFCNode(h, node, context)
+    const display = renderEditableBoundaryContent(renderSFCNode(h, node, context))
     if (!isVNode(display)) {
       throw new Error('Custom editable display did not render')
     }
     display.props?.onClick({ target: display, currentTarget: display, cancelable: true })
-    const edit = renderSFCNode(h, node, context)
+    const edit = renderEditableBoundaryContent(renderSFCNode(h, node, context))
     if (!isVNode(edit)) {
       throw new Error('Custom editable edit variant did not render')
     }

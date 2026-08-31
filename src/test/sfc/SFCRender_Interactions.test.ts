@@ -12,8 +12,9 @@ import { h, isVNode } from 'vue'
 
 import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
 import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/model/render/sfc/sfc-vue-render.type'
+import { renderEditableBoundaryContent } from '@/test/setup'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
-import { createSFCSemanticInteractionBindings } from '@/ui/render/sfc/SFCRender_Interaction'
+import { attachSFCInteractionAttrs, createSFCSemanticInteractionBindings } from '@/ui/render/sfc/SFCRender_Interaction'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
 
 describe('sFC :on interactions in Vue renderer', () => {
@@ -169,7 +170,7 @@ describe('sFC :on interactions in Vue renderer', () => {
     context.context = {
       ...context.context,
       config: {
-        ...(context.context.config as Record<string, unknown>),
+        ...context.context.config,
         groundHandling: {
           actualTimeTriggers: [{ event: 'contextmenu', button: 2, prevent: true }],
         },
@@ -177,16 +178,14 @@ describe('sFC :on interactions in Vue renderer', () => {
     }
     context.locals = { row: { id: 'leg-1' } }
     context.eventBoundary = boundary as any
-    const rendered = renderSFCNode(h, node, context)
-    if (!isVNode(rendered)) {
-      throw new Error('Cell did not render a VNode')
-    }
+    const attrs: Record<string, unknown> = {}
+    attachSFCInteractionAttrs(attrs, node, {}, context)
 
-    expect(rendered.props?.onContextmenu).toBeTypeOf('function')
-    expect(rendered.props?.onClick).toBeUndefined()
+    expect(attrs.onContextmenu).toBeTypeOf('function')
+    expect(attrs.onClick).toBeUndefined()
     const currentTarget = { id: 'bridge' }
     const preventDefault = vi.fn()
-    rendered.props?.onContextmenu({
+    ;(attrs.onContextmenu as (event: Event) => void)({
       type: 'contextmenu',
       target: currentTarget,
       currentTarget,
@@ -201,7 +200,7 @@ describe('sFC :on interactions in Vue renderer', () => {
       ctrlKey: false,
       altKey: false,
       metaKey: false,
-    })
+    } as unknown as Event)
     await Promise.resolve()
 
     expect(preventDefault).toHaveBeenCalledOnce()
@@ -232,7 +231,7 @@ describe('sFC :on interactions in Vue renderer', () => {
     const context = createSFCVueRenderContext({})
     context.eventBoundary = boundary as any
     context.host = host as any
-    const rendered = renderSFCNode(h, node, context)
+    const rendered = renderEditableBoundaryContent(renderSFCNode(h, node, context))
     if (!isVNode(rendered)) {
       throw new Error('Text did not render a VNode')
     }
@@ -323,6 +322,7 @@ describe('sFC :on interactions in Vue renderer', () => {
       rows: [row],
       rowOffset: 0,
       selected: () => false,
+      cellSelected: () => false,
       onClick,
       onActivate: vi.fn(),
       onContextMenu: vi.fn(),

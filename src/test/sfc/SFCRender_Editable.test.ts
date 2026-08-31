@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import type { ComponentSFCProgramPayload, ProgramArtifact } from '@endge/core'
+import type { VNode } from 'vue'
 import {
   compileComponentSFC,
   ComponentSFCRuntimeHost,
@@ -15,6 +16,7 @@ import { h, isVNode } from 'vue'
 
 import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
 import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/model/render/sfc/sfc-vue-render.type'
+import { renderEditableBoundaryContent } from '@/test/setup'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode, renderSFCNodes } from '@/ui/render/sfc/SFCRender_Node'
 
@@ -65,19 +67,18 @@ describe('sFC Editable renderer', () => {
     const context = createSFCVueRenderContext({ status: 'RUN' }, 0, host as any, compiled.ir)
     context.eventBoundary = boundary as any
 
-    const display = renderSFCNode(h, node, context)
+    const display = renderEditableBoundaryContent(renderSFCNode(h, node, context))
     if (!isVNode(display)) {
       throw new Error('Editable display did not render')
     }
     display.props?.onDblclick({ target: display, currentTarget: display, cancelable: true })
 
-    const editor = renderSFCNode(h, node, context)
+    const editor = renderEditableBoundaryContent(renderSFCNode(h, node, context))
     if (!isVNode(editor)) {
       throw new Error('Editable input did not render')
     }
     expect(editor.type).toBe('input')
-    editor.props?.onInput({ target: { value: 'STOP' } })
-    await editor.props?.onChange({ target: { value: 'STOP' } })
+    await commitEditableValue(editor, 'STOP')
 
     expect(boundary.routeChild).toHaveBeenCalledWith(
       expect.objectContaining({ nodeId: expect.any(String), componentTag: 'Text' }),
@@ -146,16 +147,16 @@ describe('sFC Editable renderer', () => {
     context.locals = { rowKey: 15, columnKey: 'status' }
     const node = compiled.ir!.template.roots[0]!
 
-    const display = renderSFCNode(h, node, context)
+    const display = renderEditableBoundaryContent(renderSFCNode(h, node, context))
     if (!isVNode(display)) {
       throw new Error('Editable display did not render')
     }
     display.props?.onClick({ target: display, currentTarget: display, cancelable: true })
-    const editor = renderSFCNode(h, node, context)
+    const editor = renderEditableBoundaryContent(renderSFCNode(h, node, context))
     if (!isVNode(editor)) {
       throw new Error('Editable input did not render')
     }
-    await editor.props?.onChange({ target: { value: 'STOP' } })
+    await commitEditableValue(editor, 'STOP')
     await Promise.resolve()
 
     expect(received).toEqual([{ id: 15, patch: { status: 'STOP' } }])
@@ -188,7 +189,7 @@ describe('sFC Editable renderer', () => {
     }
     const context = createSFCVueRenderContext({ status: 'RUN' }, 0, host as any, compiled.ir)
     context.eventBoundary = null
-    const display = renderSFCNode(h, node, context)
+    const display = renderEditableBoundaryContent(renderSFCNode(h, node, context))
     if (!isVNode(display)) {
       throw new Error('Editable display did not render')
     }
@@ -228,7 +229,7 @@ describe('sFC Editable renderer', () => {
     expect(preventDefault).toHaveBeenCalledOnce()
     expect(stopPropagation).toHaveBeenCalledOnce()
 
-    const editor = renderSFCNode(h, node, context)
+    const editor = renderEditableBoundaryContent(renderSFCNode(h, node, context))
     if (!isVNode(editor)) {
       throw new Error('Editable input did not render')
     }
@@ -259,7 +260,7 @@ describe('sFC Editable renderer', () => {
       },
     }
     const context = createSFCVueRenderContext({}, 0, host as any, compiled.ir)
-    const display = renderSFCNode(h, node, context)
+    const display = renderEditableBoundaryContent(renderSFCNode(h, node, context))
     if (!isVNode(display)) {
       throw new Error('Editable display did not render')
     }
@@ -304,19 +305,19 @@ describe('sFC Editable renderer', () => {
     }
     const context = createSFCVueRenderContext({ initial }, 0, host as any, compiled.ir)
     context.eventBoundary = null
-    const display = renderSFCNode(h, node, context)
+    const display = renderEditableBoundaryContent(renderSFCNode(h, node, context))
     if (!isVNode(display)) {
       throw new Error('Editable display did not render')
     }
     display.props?.onClick({ target: display, currentTarget: display, cancelable: true })
 
-    const editor = renderSFCNode(h, node, context)
+    const editor = renderEditableBoundaryContent(renderSFCNode(h, node, context))
     if (!isVNode(editor)) {
       throw new Error('Editable input did not render')
     }
     expect(editor.type).toBe('input')
     expect(editor.props?.type).toBe(nativeType)
-    await editor.props?.onChange({ target: { value: next } })
+    await commitEditableValue(editor, next)
     expect(commitEditSession).toHaveBeenCalledWith(expect.any(String), committed)
   })
 
@@ -332,13 +333,13 @@ describe('sFC Editable renderer', () => {
       },
     }
     const context = createSFCVueRenderContext({}, 0, host as any, compiled.ir)
-    const display = renderSFCNode(h, node, context)
+    const display = renderEditableBoundaryContent(renderSFCNode(h, node, context))
     if (!isVNode(display)) {
       throw new Error('Editable display did not render')
     }
     display.props?.onClick({ target: display, currentTarget: display, cancelable: true })
 
-    const editor = renderSFCNode(h, node, context)
+    const editor = renderEditableBoundaryContent(renderSFCNode(h, node, context))
     if (!isVNode(editor)) {
       throw new Error('Editable input did not render')
     }
@@ -354,3 +355,23 @@ describe('sFC Editable renderer', () => {
     expect(focus).toHaveBeenCalledOnce()
   })
 })
+
+/** Воспроизводит штатный input + Enter контракт встроенного editor adapter. */
+async function commitEditableValue(editor: VNode, value: unknown): Promise<void> {
+  const target = { value }
+  editor.props?.onInput({ target })
+  await editor.props?.onKeydown({
+    type: 'keydown',
+    key: 'Enter',
+    code: 'Enter',
+    target,
+    currentTarget: target,
+    cancelable: true,
+    preventDefault: vi.fn(),
+    stopPropagation: vi.fn(),
+    shiftKey: false,
+    ctrlKey: false,
+    altKey: false,
+    metaKey: false,
+  })
+}
