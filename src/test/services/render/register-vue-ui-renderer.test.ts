@@ -2,7 +2,7 @@ import { Endge } from '@endge/core'
 import { describe, expect, it, vi } from 'vitest'
 import { reactive } from 'vue'
 
-import { registerVueUIRenderer } from '@/model/render/register-vue-ui-renderer'
+import { registerVueUIRenderer } from '@/services/render/register-vue-ui-renderer'
 
 describe('регистрация Vue renderer', () => {
   /** Проверяет, что Vue component помечается raw до передачи в Core. */

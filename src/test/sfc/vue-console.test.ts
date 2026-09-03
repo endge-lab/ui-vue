@@ -1,7 +1,7 @@
 import type { App } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
 
-import { installEndgeVueWarnHandler } from '@/model/debug/vue-console'
+import { installEndgeVueWarnHandler } from '@/services/debug/vue-console'
 import SFC_RuntimeRenderer from '@/ui/render/sfc/SFC_RuntimeRenderer.vue'
 
 describe('vue console memory safety', () => {

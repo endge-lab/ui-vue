@@ -1,4 +1,4 @@
-import type { SFCVueRenderAdapterFunction } from '@/model/render/sfc/sfc-vue-render.type'
+import type { SFCVueRenderAdapterFunction } from '@/services/render/sfc/sfc-vue-render.type'
 
 /** Рендерит badge primitive с нейтральным tone metadata. */
 export const SFCRender_Badge: SFCVueRenderAdapterFunction = (input) => {

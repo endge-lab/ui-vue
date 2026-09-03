@@ -1,5 +1,5 @@
 import type { SourceFieldType } from '@endge/core'
-import type { SFCVueRenderAdapterFunction } from '@/model/render/sfc/sfc-vue-render.type'
+import type { SFCVueRenderAdapterFunction } from '@/services/render/sfc/sfc-vue-render.type'
 
 import { isoToDateInput, isoToDateTimeLocalInput, timeToTimeInput } from '@endge/utils'
 

@@ -1,4 +1,4 @@
-import type { SFCVueRenderAdapterFunction } from '@/model/render/sfc/sfc-vue-render.type'
+import type { SFCVueRenderAdapterFunction } from '@/services/render/sfc/sfc-vue-render.type'
 
 /** Рендерит дату или время через базовые форматы SFC v1. */
 export const SFCRender_DateTime: SFCVueRenderAdapterFunction = (input) => {

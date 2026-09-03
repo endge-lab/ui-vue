@@ -17,7 +17,7 @@ import {
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { h, isVNode } from 'vue'
 
-import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
+import { NativeVueSFCAdapter } from '@/services/render/sfc/native-vue-sfc-adapter'
 import { renderEditableBoundaryContent } from '@/test/setup'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'

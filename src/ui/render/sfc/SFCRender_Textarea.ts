@@ -1,4 +1,4 @@
-import type { SFCVueRenderAdapterFunction } from '@/model/render/sfc/sfc-vue-render.type'
+import type { SFCVueRenderAdapterFunction } from '@/services/render/sfc/sfc-vue-render.type'
 
 /** Рендерит многострочный display-only input без обратной связи с runtime. */
 export const SFCRender_Textarea: SFCVueRenderAdapterFunction = (input) => {

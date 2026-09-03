@@ -1,6 +1,6 @@
 import type { SourceFieldOption } from '@endge/core'
 
-import type { SFCVueRenderAdapterFunction, SFCVueRenderH } from '@/model/render/sfc/sfc-vue-render.type'
+import type { SFCVueRenderAdapterFunction, SFCVueRenderH } from '@/services/render/sfc/sfc-vue-render.type'
 import NativeMultiSelect from '@/ui/render/sfc/NativeMultiSelect.vue'
 
 /** Рендерит одиночный или множественный display-only select. */

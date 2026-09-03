@@ -2,7 +2,7 @@ import type { ComponentSFCRuntimeHost } from '@endge/core'
 import type { PropType } from 'vue'
 import { defineComponent, onBeforeUnmount, shallowRef, watch } from 'vue'
 
-import { isSFCVueEditableResourceUpdate } from '@/model/render/sfc/SFCVueEditableResource'
+import { isSFCVueEditableResourceUpdate } from '@/services/render/sfc/SFCVueEditableResource'
 
 /**
  * Isolates one editable consumer from the root SFC render version.

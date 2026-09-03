@@ -3,11 +3,11 @@ import type {
   SFCVueRuntimeBridgeBoundaryPatch,
   SFCVueRuntimeBridgeUpdate,
   SFCVueRuntimeInputSource,
-} from '@/model/render/sfc/sfc-vue-render.type'
+} from '@/services/render/sfc/sfc-vue-render.type'
 
 import { Raph } from '@endge/raph'
 
-import { isSFCVueEditableResourceUpdate } from '@/model/render/sfc/SFCVueEditableResource'
+import { isSFCVueEditableResourceUpdate } from '@/services/render/sfc/SFCVueEditableResource'
 
 /**
  * Связывает runtime-host SFC-компонента с Vue render root.

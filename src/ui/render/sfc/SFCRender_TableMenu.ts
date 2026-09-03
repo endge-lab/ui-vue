@@ -4,7 +4,7 @@ import type {
   ContextMenuNodeDescriptor,
 } from '@endge/core'
 
-import type { SFCVueRenderContext } from '@/model/render/sfc/sfc-vue-render.type'
+import type { SFCVueRenderContext } from '@/services/render/sfc/sfc-vue-render.type'
 import { evaluateSFCValue } from '@/ui/render/sfc/SFCRender_Evaluator'
 
 /** Materializes a compiled SFC menu only when its concrete row/column context exists. */

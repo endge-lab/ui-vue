@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { SFCVueRenderAdapterProps } from '@/model/render/sfc/sfc-vue-render.type'
+import type { SFCVueRenderAdapterProps } from '@/services/render/sfc/sfc-vue-render.type'
 import { Endge } from '@endge/core'
 import { computed, defineComponent, Fragment, h, inject, onScopeDispose, ref } from 'vue'
-import { registerSFCInspectionRoot } from '@/model/render/sfc/SFCVueRenderInspection'
+import { registerSFCInspectionRoot } from '@/services/render/sfc/SFCVueRenderInspection'
 import { EndgeVueTooltipManagerKey } from '@/ui/overlay/tooltip/endge-tooltip-manager'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNodes } from '@/ui/render/sfc/SFCRender_Node'

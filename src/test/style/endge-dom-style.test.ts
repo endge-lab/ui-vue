@@ -2,7 +2,7 @@ import { compileEndgeCSS } from '@endge/core'
 import postcss from 'postcss'
 import { describe, expect, it } from 'vitest'
 
-import { materializeEndgeCSSForDOM } from '@/model/style/endge-dom-style'
+import { materializeEndgeCSSForDOM } from '@/services/style/endge-dom-style'
 
 describe('endgeCSS DOM materializer', () => {
   it('emits parseable CSS in neutral cascade order', () => {

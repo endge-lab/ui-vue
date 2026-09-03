@@ -1,11 +1,11 @@
 import type { EndgeWorkspaceDefinition, RComponentSFC_IR_ElementNode } from '@endge/core'
-import type { SFCVueRenderAdapter } from '@/model/render/sfc/sfc-vue-render.type'
+import type { SFCVueRenderAdapter } from '@/services/render/sfc/sfc-vue-render.type'
 import { Endge } from '@endge/core'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { h, isVNode } from 'vue'
-import { EndgeVue_Module } from '@/model/kernel/EndgeVue_Module'
-import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
+import { EndgeVue_Module } from '@/modules/EndgeVue_Module'
+import { NativeVueSFCAdapter } from '@/services/render/sfc/native-vue-sfc-adapter'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
 

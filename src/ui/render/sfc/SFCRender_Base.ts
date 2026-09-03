@@ -11,9 +11,9 @@ import type {
   SFCVueRenderElementInput,
   SFCVueRenderFunction,
   SFCVueRenderResult,
-} from '@/model/render/sfc/sfc-vue-render.type'
+} from '@/services/render/sfc/sfc-vue-render.type'
 import { createEndgeTooltipDomId, getComponentSFCIntrinsicEventDefinitions } from '@endge/core'
-import { createSFCInspectionAttrs, registerSFCInspectionElement } from '@/model/render/sfc/SFCVueRenderInspection'
+import { createSFCInspectionAttrs, registerSFCInspectionElement } from '@/services/render/sfc/SFCVueRenderInspection'
 import { attachEndgeTooltipTriggerAttrs } from '@/ui/overlay/tooltip/endge-tooltip-manager'
 import { SFC_EditableRenderBoundary } from '@/ui/render/sfc/SFC_EditableRenderBoundary'
 import { extendSFCVueRenderContext, extendSFCVueStyleContext } from '@/ui/render/sfc/SFCRender_Context'

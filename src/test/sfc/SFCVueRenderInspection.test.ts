@@ -6,7 +6,7 @@ import {
   registerSFCInspectionDefinitionTree,
   registerSFCInspectionElement,
   registerSFCInspectionRoot,
-} from '@/model/render/sfc/SFCVueRenderInspection'
+} from '@/services/render/sfc/SFCVueRenderInspection'
 import { createSFCVueRenderContext, extendSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 
 describe('sFCVueRenderInspection', () => {

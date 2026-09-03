@@ -1,5 +1,5 @@
 import type { ComponentSFCEventBoundary, ComponentSFCRequiredPortBinding, ComponentSFCRuntimeHost, ComputationResource, EndgeStyleMatchNode, EndgeStyleSheetArtifact, ProgramMetadata, RComponentSFC_IR, SFCRenderInspectionSessionLike } from '@endge/core'
-import type { SFCVueRenderContext, SFCVueRenderIteration } from '@/model/render/sfc/sfc-vue-render.type'
+import type { SFCVueRenderContext, SFCVueRenderIteration } from '@/services/render/sfc/sfc-vue-render.type'
 import type { EndgeVueTooltipManager } from '@/ui/overlay/tooltip/endge-tooltip-manager'
 import { Endge, ComponentSFCEventBoundary as EndgeComponentSFCEventBoundary } from '@endge/core'
 import { evaluateSFCValue } from '@/ui/render/sfc/SFCRender_Evaluator'

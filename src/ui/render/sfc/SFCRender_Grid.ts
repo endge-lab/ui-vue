@@ -1,4 +1,4 @@
-import type { SFCVueRenderAdapterFunction } from '@/model/render/sfc/sfc-vue-render.type'
+import type { SFCVueRenderAdapterFunction } from '@/services/render/sfc/sfc-vue-render.type'
 
 /** Рендерит renderer-neutral Grid через нативный CSS Grid. */
 export const SFCRender_Grid: SFCVueRenderAdapterFunction = (input) => {

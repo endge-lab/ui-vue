@@ -13,7 +13,7 @@ import {
 import { beforeAll, describe, expect, it } from 'vitest'
 import { h, isVNode } from 'vue'
 
-import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
+import { NativeVueSFCAdapter } from '@/services/render/sfc/native-vue-sfc-adapter'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
 

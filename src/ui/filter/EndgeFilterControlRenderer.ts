@@ -6,7 +6,7 @@ import type {
 import type { PropType } from 'vue'
 import type {
   SFCVueRenderAdapterFunction,
-} from '@/model/render/sfc/sfc-vue-render.type'
+} from '@/services/render/sfc/sfc-vue-render.type'
 
 import {
   Endge,

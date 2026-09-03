@@ -1,4 +1,4 @@
-import type { SFCVueRenderAdapterFunction } from '@/model/render/sfc/sfc-vue-render.type'
+import type { SFCVueRenderAdapterFunction } from '@/services/render/sfc/sfc-vue-render.type'
 
 /** Рендерит flex-контейнер SFC primitive. */
 export const SFCRender_Flex: SFCVueRenderAdapterFunction = (input) => {

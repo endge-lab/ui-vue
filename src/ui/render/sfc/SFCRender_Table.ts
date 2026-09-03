@@ -35,7 +35,7 @@ import type {
   SFCVueRenderFunction,
   SFCVueRenderH,
   SFCVueRuntimeStateController,
-} from '@/model/render/sfc/sfc-vue-render.type'
+} from '@/services/render/sfc/sfc-vue-render.type'
 import type { SFCTableCellAlign, SFCTableCellAlignment, SFCTableCellVerticalAlign } from '@/ui/render/sfc/SFCRender_TableAlignment'
 import type { SFCTableColumnMarkers, SFCTableMarkerAttrs, SFCTableMarkers } from '@/ui/render/sfc/SFCRender_TableStyle'
 

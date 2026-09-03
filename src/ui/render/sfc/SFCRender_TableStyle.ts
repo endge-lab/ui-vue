@@ -1,4 +1,4 @@
-import type { SFCVueRenderContext } from '@/model/render/sfc/sfc-vue-render.type'
+import type { SFCVueRenderContext } from '@/services/render/sfc/sfc-vue-render.type'
 
 export type SFCTablePublicPart
   = 'grid'

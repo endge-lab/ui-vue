@@ -1,4 +1,4 @@
-import type { SFCVueRenderAdapter } from '@/model/render/sfc/sfc-vue-render.type'
+import type { SFCVueRenderAdapter } from '@/services/render/sfc/sfc-vue-render.type'
 import {
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,

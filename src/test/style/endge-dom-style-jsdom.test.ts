@@ -2,8 +2,8 @@
 import { compileEndgeCSS } from '@endge/core'
 import { afterEach, describe, expect, it } from 'vitest'
 
-import { materializeEndgeCSSForDOM } from '@/model/style/endge-dom-style'
-import { EndgeDOMStyleRuntime } from '@/model/style/EndgeDOMStyleRuntime'
+import { materializeEndgeCSSForDOM } from '@/services/style/endge-dom-style'
+import { EndgeDOMStyleRuntime } from '@/services/style/EndgeDOMStyleRuntime'
 
 describe('endgeCSS DOM application', () => {
   afterEach(() => {

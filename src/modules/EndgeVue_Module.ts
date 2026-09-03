@@ -7,9 +7,9 @@ import { Raph, RaphNode } from '@endge/raph'
 import { randomString } from '@endge/utils'
 
 import { onBeforeUnmount, ref, watch } from 'vue'
-import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
-import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/model/render/sfc/sfc-vue-render.type'
-import { EndgeDOMStyleRuntime } from '@/model/style/EndgeDOMStyleRuntime'
+import { NativeVueSFCAdapter } from '@/services/render/sfc/native-vue-sfc-adapter'
+import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/services/render/sfc/sfc-vue-render.type'
+import { EndgeDOMStyleRuntime } from '@/services/style/EndgeDOMStyleRuntime'
 
 export class EndgeVue_Module extends EndgeModule {
   private _started = false

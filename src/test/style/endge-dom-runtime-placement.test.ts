@@ -3,8 +3,8 @@ import { compileEndgeCSS } from '@endge/core'
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
 
-import { materializeEndgeCSSForDOM } from '@/model/style/endge-dom-style'
-import { EndgeDOMStyleRuntime } from '@/model/style/EndgeDOMStyleRuntime'
+import { materializeEndgeCSSForDOM } from '@/services/style/endge-dom-style'
+import { EndgeDOMStyleRuntime } from '@/services/style/EndgeDOMStyleRuntime'
 
 describe('dOM style runtime placements', () => {
   afterEach(() => {
