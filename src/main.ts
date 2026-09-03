@@ -3,7 +3,7 @@ import '@/assets/styles.scss'
 export * from '@/domain/types/filter-renderer.type'
 
 export * from '@/model/debug/vue-console'
-export * from '@/model/kernel/endge-vue'
+export * from '@/model/kernel/EndgeVue_Module'
 export * from '@/model/render/register-vue-ui-renderer'
 export * from '@/model/render/sfc/native-vue-sfc-adapter'
 export * from '@/model/render/sfc/sfc-vue-render.type'

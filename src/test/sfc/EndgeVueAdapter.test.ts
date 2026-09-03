@@ -4,7 +4,7 @@ import { Endge } from '@endge/core'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { h, isVNode } from 'vue'
-import { EndgeVueModule } from '@/model/kernel/endge-vue'
+import { EndgeVue_Module } from '@/model/kernel/EndgeVue_Module'
 import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
@@ -77,7 +77,7 @@ describe('endgeVueModule SFC adapter', () => {
   })
 
   it('registers and activates vue-native for the selected workspace', () => {
-    const module = new EndgeVueModule()
+    const module = new EndgeVue_Module()
 
     module.setup()
     module.build()
@@ -86,7 +86,7 @@ describe('endgeVueModule SFC adapter', () => {
   })
 
   it('fails before runtime start when selected adapter is not registered', () => {
-    const module = new EndgeVueModule()
+    const module = new EndgeVue_Module()
     module.setup()
     Endge.workspace.apply({
       ...TEST_WORKSPACE,
@@ -103,7 +103,7 @@ describe('endgeVueModule SFC adapter', () => {
   })
 
   it('dispatches visual primitives through the selected adapter', () => {
-    const module = new EndgeVueModule()
+    const module = new EndgeVue_Module()
     const customerAdapter: SFCVueRenderAdapter = {
       ...NativeVueSFCAdapter,
       id: 'customer-aodb',

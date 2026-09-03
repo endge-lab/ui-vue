@@ -11,7 +11,7 @@ import { NativeVueSFCAdapter } from '@/model/render/sfc/native-vue-sfc-adapter'
 import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/model/render/sfc/sfc-vue-render.type'
 import { EndgeDOMStyleRuntime } from '@/model/style/EndgeDOMStyleRuntime'
 
-export class EndgeVueModule extends EndgeModule {
+export class EndgeVue_Module extends EndgeModule {
   private _started = false
   private _adapterFallbackIds: readonly string[] = []
   private _unsubscribeWorkspace: (() => void) | null = null
@@ -130,7 +130,7 @@ export const EndgeVuePlugin: EndgePlugin = {
   install(): void {
     Endge.defineModule({
       key: 'vue',
-      module: new EndgeVueModule(),
+      module: new EndgeVue_Module(),
       after: ['configuration', 'uiRegistry'],
       before: 'runtime',
     })
@@ -138,7 +138,7 @@ export const EndgeVuePlugin: EndgePlugin = {
 }
 
 export class EndgeVue {
-  static makeRaphRef<T>(path: string): Ref<T> {
+  public static makeRaphRef<T>(path: string): Ref<T> {
     const newRef = ref<T>(Raph.get(path) as T)
 
     const raphNode = new RaphNode(Raph.app, {
@@ -166,7 +166,7 @@ export class EndgeVue {
     return newRef as Ref<T>
   }
 
-  static makeVocabRef<T>(vocab: string): Ref<T> {
+  public static makeVocabRef<T>(vocab: string): Ref<T> {
     return EndgeVue.makeRaphRef(`vocabs.${vocab}`)
   }
 }
