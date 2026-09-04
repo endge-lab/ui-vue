@@ -1,4 +1,4 @@
-import type { SubscribableLike } from '@endge/core'
+import type { SubscribableLike } from '@endge/utils'
 import type { ShallowRef } from 'vue'
 
 import { onScopeDispose, shallowRef, triggerRef } from 'vue'
