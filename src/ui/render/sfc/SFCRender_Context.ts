@@ -121,7 +121,7 @@ function evaluatePortLocals(
       ?? call.defaultIdentity
     const resource = context.host
       ? context.host.getComputationResource(identity, input, consumerKey, call.port)
-      : Endge.runtime.computation.createResource(identity, input, consumerKey)
+      : Endge.computations.createResource(identity, input, consumerKey)
     locals[call.local] = createSFCComputationResourceView(resource)
   }
   return locals

@@ -72,7 +72,7 @@ export async function executeEndgeContextMenuItem(item: ContextMenuItemDescripto
   }
 
   try {
-    await Endge.runtime.actions.execute(item.action, context, item.input)
+    await Endge.actions.execute(item.action, context, item.input)
   }
   finally {
     closeEndgeContextMenu()

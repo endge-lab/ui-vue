@@ -26,7 +26,7 @@ describe('выполнение Action контекстного меню', () => 
     closeEndgeContextMenu()
   })
 
-  it('фильтрует и выполняет элементы через Endge.runtime.actions', async () => {
+  it('фильтрует и выполняет элементы через Endge.actions', async () => {
     const execute = vi.fn()
     const context: RuntimeActionContext = { surface: 'test' }
     disposeDefinition = Endge.actions.define({

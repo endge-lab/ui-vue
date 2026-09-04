@@ -37,7 +37,7 @@ describe('проверка Render компонента SFC', () => {
   })
 
   afterEach(() => {
-    Endge.runtime.computation.setSandboxAdapter(null)
+    Endge.computations.setSandboxAdapter(null)
     Endge.program.clear()
   })
 
@@ -203,7 +203,7 @@ const state = ports.require.state({ value: props.value })
   it('предоставляет состояния pending и success асинхронного порта Computation', async () => {
     Endge.program.beginCompile('test')
     Endge.program.addArtifact(createAsyncComputationArtifact('async-state'))
-    Endge.runtime.computation.setSandboxAdapter({
+    Endge.computations.setSandboxAdapter({
       execute: async request => ({ value: String(request.inputs.value).toUpperCase() }),
     })
 
