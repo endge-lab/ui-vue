@@ -2829,9 +2829,9 @@ export function normalizeSFCTableRows(value: unknown): Record<string, unknown>[]
 }
 
 function cloneRows(rows: Record<string, unknown>[]): Record<string, unknown>[] {
-  // Rows enter the table as normalized immutable snapshots. Copying the
-  // collection is sufficient and avoids duplicating every 10k-row snapshot at
-  // each base/current/previous transition.
+  // Строки поступают в таблицу как нормализованные неизменяемые snapshots. Копирования
+  // коллекции достаточно: это позволяет не дублировать каждый snapshot из 10 тысяч строк при
+  // каждом переходе между base, current и previous.
   return [...rows]
 }
 

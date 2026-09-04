@@ -8,8 +8,8 @@ import {
   readSFCPath,
 } from '@/ui/render/sfc/SFCRender_Evaluator'
 
-describe('sFCRender_Evaluator', () => {
-  it('returns literal prop values', () => {
+describe('вычислитель render SFC', () => {
+  it('возвращает литеральные значения props', () => {
     const value: RComponentSFC_IR_Value = {
       kind: 'literal',
       value: 'Boarding',
@@ -18,7 +18,7 @@ describe('sFCRender_Evaluator', () => {
     expect(evaluateSFCValue(value, createSFCVueRenderContext({}))).toBe('Boarding')
   })
 
-  it('evaluates dotted prop expressions', () => {
+  it('вычисляет выражения props с точками', () => {
     const context = createSFCVueRenderContext({
       flight: {
         number: 'SU 1402',
@@ -28,7 +28,7 @@ describe('sFCRender_Evaluator', () => {
     expect(evaluateSFCExpression('flight.number', context)).toBe('SU 1402')
   })
 
-  it('evaluates boolean negation', () => {
+  it('вычисляет логическое отрицание', () => {
     const context = createSFCVueRenderContext({
       compact: false,
     })
@@ -36,7 +36,7 @@ describe('sFCRender_Evaluator', () => {
     expect(evaluateSFCExpression('!compact', context)).toBe(true)
   })
 
-  it('evaluates logical and nullish expressions with short-circuit semantics', () => {
+  it('вычисляет логические и nullish-выражения с коротким замыканием', () => {
     const context = createSFCVueRenderContext({
       carrier: 'SU',
       number: '1418',
@@ -49,7 +49,7 @@ describe('sFCRender_Evaluator', () => {
     expect(evaluateSFCExpression('missing ?? number', context)).toBe('1418')
   })
 
-  it('evaluates optional access and conditional expressions', () => {
+  it('вычисляет optional access и условные выражения', () => {
     const context = createSFCVueRenderContext({
       comment: { text: 'Memo' },
       fresh: true,
@@ -65,7 +65,7 @@ describe('sFCRender_Evaluator', () => {
     ).toBe('700')
   })
 
-  it('evaluates comparison and arithmetic expressions', () => {
+  it('вычисляет выражения сравнения и арифметики', () => {
     const context = createSFCVueRenderContext({
       delay: 15,
       status: 'ready',
@@ -76,13 +76,13 @@ describe('sFCRender_Evaluator', () => {
     expect(evaluateSFCExpression('count + 1', context)).toBe(3)
   })
 
-  it('returns undefined for missing props', () => {
+  it('возвращает undefined для отсутствующих props', () => {
     const context = createSFCVueRenderContext({})
 
     expect(evaluateSFCExpression('flight.number', context)).toBeUndefined()
   })
 
-  it('reads array items by a DataPath parameter selector', () => {
+  it('читает элементы массива через selector параметра DataPath', () => {
     const context = createSFCVueRenderContext({})
     context.locals.row = {
       departureLeg: {
@@ -102,7 +102,7 @@ describe('sFCRender_Evaluator', () => {
     )).toBe('73151')
   })
 
-  it('reads nested selectors containing spaces', () => {
+  it('читает вложенные selectors с пробелами', () => {
     const context = createSFCVueRenderContext({
       rows: [
         {
@@ -126,7 +126,7 @@ describe('sFCRender_Evaluator', () => {
     ).toBe('2026-07-14T11:52:00Z')
   })
 
-  it('combines Endge selectors with logical and optional expressions', () => {
+  it('объединяет selectors Endge с логическими и optional-выражениями', () => {
     const context = createSFCVueRenderContext({})
     context.locals.row = {
       attributes: [{ name: 'ACTail', text: '73151' }],
@@ -137,7 +137,7 @@ describe('sFCRender_Evaluator', () => {
     )
   })
 
-  it('allows only explicitly supported pure calls', () => {
+  it('разрешает только явно поддерживаемые чистые вызовы', () => {
     const context = createSFCVueRenderContext({
       status: ' READY ',
       stations: ['SVO', 'LED'],
@@ -148,7 +148,7 @@ describe('sFCRender_Evaluator', () => {
     expect(evaluateSFCExpression('Math.max(1, 5, 3)', context)).toBe(5)
   })
 
-  it('rejects arbitrary calls, assignments and prototype access', () => {
+  it('отклоняет произвольные вызовы, присваивания и доступ к prototype', () => {
     let called = false
     const context = createSFCVueRenderContext({
       ready: false,

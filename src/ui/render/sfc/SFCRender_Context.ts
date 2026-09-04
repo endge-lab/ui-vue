@@ -93,7 +93,7 @@ export function extendSFCVueRenderContext(
   }
 }
 
-/** Creates a logical child frame without carrying physical Vue wrappers into selector semantics. */
+/** Создаёт логический дочерний frame, не перенося физические Vue-обёртки в семантику селекторов. */
 export function extendSFCVueStyleContext(
   context: SFCVueRenderContext,
   parent: EndgeStyleMatchNode,
@@ -132,7 +132,7 @@ type SFCComputationResourceView = Pick<
   'status' | 'loading' | 'value' | 'error'
 >
 
-/** Exposes trusted computation state through own getters readable by the safe SFC evaluator. */
+/** Открывает доверенное состояние вычислений через собственные getters, доступные безопасному evaluator SFC. */
 function createSFCComputationResourceView(
   resource: ComputationResource,
 ): SFCComputationResourceView {

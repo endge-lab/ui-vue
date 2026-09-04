@@ -14,7 +14,7 @@ import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
 import { normalizeSFCTableRows } from '@/ui/render/sfc/SFCRender_Table'
 
-describe('sFC EndgeCSS runtime markers', () => {
+describe('проверка Runtime-markers EndgeCSS для SFC', () => {
   beforeAll(() => {
     Endge.uiRegistry.adapters.register(NativeVueSFCAdapter)
     Endge.uiRegistry.adapters.activate({
@@ -26,7 +26,7 @@ describe('sFC EndgeCSS runtime markers', () => {
     })
   })
 
-  it('normalizes id, class, state and part without generated matching classes', () => {
+  it('нормализует ID, class, state и part без сгенерированных classes сопоставления', () => {
     const compiled = compileComponentSFC(`<template>
       <Text id="status" class="flight-card" state="delayed selected" part="status">Delayed</Text>
     </template>
@@ -48,7 +48,7 @@ describe('sFC EndgeCSS runtime markers', () => {
     expect(String(rendered.props?.class)).not.toContain('endge-es-')
   })
 
-  it('exposes the complete Table structural style contract', () => {
+  it('предоставляет полный контракт структурных стилей Table', () => {
     const compiled = compileComponentSFC(`<template>
       <Table id="groundhandling-control" :rows="[]">
         <Column key="aircraft" title="ВС"><Text>RA-00001</Text></Column>
@@ -112,7 +112,7 @@ describe('sFC EndgeCSS runtime markers', () => {
     expect(column.markers.headerContent.class).toEqual([])
   })
 
-  it('keeps 10k-row objects untouched and creates no cell style cache', () => {
+  it('не изменяет объекты 10 тысяч строк и не создаёт cache стилей ячеек', () => {
     const compiled = compileComponentSFC(`<template>
       <Table id="large-schedule" :rows="[]">
         <Column key="flight" title="Flight"><Text>GH0967</Text></Column>
@@ -143,7 +143,7 @@ describe('sFC EndgeCSS runtime markers', () => {
     expect(Object.getOwnPropertySymbols(rows[0])).toHaveLength(0)
   })
 
-  it('wraps primitive rows without creating style metadata', () => {
+  it('оборачивает примитивные строки без создания метаданных стиля', () => {
     const rows = normalizeSFCTableRows(['first', 2])
     expect(rows).toEqual([{ id: 0, value: 'first' }, { id: 1, value: 2 }])
     expect(Object.getOwnPropertySymbols(rows[0])).toHaveLength(0)

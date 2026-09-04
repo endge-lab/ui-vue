@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest'
 
 import { materializeEndgeCSSForDOM } from '@/services/style/endge-dom-style'
 
-describe('endgeCSS DOM materializer', () => {
-  it('emits parseable CSS in neutral cascade order', () => {
+describe('материализатор EndgeCSS для DOM', () => {
+  it('выводит разбираемый CSS в нейтральном порядке каскада', () => {
     const artifact = compileEndgeCSS(`
       .status { color: blue; }
       Text { color: gray; }
@@ -19,7 +19,7 @@ describe('endgeCSS DOM materializer', () => {
     expect(result.css.lastIndexOf('!important')).toBeGreaterThan(result.css.lastIndexOf('color:blue'))
   })
 
-  it('uses native semantic selectors with uniform non-zero specificity', () => {
+  it('использует нативные семантические selectors с равномерной ненулевой специфичностью', () => {
     const artifact = compileEndgeCSS('Table::part(header-content) { color: white; }').artifact!
     const result = materializeEndgeCSSForDOM([artifact])
 
@@ -29,7 +29,7 @@ describe('endgeCSS DOM materializer', () => {
     expect(result.css).toContain(':is([data-endge-node],[data-endge-part])')
   })
 
-  it('includes dom rules, excludes canvas rules and warns for unknown capabilities', () => {
+  it('включает DOM-правила, исключает canvas-правила и предупреждает о неизвестных возможностях', () => {
     const artifact = compileEndgeCSS(`
       @supports renderer(dom) { Text { color: green; } }
       @supports renderer(canvas) { Text { color: orange; } }
@@ -42,7 +42,7 @@ describe('endgeCSS DOM materializer', () => {
     expect(result.diagnostics).toContainEqual(expect.objectContaining({ code: 'ENDGECSS_CAPABILITY_UNAVAILABLE' }))
   })
 
-  it('translates combinators, structural pseudos and state markers for the browser', () => {
+  it('преобразует комбинаторы, структурные pseudo и markers состояния для браузера', () => {
     const artifact = compileEndgeCSS('Flex > Text:nth-child(even):state(delayed) { color: red; }').artifact!
     const css = materializeEndgeCSSForDOM([artifact]).css
     expect(css).toContain('[data-endge-tag="Flex"] > [data-endge-tag="Text"]:nth-child(even)[data-endge-state~="delayed"]')

@@ -13,7 +13,7 @@ import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/services/render/sfc/sfc-
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
 
-describe('sFC Table layout', () => {
+describe('компоновка Table SFC', () => {
   beforeEach(() => {
     Endge.uiRegistry.adapters.reset()
     Endge.uiRegistry.adapters.register(NativeVueSFCAdapter)
@@ -28,7 +28,7 @@ describe('sFC Table layout', () => {
 
   afterEach(() => Endge.uiRegistry.adapters.reset())
 
-  it('fills the available height by default', () => {
+  it('по умолчанию заполняет доступную высоту', () => {
     const table = renderTable()
 
     expect(table.props?.['data-endge-layout-fill-height']).toBe('')
@@ -41,7 +41,7 @@ describe('sFC Table layout', () => {
     })
   })
 
-  it('keeps an explicit height as an opt-out from fill layout', () => {
+  it('сохраняет явную высоту как отказ от заполняющего layout', () => {
     const table = renderTable({ height: 420, minHeight: 120 })
 
     expect(table.props?.['data-endge-layout-fill-height']).toBeUndefined()
@@ -52,7 +52,7 @@ describe('sFC Table layout', () => {
     expect(table.props?.style?.flex).toBeUndefined()
   })
 
-  it('enables paging by default and forwards the lazy marker', () => {
+  it('по умолчанию включает постраничность и передаёт marker lazy', () => {
     const table = renderTable({ lazy: true })
     const grid = table.children as VNode[]
 
@@ -64,7 +64,7 @@ describe('sFC Table layout', () => {
     })
   })
 
-  it('forwards virtual paging without changing the local data contract', () => {
+  it('передаёт виртуальную постраничность без изменения локального контракта данных', () => {
     const table = renderTable({ paging: 'virtual' })
     const grid = table.children as VNode[]
 
@@ -76,7 +76,7 @@ describe('sFC Table layout', () => {
     })
   })
 
-  it('forwards Table Event boundary and selection mode to the native renderer', () => {
+  it('передаёт границу Event Table и режим выбора в нативный renderer', () => {
     const table = renderTable({ 'selection-mode': 'multiple', 'ref': 'table' })
     const grid = table.children as VNode[]
 
@@ -87,7 +87,7 @@ describe('sFC Table layout', () => {
     })
   })
 
-  it('resolves Column metadata from the current component artifact when host metadata belongs to its owner', () => {
+  it('разрешает метаданные Column из текущего артефакта компонента, когда метаданные host принадлежат его владельцу', () => {
     const column: RComponentSFC_IR_ElementNode = {
       id: 'test-table-column',
       kind: 'element',

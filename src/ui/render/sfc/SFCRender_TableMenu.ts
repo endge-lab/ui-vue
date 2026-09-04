@@ -7,7 +7,7 @@ import type {
 import type { SFCVueRenderContext } from '@/services/render/sfc/sfc-vue-render.type'
 import { evaluateSFCValue } from '@/ui/render/sfc/SFCRender_Evaluator'
 
-/** Materializes a compiled SFC menu only when its concrete row/column context exists. */
+/** Материализует скомпилированное меню SFC только при наличии контекста конкретной строки и колонки. */
 export function resolveSFCTableMenu(
   descriptor: ComponentSFCTableMenuDescriptor | null,
   context: SFCVueRenderContext,

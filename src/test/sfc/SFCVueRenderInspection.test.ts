@@ -9,8 +9,8 @@ import {
 } from '@/services/render/sfc/SFCVueRenderInspection'
 import { createSFCVueRenderContext, extendSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 
-describe('sFCVueRenderInspection', () => {
-  it('keeps one table template branch and isolates concrete row instances', () => {
+describe('инспекция render SFC Vue', () => {
+  it('сохраняет одну ветвь шаблона таблицы и изолирует конкретные экземпляры строк', () => {
     const session = new SFCRenderInspectionSession()
     const context = createSFCVueRenderContext(
       { rows: [{ id: 'SU-100', status: 'boarding' }] },

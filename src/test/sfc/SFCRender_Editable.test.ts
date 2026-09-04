@@ -20,7 +20,7 @@ import { renderEditableBoundaryContent } from '@/test/setup'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode, renderSFCNodes } from '@/ui/render/sfc/SFCRender_Node'
 
-describe('sFC Editable renderer', () => {
+describe('рендерер Editable SFC', () => {
   beforeEach(() => {
     Endge.uiRegistry.adapters.reset()
     Endge.uiRegistry.adapters.register(NativeVueSFCAdapter)
@@ -39,7 +39,7 @@ describe('sFC Editable renderer', () => {
     Raph.app.reset()
   })
 
-  it('enters on dblclick, keeps a draft and commits normalized edited payload', async () => {
+  it('входит по dblclick, сохраняет черновик и фиксирует нормализованный payload edited', async () => {
     const compiled = compileComponentSFC(`<script setup lang="ts">defineProps<{ status: string }>()</script>
 <template><Text :value="status" editable edit-on="dblclick" /></template>`)
     const node = compiled.ir!.template.roots[0]!
@@ -92,7 +92,7 @@ describe('sFC Editable renderer', () => {
     expect(sessions.size).toBe(0)
   })
 
-  it('renders only the active explicit Variant', () => {
+  it('отрисовывает только активный явный Variant', () => {
     const compiled = compileComponentSFC(`<template>
       <Variant name="default"><Text>View</Text></Variant>
       <Variant name="edit"><Text>Edit</Text></Variant>
@@ -103,7 +103,7 @@ describe('sFC Editable renderer', () => {
     expect(renderSFCNodes(h, compiled.ir!.template.roots, context).flatMap(node => isVNode(node) ? node.children as any[] : node)).toEqual(['Edit'])
   })
 
-  it('publishes the authored row patch through the real event boundary', async () => {
+  it('публикует авторское изменение строки через настоящую границу событий', async () => {
     const source = `<script setup lang="ts">defineProps<{ status: string }>()</script>
 <template>
   <Text
@@ -163,7 +163,7 @@ describe('sFC Editable renderer', () => {
     host.destroy()
   })
 
-  it('supports keyboard trigger filters and cancels the active draft on Escape', () => {
+  it('поддерживает фильтры клавиатурных триггеров и отменяет активный draft по Escape', () => {
     const compiled = compileComponentSFC(`<script setup lang="ts">defineProps<{ status: string }>()</script>
 <template>
   <Text
@@ -237,7 +237,7 @@ describe('sFC Editable renderer', () => {
     expect(sessions.size).toBe(0)
   })
 
-  it('starts editing from a pointer trigger while ordinary keys are held', () => {
+  it('начинает редактирование по pointer-триггеру при удержании обычных клавиш', () => {
     const compiled = compileComponentSFC(`<template>
   <Text
     value="RUN"
@@ -282,7 +282,7 @@ describe('sFC Editable renderer', () => {
   it.each([
     ['Number', 12, '17', 'number', 17],
     ['DateTime', '2026-08-01T10:30:00.000Z', '2026-08-01T12:00', 'datetime-local', '2026-08-01T12:00'],
-  ])('uses the adapter Input for editable %s values', async (tag, initial, next, nativeType, committed) => {
+  ])('использует Input адаптера для редактируемых значений %s', async (tag, initial, next, nativeType, committed) => {
     const compiled = compileComponentSFC(`<template><${tag} :value="initial" editable /></template>`)
     const node = compiled.ir!.template.roots[0]!
     const sessions = new Map<string, any>()
@@ -321,7 +321,7 @@ describe('sFC Editable renderer', () => {
     expect(commitEditSession).toHaveBeenCalledWith(expect.any(String), committed)
   })
 
-  it('focuses the native root exposed by an adapter Input component', () => {
+  it('фокусирует нативный корень, предоставленный компонентом Input адаптера', () => {
     const compiled = compileComponentSFC('<template><Text value="RUN" editable /></template>')
     const node = compiled.ir!.template.roots[0]!
     const sessions = new Map<string, any>()

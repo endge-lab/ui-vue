@@ -58,33 +58,33 @@ export interface SFCVueRenderContext {
   runtimeState: SFCVueRuntimeStateController | null
   /** Stack identity текущего component-call для защиты от recursive render cycles. */
   componentStack: readonly string[]
-  /** Stable renderer scope used to isolate host-owned computation resources. */
+  /** Стабильный scope renderer для изоляции ресурсов computation, принадлежащих host. */
   consumerScope: string
-  /** Effective required-port providers for the current mounted SFC instance. */
+  /** Фактические провайдеры обязательных портов текущего смонтированного экземпляра SFC. */
   portBindings?: readonly ComponentSFCRequiredPortBinding[]
   /** Активный renderer-neutral вариант текущего component boundary. */
   variant: string
-  /** Effective global, ancestor and local style artifacts for this boundary. */
+  /** Фактические глобальные, родительские и локальные артефакты стилей этой границы. */
   styleArtifacts: readonly EndgeStyleSheetArtifact[]
-  /** Logical parent in the abstract SFC tree. */
+  /** Логический родитель в абстрактном дереве SFC. */
   styleParent: EndgeStyleMatchNode | undefined
-  /** Current scoped SFC owner. */
+  /** Текущий владелец SFC в рамках scope. */
   styleOwnerScopeId: string | undefined
-  /** Runtime lifecycle ancestry used by renderer boundary isolation. */
+  /** Иерархия lifecycle runtime для изоляции границы renderer. */
   runtimeScopeIds: readonly string[]
-  /** Mount-scoped semantic Event router for the current Component SFC artifact. */
+  /** Семантический router Event уровня mount для текущего артефакта Component SFC. */
   eventBoundary?: ComponentSFCEventBoundary | null
-  /** Optional debug sink enabled by Configurator; null in normal runtime. */
+  /** Необязательный debug sink, включаемый Configurator; null в обычном runtime. */
   inspection?: SFCRenderInspectionSessionLike | null
-  /** Parent live-instance id in the semantic inspection tree. */
+  /** ID родительского live-экземпляра в семантическом дереве инспекции. */
   inspectionParentId?: string | null
   /** Compiled metadata текущего Component SFC artifact. */
   metadata: ProgramMetadata | null
-  /** Shell-scoped singleton overlay manager; null in isolated renderer tests. */
+  /** Singleton-manager overlay уровня Shell; null в изолированных тестах renderer. */
   tooltipManager?: EndgeVueTooltipManager | null
 }
 
-/** Structural runtime-state controller contract used by Vue render adapters. */
+/** Контракт контроллера структурного runtime-состояния для render-адаптеров Vue. */
 export interface SFCVueRuntimeStateController {
   readonly runtimeId: string
   readonly storageKey: string

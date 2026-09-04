@@ -6,13 +6,13 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { materializeEndgeCSSForDOM } from '@/services/style/endge-dom-style'
 import { EndgeDOMStyleRuntime } from '@/services/style/EndgeDOMStyleRuntime'
 
-describe('dOM style runtime placements', () => {
+describe('проверка Runtime-размещения DOM-стилей', () => {
   afterEach(() => {
     document.head.querySelectorAll('style[data-endge-styles]').forEach(element => element.remove())
     document.body.replaceChildren()
   })
 
-  it('isolates an acquired artifact by runtime scope boundary', () => {
+  it('изолирует полученный артефакт границей scope runtime', () => {
     const artifact = compileEndgeCSS('.cell { color: red; }', { identity: 'theme' }).artifact!
     const placement: EndgeStylePlacement = {
       id: 'placement',
@@ -29,7 +29,7 @@ describe('dOM style runtime placements', () => {
     expect(css).toContain('color:red')
   })
 
-  it('keeps source order independent from activation input order through orderKey sorting upstream', () => {
+  it('сохраняет порядок Source независимым от порядка input активации через предварительную сортировку orderKey', () => {
     const first = compileEndgeCSS('.cell { color: red; }', { identity: 'first' }).artifact!
     const second = compileEndgeCSS('.cell { color: blue; }', { identity: 'second' }).artifact!
     const placement = (artifact: typeof first, orderKey: string): EndgeStylePlacement => ({
@@ -46,7 +46,7 @@ describe('dOM style runtime placements', () => {
     expect(css.indexOf('color:red')).toBeLessThan(css.indexOf('color:blue'))
   })
 
-  it('hides paused runtime boundaries without destroying their DOM', () => {
+  it('скрывает приостановленные границы runtime без уничтожения DOM', () => {
     const runtime = new EndgeDOMStyleRuntime()
     runtime.update([], { renderer: 'dom', capabilities: [] }, ['scope:paused'])
     expect(document.querySelector('style[data-endge-styles]')?.textContent).toContain(
@@ -56,7 +56,7 @@ describe('dOM style runtime placements', () => {
     expect(document.querySelector('style[data-endge-styles]')).toBeNull()
   })
 
-  it('applies, pauses and removes an acquired style through the managed stylesheet', () => {
+  it('применяет, приостанавливает и удаляет полученный стиль через управляемый stylesheet', () => {
     const artifact = compileEndgeCSS('.cell { color: rgb(255, 0, 0); }', { identity: 'theme' }).artifact!
     const placement: EndgeStylePlacement = {
       id: 'placement',

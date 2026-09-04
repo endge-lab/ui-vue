@@ -43,7 +43,7 @@ export interface EndgeVueTooltipState {
   content: VNodeChild | null
 }
 
-/** One lazy overlay manager owned by one mounted EndgeShell. */
+/** Один ленивый manager overlay, принадлежащий одному смонтированному EndgeShell. */
 export class EndgeVueTooltipManager {
   public readonly state: EndgeVueTooltipState
   public readonly adapterId: string

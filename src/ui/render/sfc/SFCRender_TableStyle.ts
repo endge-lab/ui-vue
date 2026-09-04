@@ -63,7 +63,7 @@ export function toRevoGridMarkerProps(attrs: SFCTableMarkerAttrs): Record<string
   }
 }
 
-/** Marks vendor-owned DOM only; native CSS performs all selector matching. */
+/** Помечает только DOM поставщика; всё сопоставление селекторов выполняет нативный CSS. */
 export function syncSFCTableDOMMarkers(grid: HTMLElement, markers: SFCTableMarkers): void {
   applyMarkerAttrs(grid, markers.grid)
   grid.querySelectorAll<HTMLElement>('revogr-header')

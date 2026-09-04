@@ -3,14 +3,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { EndgeVueTooltipManager } from '@/ui/overlay/tooltip/endge-tooltip-manager'
 
-describe('endgeVueTooltipManager', () => {
+describe('менеджер tooltip Endge Vue', () => {
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => {
     vi.useRealTimers()
     document.body.replaceChildren()
   })
 
-  it('creates content only after openDelay and releases it after closeDelay', () => {
+  it('создаёт содержимое только после openDelay и освобождает после closeDelay', () => {
     const anchor = document.createElement('button')
     document.body.append(anchor)
     const renderContent = vi.fn(() => 'Lazy content')
@@ -46,7 +46,7 @@ describe('endgeVueTooltipManager', () => {
     expect(anchor.hasAttribute('aria-describedby')).toBe(false)
   })
 
-  it('cancels pending work and does not retain content after dispose', () => {
+  it('отменяет ожидающую работу и не удерживает содержимое после dispose', () => {
     const anchor = document.createElement('span')
     document.body.append(anchor)
     const renderContent = vi.fn(() => 'never')

@@ -5,8 +5,8 @@ import { defineComponent, onBeforeUnmount, shallowRef, watch } from 'vue'
 import { isSFCVueEditableResourceUpdate } from '@/services/render/sfc/SFCVueEditableResource'
 
 /**
- * Isolates one editable consumer from the root SFC render version.
- * A session transition invalidates only this boundary instead of the whole Table.
+ * Изолирует один editable-consumer от версии корневого render SFC.
+ * Переход сессии инвалидирует только эту границу, а не всю Table.
  */
 export const SFC_EditableRenderBoundary = defineComponent({
   name: 'EndgeSFCEditableRenderBoundary',

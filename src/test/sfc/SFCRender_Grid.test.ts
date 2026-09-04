@@ -8,7 +8,7 @@ import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { SFCRender_Grid } from '@/ui/render/sfc/SFCRender_Grid'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
 
-describe('sFCRender_Grid', () => {
+describe('отрисовка Grid SFC', () => {
   beforeEach(() => {
     Endge.uiRegistry.adapters.reset()
     Endge.uiRegistry.adapters.register(NativeVueSFCAdapter)
@@ -19,7 +19,7 @@ describe('sFCRender_Grid', () => {
     Endge.uiRegistry.adapters.reset()
   })
 
-  it('renders explicit tracks and gaps', () => {
+  it('отрисовывает явные tracks и gaps', () => {
     const rendered = SFCRender_Grid({
       h,
       props: {
@@ -43,7 +43,7 @@ describe('sFCRender_Grid', () => {
     })
   })
 
-  it('applies Grid placement props to every visual child through base attrs', () => {
+  it('применяет props размещения Grid ко всем визуальным children через базовые attrs', () => {
     const node: RComponentSFC_IR_ElementNode = {
       id: 'grid-text',
       kind: 'element',

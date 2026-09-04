@@ -17,7 +17,7 @@ const menu: ContextMenuDescriptor = {
 let disposeDefinition: VoidFunction | null = null
 let disposeProvider: VoidFunction | null = null
 
-describe('context menu Action execution', () => {
+describe('выполнение Action контекстного меню', () => {
   afterEach(() => {
     disposeProvider?.()
     disposeDefinition?.()
@@ -26,7 +26,7 @@ describe('context menu Action execution', () => {
     closeEndgeContextMenu()
   })
 
-  it('filters and executes items through Endge.runtime.actions', async () => {
+  it('фильтрует и выполняет элементы через Endge.runtime.actions', async () => {
     const execute = vi.fn()
     const context: RuntimeActionContext = { surface: 'test' }
     disposeDefinition = Endge.actions.define({

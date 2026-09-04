@@ -10,8 +10,8 @@ import {
 
 defineOptions({
   name: 'EndgeSFCRuntimeRenderer',
-  // The renderer intentionally has no DOM root: arbitrary SFC templates can
-  // have multiple roots. Consumers own layout attributes on their boundary.
+  // Renderer намеренно не имеет корня DOM: произвольные templates SFC могут
+  // иметь несколько корней. Consumers владеют атрибутами layout на своей границе.
   inheritAttrs: false,
 })
 

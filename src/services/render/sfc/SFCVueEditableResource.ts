@@ -1,11 +1,11 @@
-/** Runtime notification emitted when one host-owned editable session changes. */
+/** Runtime-уведомление при изменении одной editable-сессии, принадлежащей host. */
 export interface SFCVueEditableResourceUpdate {
   kind: 'editable'
   action: 'begin' | 'commit' | 'cancel'
   key: string
 }
 
-/** Narrows generic runtime resource notifications to editable-session updates. */
+/** Сужает общие уведомления runtime-ресурса до обновлений editable-сессии. */
 export function isSFCVueEditableResourceUpdate(value: unknown): value is SFCVueEditableResourceUpdate {
   if (!value || typeof value !== 'object') {
     return false

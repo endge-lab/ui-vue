@@ -65,7 +65,7 @@ const TEST_WORKSPACE: EndgeWorkspaceDefinition = {
   },
 }
 
-describe('endgeVueModule SFC adapter', () => {
+describe('проверка SFC-адаптер модуля Endge Vue', () => {
   beforeEach(() => {
     Endge.uiRegistry.adapters.reset()
     Endge.workspace.apply(TEST_WORKSPACE)
@@ -76,7 +76,7 @@ describe('endgeVueModule SFC adapter', () => {
     Endge.workspace.apply(TEST_WORKSPACE)
   })
 
-  it('registers and activates vue-native for the selected workspace', () => {
+  it('регистрирует и активирует vue-native для выбранного Workspace', () => {
     const module = new EndgeVue_Module()
 
     module.setup()
@@ -85,7 +85,7 @@ describe('endgeVueModule SFC adapter', () => {
     expect(Endge.uiRegistry.adapters.active?.id).toBe(NativeVueSFCAdapter.id)
   })
 
-  it('fails before runtime start when selected adapter is not registered', () => {
+  it('завершается ошибкой до запуска runtime, если выбранный адаптер не зарегистрирован', () => {
     const module = new EndgeVue_Module()
     module.setup()
     Endge.workspace.apply({
@@ -102,7 +102,7 @@ describe('endgeVueModule SFC adapter', () => {
     )
   })
 
-  it('dispatches visual primitives through the selected adapter', () => {
+  it('направляет визуальные примитивы через выбранный адаптер', () => {
     const module = new EndgeVue_Module()
     const customerAdapter: SFCVueRenderAdapter = {
       ...NativeVueSFCAdapter,

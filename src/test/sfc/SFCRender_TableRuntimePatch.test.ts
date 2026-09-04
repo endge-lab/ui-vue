@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import { applyRowSnapshots } from '@/ui/render/sfc/SFCRender_Table'
 
-describe('sFC Table runtime row patches', () => {
-  it('applies a keyed update, removal and ordered insertion in one collection clone', () => {
+describe('проверка Runtime-изменения строк Table SFC', () => {
+  it('применяет обновление по ключу, удаление и упорядоченную вставку в одном клоне коллекции', () => {
     const source = [
       { id: 1, label: 'A' },
       { id: 2, label: 'B' },

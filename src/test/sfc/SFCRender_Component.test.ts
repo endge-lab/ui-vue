@@ -22,7 +22,7 @@ import { renderEditableBoundaryContent } from '@/test/setup'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
 
-describe('sFCRender_Component', () => {
+describe('проверка Render компонента SFC', () => {
   beforeAll(() => {
     if (!Endge.uiRegistry.adapters.has(NativeVueSFCAdapter.id)) {
       Endge.uiRegistry.adapters.register(NativeVueSFCAdapter)
@@ -41,7 +41,7 @@ describe('sFCRender_Component', () => {
     Endge.program.clear()
   })
 
-  it('renders a compiled child artifact and passes evaluated props', () => {
+  it('отрисовывает скомпилированный дочерний артефакт и передаёт вычисленные props', () => {
     Endge.program.beginCompile('test')
     Endge.program.addArtifact(createArtifact('aircraft-tail', `<script setup lang="ts">
 defineProps<{ label: string }>()
@@ -74,7 +74,7 @@ defineProps<{ label: string }>()
     expect(rendered.children).toEqual(['RA-89001'])
   })
 
-  it('stops recursive component calls with a deterministic placeholder', () => {
+  it('останавливает рекурсивные вызовы компонентов детерминированным placeholder', () => {
     Endge.program.beginCompile('test')
     Endge.program.addArtifact(createArtifact('recursive', '<template><Component is="recursive" /></template>'))
     const node: RComponentSFC_IR_ElementNode = {
@@ -96,7 +96,7 @@ defineProps<{ label: string }>()
     expect(String(rendered.children)).toContain('component cycle')
   })
 
-  it('evaluates a computation port local and forwards it through a component port', () => {
+  it('вычисляет локальный порт Computation и передаёт через порт компонента', () => {
     Endge.program.beginCompile('test')
     Endge.program.addArtifact(createComputationArtifact('process-state'))
     Endge.program.addArtifact(createArtifact('process-cell', `<script setup lang="ts">
@@ -134,7 +134,7 @@ const state = ports.require.state({ value: props.value })
     expect(rendered.children).toEqual(['A'])
   })
 
-  it('evaluates nested component ports in an isolated child context', () => {
+  it('вычисляет вложенные порты компонентов в изолированном дочернем контексте', () => {
     Endge.program.beginCompile('test')
     Endge.program.addArtifact(createComputationArtifact('process-state'))
     Endge.program.addArtifact(createArtifact('nested-owner', `<script setup lang="ts">
@@ -172,7 +172,7 @@ const state = ports.require.state({ value: props.value })
     expect(isVNode(second) && second.children).toEqual(['nested-B'])
   })
 
-  it('exposes computation execution errors without failing the render context', () => {
+  it('предоставляет ошибки выполнения Computation без сбоя контекста render', () => {
     const owner = compileComponentSFC(`<script setup lang="ts">
 interface Input { value?: string }
 const props = defineProps<{ value?: string }>()
@@ -200,7 +200,7 @@ const state = ports.require.state({ value: props.value })
     }))
   })
 
-  it('exposes pending and success states for an asynchronous computation port', async () => {
+  it('предоставляет состояния pending и success асинхронного порта Computation', async () => {
     Endge.program.beginCompile('test')
     Endge.program.addArtifact(createAsyncComputationArtifact('async-state'))
     Endge.runtime.computation.setSandboxAdapter({
@@ -228,7 +228,7 @@ const state = ports.require.state({ value: props.value })
     expect(resource.value).toEqual({ value: 'READY' })
   })
 
-  it('switches a custom component to its edit Variant and republishes normalized edited', async () => {
+  it('переключает пользовательский компонент на Variant редактирования и повторно публикует нормализованный edited', async () => {
     const childSource = `<script setup lang="ts">defineProps<{ value: string }>()</script>
 <template>
   <Variant name="default"><Text>{{ value }}</Text></Variant>

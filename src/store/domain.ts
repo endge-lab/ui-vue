@@ -55,7 +55,7 @@ function createDomainView(): DomainView {
   // Сложные типы домена
   const typesComplex = computed(() => types.value.filter(x => !x.isPrimitive))
 
-  // Editor-facing projection of the source-backed Type Registry.
+  // Проекция Type Registry на основе Source для редактора.
   const typeCatalog = computed(() => {
     const compiled = program.value.getTypeCatalog()
     if (compiled.length) {

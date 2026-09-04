@@ -5,13 +5,13 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { materializeEndgeCSSForDOM } from '@/services/style/endge-dom-style'
 import { EndgeDOMStyleRuntime } from '@/services/style/EndgeDOMStyleRuntime'
 
-describe('endgeCSS DOM application', () => {
+describe('применение EndgeCSS к DOM', () => {
   afterEach(() => {
     document.head.querySelectorAll('[data-endge-test-style]').forEach(element => element.remove())
     document.body.replaceChildren()
   })
 
-  it('applies generated CSS and preserves the important priority in CSSOM', () => {
+  it('применяет сгенерированный CSS и сохраняет приоритет important в CSSOM', () => {
     const artifact = compileEndgeCSS('Text { color: rgb(255, 0, 0) !important; }').artifact!
     const style = document.createElement('style')
     style.dataset.endgeTestStyle = ''
@@ -25,7 +25,7 @@ describe('endgeCSS DOM application', () => {
     expect(style.sheet?.cssRules[0] && (style.sheet.cssRules[0] as CSSStyleRule).style.getPropertyPriority('color')).toBe('important')
   })
 
-  it('lets the DOM evaluate physical child position without JS style surfaces', () => {
+  it('позволяет DOM вычислять физическую позицию child без JS-поверхностей стилей', () => {
     const artifact = compileEndgeCSS('Flex > Text:nth-child(even):state(delayed) { color: rgb(255, 0, 0); }').artifact!
     const style = document.createElement('style')
     style.textContent = materializeEndgeCSSForDOM([artifact]).css
@@ -45,7 +45,7 @@ describe('endgeCSS DOM application', () => {
     expect(getComputedStyle(parent.children[1]).color).toBe('rgb(255, 0, 0)')
   })
 
-  it('atomically reuses one managed fallback style element', () => {
+  it('атомарно повторно использует один управляемый fallback-элемент style', () => {
     const runtime = new EndgeDOMStyleRuntime()
     runtime.update([compileEndgeCSS('Text { color: red; }').artifact!], { renderer: 'dom' })
     runtime.update([compileEndgeCSS('Text { color: blue; }').artifact!], { renderer: 'dom' })

@@ -17,7 +17,7 @@ import { NativeVueSFCAdapter } from '@/services/render/sfc/native-vue-sfc-adapte
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
 
-describe('display-only SFC form controls', () => {
+describe('элементы формы SFC только для отображения', () => {
   beforeAll(() => {
     if (!Endge.uiRegistry.adapters.has(NativeVueSFCAdapter.id)) {
       Endge.uiRegistry.adapters.register(NativeVueSFCAdapter)
@@ -38,7 +38,7 @@ describe('display-only SFC form controls', () => {
     ['Time', 'time', '12:34'],
     ['DateTime', 'datetime-local', '2026-07-13T10:20'],
     ['Unknown', 'text', 'fallback'],
-  ])('renders Input type %s as native %s', (type, nativeType, expectedValue) => {
+  ])('отрисовывает Input типа %s как нативный %s', (type, nativeType, expectedValue) => {
     const value = type === 'Date'
       ? '2026-07-13T00:00:00.000Z'
       : type === 'Time'
@@ -56,7 +56,7 @@ describe('display-only SFC form controls', () => {
     })
   })
 
-  it('renders Textarea and Checkbox values through native props', () => {
+  it('отрисовывает значения Textarea и Checkbox через нативные props', () => {
     const textarea = renderControl('Textarea', {
       value: 'Комментарий',
       rows: '4',
@@ -82,7 +82,7 @@ describe('display-only SFC form controls', () => {
     expect(label.children).toBe('Отменённые')
   })
 
-  it('marks scalar and array Select values through string normalization', () => {
+  it('отмечает скалярные и массивные значения Select через строковую нормализацию', () => {
     const options = [
       { value: 1, label: 'Один' },
       { value: 2, label: 'Два' },
@@ -108,7 +108,7 @@ describe('display-only SFC form controls', () => {
     expect(multiple.props?.placeholder).toBe('Не показывается')
   })
 
-  it('does not register change callbacks on controls or their children', () => {
+  it('не регистрирует callbacks изменений на элементах управления или их children', () => {
     const controls = [
       renderControl('Input', { value: 'SU' }),
       renderControl('Textarea', { value: 'Комментарий' }),

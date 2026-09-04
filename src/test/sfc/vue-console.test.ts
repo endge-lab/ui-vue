@@ -4,12 +4,12 @@ import { describe, expect, it, vi } from 'vitest'
 import { installEndgeVueWarnHandler } from '@/services/debug/vue-console'
 import SFC_RuntimeRenderer from '@/ui/render/sfc/SFC_RuntimeRenderer.vue'
 
-describe('vue console memory safety', () => {
-  it('does not inherit DOM attributes through the fragment runtime renderer', () => {
+describe('безопасность памяти console Vue', () => {
+  it('не наследует DOM-атрибуты через фрагментный runtime renderer', () => {
     expect((SFC_RuntimeRenderer as { inheritAttrs?: boolean }).inheritAttrs).toBe(false)
   })
 
-  it('formats warnings without forwarding the component instance', () => {
+  it('форматирует предупреждения без передачи экземпляра компонента', () => {
     const app = { config: {} } as App
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     installEndgeVueWarnHandler(app)

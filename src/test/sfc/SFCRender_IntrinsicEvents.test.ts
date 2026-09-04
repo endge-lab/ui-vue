@@ -12,7 +12,7 @@ import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/services/render/sfc/sfc-
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
 
-describe('sFC intrinsic Events', () => {
+describe('встроенные Events SFC', () => {
   beforeEach(() => {
     Endge.uiRegistry.adapters.reset()
     Endge.uiRegistry.adapters.register(NativeVueSFCAdapter)
@@ -27,7 +27,7 @@ describe('sFC intrinsic Events', () => {
 
   afterEach(() => Endge.uiRegistry.adapters.reset())
 
-  it('routes a Text click with renderer-neutral payload and DOM modifiers', () => {
+  it('маршрутизирует клик Text с независимым от renderer payload и DOM-модификаторами', () => {
     const boundary = {
       observesChild: vi.fn(() => false),
       routeChild: vi.fn(async () => undefined),

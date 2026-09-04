@@ -39,7 +39,7 @@ interface EvaluatedSFCInteraction {
   triggerIndex: number
 }
 
-/** Adds conditional `:on` listeners to one renderer-owned visual node. */
+/** Добавляет условные listeners `:on` в один визуальный узел, принадлежащий renderer. */
 export function attachSFCInteractionAttrs(
   attrs: Record<string, unknown>,
   node: RComponentSFC_IR_ElementNode,
@@ -126,7 +126,7 @@ export function attachSFCInteractionAttrs(
   })
 }
 
-/** Projects `:on` groups of a nested SFC to its semantic Event boundary. */
+/** Проецирует группы `:on` вложенного SFC на его семантическую границу Event. */
 export function createSFCSemanticInteractionBindings(
   node: RComponentSFC_IR_ElementNode,
   context: SFCVueRenderContext,

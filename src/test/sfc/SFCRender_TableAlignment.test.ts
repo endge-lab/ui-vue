@@ -2,15 +2,15 @@ import { describe, expect, it } from 'vitest'
 
 import { normalizeSFCTableCellAlignment } from '@/ui/render/sfc/SFCRender_TableAlignment'
 
-describe('sFC Table cell alignment', () => {
-  it('normalizes explicit center and middle alignment', () => {
+describe('выравнивание ячеек Table SFC', () => {
+  it('нормализует явное выравнивание center и middle', () => {
     expect(normalizeSFCTableCellAlignment('center', 'middle')).toEqual({
       horizontal: 'center',
       vertical: 'middle',
     })
   })
 
-  it('supports all edge alignments without DOM-specific values', () => {
+  it('поддерживает все краевые выравнивания без DOM-специфичных значений', () => {
     expect(normalizeSFCTableCellAlignment('right', 'bottom')).toEqual({
       horizontal: 'right',
       vertical: 'bottom',
@@ -21,7 +21,7 @@ describe('sFC Table cell alignment', () => {
     })
   })
 
-  it('keeps backward-compatible defaults for missing or invalid values', () => {
+  it('сохраняет обратно совместимые значения по умолчанию для отсутствующих или некорректных значений', () => {
     expect(normalizeSFCTableCellAlignment(undefined, undefined)).toEqual({
       horizontal: 'left',
       vertical: 'middle',
@@ -32,7 +32,7 @@ describe('sFC Table cell alignment', () => {
     })
   })
 
-  it('normalizes casing and surrounding whitespace', () => {
+  it('нормализует регистр и окружающие пробелы', () => {
     expect(normalizeSFCTableCellAlignment(' Center ', ' BOTTOM ')).toEqual({
       horizontal: 'center',
       vertical: 'bottom',
