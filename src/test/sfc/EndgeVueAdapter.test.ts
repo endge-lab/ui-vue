@@ -53,6 +53,10 @@ const TEST_WORKSPACE: EndgeWorkspaceDefinition = {
       },
       snapshots: {
         content: { telemetry: true, problems: true, configuration: false },
+        shortcut: {
+          triggerSet: [],
+          content: { telemetry: true, problems: true, configuration: false },
+        },
         automatic: {
           enabled: false,
           errorCount: 10,
