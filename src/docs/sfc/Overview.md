@@ -58,7 +58,7 @@ import CustomerInput from './CustomerInput.vue'
 
 const CustomerAdapter: SFCVueRenderAdapter = {
   ...NativeVueSFCAdapter,
-  id: 'customer-aodb',
+  id: 'customer-ui',
   renderers: {
     ...NativeVueSFCAdapter.renderers,
     Input: input => input.h(CustomerInput, input.attrs),
@@ -72,13 +72,13 @@ class CustomerAdapterModule extends EndgeModule {
 }
 
 export const CustomerAdapterPlugin: EndgePlugin = {
-  id: '@customer/aodb-ui',
-  install(): void {
-    Endge.defineModule({
-      key: 'customerAodbUi',
-      module: new CustomerAdapterModule(),
-    })
-  },
+  id: '@example/customer-ui',
+  modules: [
+    {
+      key: 'customerUi',
+      create: () => new CustomerAdapterModule(),
+    },
+  ],
 }
 ```
 

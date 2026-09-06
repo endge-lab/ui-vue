@@ -8,7 +8,7 @@ import { getCurrentScope, onScopeDispose, ref, toRaw, watch } from 'vue'
  * Связывает Vue ref с dynamic state текущего Endge context scope.
  * Глубокие изменения записываются автоматически; смена context/user перечитывает значение.
  */
-export function useContextState<T>(
+export function createContextStateRef<T>(
   key: string,
   defaultFactory: () => T,
   transform?: EndgeContextStateTransform<T>,

@@ -3,7 +3,6 @@ import '@/assets/styles.scss'
 export * from '@/domain/types/filter-renderer.type'
 
 export * from '@/modules/EndgeVue_Module'
-export * from '@/reactive/use-context-state'
 export * from '@/reactive/use-current-environment'
 export * from '@/reactive/use-current-locale'
 export * from '@/reactive/use-current-project-filter'

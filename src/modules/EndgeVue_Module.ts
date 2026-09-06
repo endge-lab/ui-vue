@@ -1,4 +1,10 @@
-import type { EndgeBootContext, EndgeFederationContext, EndgePlugin, EndgeStylePlacement } from '@endge/core'
+import type {
+  EndgeBootContext,
+  EndgeContextStateTransform,
+  EndgeFederationContext,
+  EndgePlugin,
+  EndgeStylePlacement,
+} from '@endge/core'
 import type { PhaseName } from '@endge/raph'
 
 import type { Ref } from 'vue'
@@ -7,6 +13,7 @@ import { Raph, RaphNode } from '@endge/raph'
 import { randomString } from '@endge/utils'
 
 import { onBeforeUnmount, ref, watch } from 'vue'
+import { createContextStateRef } from '@/reactive/use-context-state'
 import { NativeVueSFCAdapter } from '@/services/render/sfc/native-vue-sfc-adapter'
 import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/services/render/sfc/sfc-vue-render.type'
 import { EndgeDOMStyleRuntime } from '@/services/style/EndgeDOMStyleRuntime'
@@ -112,33 +119,16 @@ export class EndgeVue_Module extends EndgeModule {
     this._started = false
   }
 
-  private _refreshStyles(): void {
-    if (Endge.uiRegistry.adapters.active?.renderer !== 'vue') {
-      this._styleRuntime.reset()
-      return
-    }
-    const artifacts: EndgeStylePlacement[] = [...Endge.styles.getActivePlacements()]
-    const hiddenScopeIds = Endge.runtime.scopes.getAll()
-      .filter(scope => scope.state !== 'active' && scope.state !== 'inactive' && scope.state !== 'disposed')
-      .map(scope => scope.id)
-    this._styleRuntime.update(artifacts, { renderer: 'dom', capabilities: [] }, hiddenScopeIds)
+  /** Связывает Vue ref с dynamic state текущего Endge context scope. */
+  public useContextState<T>(
+    key: string,
+    defaultFactory: () => T,
+    transform?: EndgeContextStateTransform<T>,
+  ): Ref<T> {
+    return createContextStateRef(key, defaultFactory, transform)
   }
-}
 
-export const EndgeVuePlugin: EndgePlugin = {
-  id: '@endge/ui-vue',
-  install(): void {
-    Endge.defineModule({
-      key: 'vue',
-      module: new EndgeVue_Module(),
-      after: ['configuration', 'uiRegistry'],
-      before: 'runtime',
-    })
-  },
-}
-
-export class EndgeVue {
-  public static makeRaphRef<T>(path: string): Ref<T> {
+  public makeRaphRef<T>(path: string): Ref<T> {
     const newRef = ref<T>(Raph.get(path) as T)
 
     const raphNode = new RaphNode(Raph.app, {
@@ -166,7 +156,37 @@ export class EndgeVue {
     return newRef as Ref<T>
   }
 
-  public static makeVocabRef<T>(vocab: string): Ref<T> {
-    return EndgeVue.makeRaphRef(`vocabs.${vocab}`)
+  public makeVocabRef<T>(vocab: string): Ref<T> {
+    return this.makeRaphRef(`vocabs.${vocab}`)
   }
+
+  private _refreshStyles(): void {
+    if (Endge.uiRegistry.adapters.active?.renderer !== 'vue') {
+      this._styleRuntime.reset()
+      return
+    }
+    const artifacts: EndgeStylePlacement[] = [...Endge.styles.getActivePlacements()]
+    const hiddenScopeIds = Endge.runtime.scopes.getAll()
+      .filter(scope => scope.state !== 'active' && scope.state !== 'inactive' && scope.state !== 'disposed')
+      .map(scope => scope.id)
+    this._styleRuntime.update(artifacts, { renderer: 'dom', capabilities: [] }, hiddenScopeIds)
+  }
+}
+
+declare module '@endge/core' {
+  interface EndgeExtensions {
+    readonly vue: EndgeVue_Module
+  }
+}
+
+export const EndgeVuePlugin: EndgePlugin = {
+  id: '@endge/ui-vue',
+  modules: [
+    {
+      key: 'vue',
+      create: () => new EndgeVue_Module(),
+      after: ['configuration', 'uiRegistry'],
+      before: 'runtime',
+    },
+  ],
 }

@@ -36,6 +36,7 @@ export function createSFCVueRenderContext(
     context: Object.freeze(Endge.context.runtimeSnapshot()),
     locals: {},
     iteration: null,
+    dataScope: null,
     renderVersion,
     host,
     runtimeState: (host as any)?.runtimeState ?? null,
@@ -65,6 +66,7 @@ export function extendSFCVueRenderContext(
   locals: Record<string, unknown>,
   iteration: SFCVueRenderIteration | null = context.iteration,
   consumerScope = context.consumerScope,
+  dataScope = context.dataScope,
 ): SFCVueRenderContext {
   return {
     props: context.props,
@@ -74,6 +76,7 @@ export function extendSFCVueRenderContext(
       ...locals,
     },
     iteration,
+    dataScope,
     renderVersion: context.renderVersion,
     host: context.host,
     runtimeState: context.runtimeState,

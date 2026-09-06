@@ -1526,6 +1526,7 @@ export const SFCRender_Table: SFCVueRenderFunction = SFCRender_Base((input) => {
           context: tableContext,
           cellAlignmentStyle,
           rowKey,
+          boundaryId: input.node.id,
         })
       },
     }),
@@ -2386,6 +2387,7 @@ function renderTableCell(input: SFCTableCellRenderInput & {
   context: SFCVueRenderContext
   cellAlignmentStyle: SFCTableCellAlignmentStyle
   rowKey: string
+  boundaryId: string
 }): ReturnType<SFCVueRenderH> {
   const h = input.h ?? input.fallbackH
   const localRowIndex = normalizeNumber(input.cellProps.rowIndex, 0)
@@ -2410,7 +2412,11 @@ function renderTableCell(input: SFCTableCellRenderInput & {
     columnKey: input.column.key,
     columnMeta: input.column.metadata,
     value,
-  }, input.context.iteration, `${input.context.consumerScope}/row:${String(rowIdentity)}/column:${input.column.key}`)
+  }, input.context.iteration, `${input.context.consumerScope}/row:${String(rowIdentity)}/column:${input.column.key}`, {
+    kind: 'table-row',
+    boundaryId: input.boundaryId,
+    rowKey: rowIdentity,
+  })
   const children = renderSFCNodes(h, input.column.cellNodes, cellContext)
   const rowSelected = input.selected(row, rowIndex)
   const cellSelected = input.cellSelected(row, rowIndex, input.column.key)
