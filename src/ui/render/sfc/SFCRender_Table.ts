@@ -15,6 +15,7 @@ import type {
   RComponentSFC_IR_ElementNode,
   RComponentSFC_IR_EventBinding,
   RComponentSFC_IR_Node,
+  RComponentSFC_IR_Value,
   RuntimeBoundaryPatch,
   TableCellSelectionMode,
   TableColumnActionContext,
@@ -1527,6 +1528,7 @@ export const SFCRender_Table: SFCVueRenderFunction = SFCRender_Base((input) => {
           cellAlignmentStyle,
           rowKey,
           boundaryId: input.node.id,
+          rowState: input.node.props['row-state'] ?? input.node.props.rowState,
         })
       },
     }),
@@ -2388,6 +2390,7 @@ function renderTableCell(input: SFCTableCellRenderInput & {
   cellAlignmentStyle: SFCTableCellAlignmentStyle
   rowKey: string
   boundaryId: string
+  rowState?: RComponentSFC_IR_Value
 }): ReturnType<SFCVueRenderH> {
   const h = input.h ?? input.fallbackH
   const localRowIndex = normalizeNumber(input.cellProps.rowIndex, 0)
@@ -2430,9 +2433,12 @@ function renderTableCell(input: SFCTableCellRenderInput & {
   if (cellSelected) {
     selectionStates.push('selected', 'cell-selected')
   }
+  const rowStates = normalizeTableRowStates(
+    input.rowState ? evaluateSFCValue(input.rowState, cellContext) : undefined,
+  )
   const contentAttrs = withMarkerStates(
     input.column.markers.cellContent,
-    [...new Set(selectionStates)],
+    [...new Set([...selectionStates, ...rowStates])],
   )
   const cellProps = input.column.cellNode ? evaluateSFCProps(input.column.cellNode.props, cellContext) : {}
   const attrs: Record<string, unknown> = {
@@ -2496,6 +2502,27 @@ function renderTableCell(input: SFCTableCellRenderInput & {
       outline: 'none',
     },
   }, children)
+}
+
+function normalizeTableRowStates(value: unknown): string[] {
+  const result = new Set<string>()
+  const visit = (item: unknown): void => {
+    if (typeof item === 'string') {
+      item.trim().split(/\s+/).filter(Boolean).forEach(token => result.add(token))
+    }
+    else if (Array.isArray(item)) {
+      item.forEach(visit)
+    }
+    else if (item && typeof item === 'object') {
+      Object.entries(item as Record<string, unknown>).forEach(([state, enabled]) => {
+        if (enabled) {
+          result.add(state)
+        }
+      })
+    }
+  }
+  visit(value)
+  return [...result]
 }
 
 function createCellAlignmentStyle(alignment: SFCTableCellAlignment): SFCTableCellAlignmentStyle {
