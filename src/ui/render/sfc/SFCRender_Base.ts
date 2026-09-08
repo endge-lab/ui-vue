@@ -16,6 +16,7 @@ import { createEndgeTooltipDomId, getComponentSFCIntrinsicEventDefinitions } fro
 import { createSFCInspectionAttrs, registerSFCInspectionElement } from '@/services/render/sfc/SFCVueRenderInspection'
 import { attachEndgeTooltipTriggerAttrs } from '@/ui/overlay/tooltip/endge-tooltip-manager'
 import { SFC_EditableRenderBoundary } from '@/ui/render/sfc/SFC_EditableRenderBoundary'
+import { computationScopeKey, reconcileForComputations } from '@/ui/render/sfc/SFCRender_Computations'
 import { extendSFCVueRenderContext, extendSFCVueStyleContext } from '@/ui/render/sfc/SFCRender_Context'
 import {
   attachSFCEditableAttrs,
@@ -330,6 +331,7 @@ function renderForDirective(
 
   const source = evaluateSFCValue(directive.source, input.context)
   const entries = createForEntries(source)
+  reconcileForComputations(input.context, input.node.id, (entries ?? []).map(([key]) => key))
   if (!entries) {
     return null
   }
@@ -364,7 +366,7 @@ function renderForItem(
     value,
     indexValue: index,
     key,
-  }, `${input.context.consumerScope}/for:${input.node.id}:${String(key)}`)
+  }, `${input.context.consumerScope}/for:${input.node.id}:${computationScopeKey(key)}`)
   return renderOnce({
     ...input,
     context,

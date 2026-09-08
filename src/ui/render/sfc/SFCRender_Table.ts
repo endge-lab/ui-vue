@@ -39,7 +39,6 @@ import type {
 } from '@/services/render/sfc/sfc-vue-render.type'
 import type { SFCTableCellAlign, SFCTableCellAlignment, SFCTableCellVerticalAlign } from '@/ui/render/sfc/SFCRender_TableAlignment'
 import type { SFCTableColumnMarkers, SFCTableMarkerAttrs, SFCTableMarkers } from '@/ui/render/sfc/SFCRender_TableStyle'
-
 import {
   Endge,
   normalizeComponentSFCTableColumnMenu,
@@ -51,11 +50,13 @@ import {
   normalizeComponentSFCTableSortMode,
   TABLE_RUNTIME_ACTION_IDS,
 } from '@endge/core'
+
 import RevoGrid, { VGridVueTemplate } from '@revolist/vue3-datagrid'
 import { computed, defineComponent, inject, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, h as vueH, watch } from 'vue'
 import { closeEndgeContextMenu, openEndgeContextMenu } from '@/ui/overlay/context-menu-manager'
 import { createSFCNodeEventAttrs, SFCRender_Base } from '@/ui/render/sfc/SFCRender_Base'
 import { SFCVueBoundaryRegistryKey } from '@/ui/render/sfc/SFCRender_BoundaryRegistry'
+import { computationScopeKey, reconcileTableComputations } from '@/ui/render/sfc/SFCRender_Computations'
 import { extendSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { evaluateSFCProps, evaluateSFCValue, readSFCObjectPath } from '@/ui/render/sfc/SFCRender_Evaluator'
 import { chainSFCEventAttr } from '@/ui/render/sfc/SFCRender_Interaction'
@@ -627,7 +628,12 @@ const SFCRevoGridTable = defineComponent({
       schedulePublicMarkerSync()
     })
 
+    watch(() => [baseSource.value, stableColumns.value] as const, ([rows, columns]) => {
+      reconcileTableComputations(props.menuContext, rows, props.rowKey, columns)
+    }, { flush: 'sync' })
+
     onBeforeUnmount(() => {
+      props.menuContext?.host?.releaseComputationResources(props.menuContext.consumerScope)
       mounted = false
       if (resizeTimer) {
         clearTimeout(resizeTimer)
@@ -2415,7 +2421,7 @@ function renderTableCell(input: SFCTableCellRenderInput & {
     columnKey: input.column.key,
     columnMeta: input.column.metadata,
     value,
-  }, input.context.iteration, `${input.context.consumerScope}/row:${String(rowIdentity)}/column:${input.column.key}`, {
+  }, input.context.iteration, `${input.context.consumerScope}/row:${computationScopeKey(rowIdentity)}/column:${computationScopeKey(input.column.key)}`, {
     kind: 'table-row',
     boundaryId: input.boundaryId,
     rowKey: rowIdentity,
