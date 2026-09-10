@@ -1,4 +1,4 @@
-import type { ComponentSFCRuntimeHost } from '@endge/core'
+import type { ComponentSFCRenderPort } from '@endge/core'
 import type { PropType } from 'vue'
 import { defineComponent, onBeforeUnmount, shallowRef, watch } from 'vue'
 
@@ -12,7 +12,7 @@ export const SFC_EditableRenderBoundary = defineComponent({
   name: 'EndgeSFCEditableRenderBoundary',
   props: {
     host: {
-      type: Object as PropType<ComponentSFCRuntimeHost>,
+      type: Object as PropType<ComponentSFCRenderPort>,
       required: true,
     },
     sessionKey: {
@@ -22,7 +22,7 @@ export const SFC_EditableRenderBoundary = defineComponent({
   },
   setup(props, { slots }) {
     const version = shallowRef(0)
-    let subscribedHost: ComponentSFCRuntimeHost | null = null
+    let subscribedHost: ComponentSFCRenderPort | null = null
     let active = false
 
     const resourceDirtyHandler = (update: unknown): void => {

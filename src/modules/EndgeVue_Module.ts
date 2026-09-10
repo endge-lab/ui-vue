@@ -19,6 +19,8 @@ import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/services/render/sfc/sfc-
 import { EndgeDOMStyleRuntime } from '@/services/style/EndgeDOMStyleRuntime'
 
 export class EndgeVue_Module extends EndgeModule {
+  /** В debugger участвует только регистрация renderer и отображение наблюдаемых стилей. */
+  public readonly debuggerCompatible = true
   private _started = false
   private _adapterFallbackIds: readonly string[] = []
   private _unsubscribeWorkspace: (() => void) | null = null
@@ -38,6 +40,9 @@ export class EndgeVue_Module extends EndgeModule {
   }
 
   private _activateWorkspaceAdapter(): void {
+    if (Endge.mode === 'debugger' && !Endge.configuration.isResolved) {
+      return
+    }
     const selectedId = Endge.workspace.defaultSfcAdapterId
     const selected = Endge.uiRegistry.adapters.resolveAvailable(
       selectedId,
@@ -66,6 +71,17 @@ export class EndgeVue_Module extends EndgeModule {
     }
 
     this._started = true
+
+    if (Endge.mode === 'debugger') {
+      this._unsubscribeWorkspace = Endge.configuration.subscribe(() => {
+        this._activateWorkspaceAdapter()
+        this._refreshStyles()
+      })
+      this._unsubscribeRuntimeScopes = Endge.runtime.subscribe(() => this._refreshStyles())
+      this._unsubscribeUIRegistry = Endge.uiRegistry.subscribe(() => this._refreshStyles())
+      this._refreshStyles()
+      return
+    }
 
     Raph.addPhase({
       name: 'watch' as PhaseName,
@@ -163,6 +179,10 @@ export class EndgeVue_Module extends EndgeModule {
   private _refreshStyles(): void {
     if (Endge.uiRegistry.adapters.active?.renderer !== 'vue') {
       this._styleRuntime.reset()
+      return
+    }
+    if (Endge.mode === 'debugger') {
+      this._styleRuntime.update(Endge.runtime.inspection.render?.styles ?? [], { renderer: 'dom', capabilities: [] })
       return
     }
     const artifacts: EndgeStylePlacement[] = [...Endge.styles.getActivePlacements()]

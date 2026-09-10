@@ -1,7 +1,7 @@
 import type {
   ComponentSFCEventBoundary,
+  ComponentSFCRenderPort,
   ComponentSFCRequiredPortBinding,
-  ComponentSFCRuntimeHost,
   EndgeRuntimeContextSnapshot,
   EndgeStyleMatchNode,
   EndgeStyleSheetArtifact,
@@ -56,7 +56,7 @@ export interface SFCVueRenderContext {
   /** Provenance текущей строки для read-only `$data.metaOf(row.field)`. */
   dataScope: { kind: 'table-row', boundaryId: string, rowKey: unknown } | null
   renderVersion: number
-  host: ComponentSFCRuntimeHost | null
+  host: ComponentSFCRenderPort | null
   runtimeState: SFCVueRuntimeStateController | null
   /** Stack identity текущего component-call для защиты от recursive render cycles. */
   componentStack: readonly string[]
@@ -114,7 +114,7 @@ export interface SFCVueRenderAdapterProps {
   ir: RComponentSFC_IR | null
   props?: Record<string, unknown>
   renderVersion?: number
-  host?: ComponentSFCRuntimeHost | null
+  host?: ComponentSFCRenderPort | null
   inspection?: SFCRenderInspectionSessionLike | null
 }
 
@@ -132,7 +132,7 @@ export type SFCVueRuntimeInputSource = RuntimeHostInputSource
 
 /** Вход Vue runtime renderer-а, связывающего RuntimeHost и render root. */
 export interface SFCVueRuntimeRendererProps {
-  host: ComponentSFCRuntimeHost | null
+  host: ComponentSFCRenderPort | null
   input: SFCVueRuntimeInputSource
   inspection?: SFCRenderInspectionSessionLike | null
 }

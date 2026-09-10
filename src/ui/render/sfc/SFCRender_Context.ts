@@ -1,4 +1,4 @@
-import type { ComponentSFCEventBoundary, ComponentSFCRequiredPortBinding, ComponentSFCRuntimeHost, ComputationResource, EndgeStyleMatchNode, EndgeStyleSheetArtifact, ProgramMetadata, RComponentSFC_IR, SFCRenderInspectionSessionLike } from '@endge/core'
+import type { ComponentSFCEventBoundary, ComponentSFCRenderPort, ComponentSFCRequiredPortBinding, ComputationResource, EndgeStyleMatchNode, EndgeStyleSheetArtifact, ProgramMetadata, RComponentSFC_IR, SFCRenderInspectionSessionLike } from '@endge/core'
 import type { SFCVueRenderContext, SFCVueRenderIteration } from '@/services/render/sfc/sfc-vue-render.type'
 import type { EndgeVueTooltipManager } from '@/ui/overlay/tooltip/endge-tooltip-manager'
 import { Endge, ComponentSFCEventBoundary as EndgeComponentSFCEventBoundary } from '@endge/core'
@@ -8,7 +8,7 @@ import { evaluateSFCValue } from '@/ui/render/sfc/SFCRender_Evaluator'
 export function createSFCVueRenderContext(
   props: Record<string, unknown> | undefined,
   renderVersion = 0,
-  host: ComponentSFCRuntimeHost | null = null,
+  host: ComponentSFCRenderPort | null = null,
   ir: RComponentSFC_IR | null = null,
   componentStack: readonly string[] = host?.entityIdentity ? [host.entityIdentity] : [],
   consumerScope = 'root',
@@ -20,14 +20,14 @@ export function createSFCVueRenderContext(
   tooltipManager: EndgeVueTooltipManager | null = null,
   portBindings: readonly ComponentSFCRequiredPortBinding[] = [],
 ): SFCVueRenderContext {
-  const lifecycleScope = host ? Endge.runtime.getRuntimeScopeByHost(host.id) : null
-  const runtimeScopeIds: string[] = []
+  const lifecycleScope = host && !host.readonly ? Endge.runtime.getRuntimeScopeByHost(host.id) : null
+  const runtimeScopeIds: string[] = [...(host?.runtimeScopeIds ?? [])]
   for (let current = lifecycleScope; current; current = current.parent) {
     runtimeScopeIds.unshift(current.id)
   }
   const styleArtifacts = inheritedStyleArtifacts
     ? [...inheritedStyleArtifacts]
-    : [...Endge.styles.getActiveArtifacts()]
+    : [...(host?.styleArtifacts ?? Endge.styles.getActiveArtifacts())]
   if (ir?.style && !styleArtifacts.includes(ir.style)) {
     styleArtifacts.push(ir.style)
   }
@@ -48,9 +48,11 @@ export function createSFCVueRenderContext(
     styleParent: undefined,
     styleOwnerScopeId: ir?.style?.scopeId,
     runtimeScopeIds,
-    eventBoundary: inheritedEventBoundary ?? (ir
-      ? new EndgeComponentSFCEventBoundary(host, host?.entityIdentity ?? componentStack.at(-1) ?? 'component', ir.script.ports)
-      : null),
+    eventBoundary: host?.readonly
+      ? null
+      : inheritedEventBoundary ?? (ir
+        ? new EndgeComponentSFCEventBoundary(host, host?.entityIdentity ?? componentStack.at(-1) ?? 'component', ir.script.ports)
+        : null),
     inspection,
     inspectionParentId: null,
     metadata: metadata ?? host?.getArtifact()?.metadata ?? null,
