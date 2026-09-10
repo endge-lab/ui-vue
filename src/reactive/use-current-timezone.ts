@@ -13,6 +13,6 @@ export function useCurrentTimezone() {
 
   return {
     current,
-    setCurrent: (timezone: string | null) => context.setCurrentTimezone(timezone),
+    setCurrent: (timezone: string | null) => Endge.commands.execute({ type: 'context:set-timezone', payload: { timezone } }),
   }
 }

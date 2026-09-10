@@ -16,6 +16,6 @@ export function useCurrentTheme() {
 
   return {
     current,
-    setCurrent: (theme: string | null) => context.setCurrentTheme(theme),
+    setCurrent: (theme: string | null) => Endge.commands.execute({ type: 'context:set-theme', payload: { theme } }),
   }
 }

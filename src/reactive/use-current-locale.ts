@@ -16,6 +16,6 @@ export function useCurrentLocale() {
 
   return {
     current,
-    setCurrent: (locale: string | null) => context.setCurrentLocale(locale),
+    setCurrent: (locale: string | null) => Endge.commands.execute({ type: 'context:set-locale', payload: { locale } }),
   }
 }
