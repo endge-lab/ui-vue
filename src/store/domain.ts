@@ -2,7 +2,7 @@ import { Endge } from '@endge/core'
 import { computed, reactive } from 'vue'
 import { useSubscribableRef } from '@/reactive/use-subscribable-ref'
 
-/** Публичная Vue-проекция domain/program/events модулей Endge. */
+/** Публичная Vue-проекция domain/program модулей Endge. */
 export interface DomainView {
   readonly domain: typeof Endge.domain
   readonly projects: ReturnType<typeof Endge.domain.getProjects>
@@ -32,14 +32,12 @@ export interface DomainView {
   readonly i18nBundles: ReturnType<typeof Endge.domain.getI18nBundles>
   readonly mocks: ReturnType<typeof Endge.domain.getMocks>
   readonly authProfiles: ReturnType<typeof Endge.domain.getAuthProfiles>
-  readonly events: typeof Endge.events.lastEvents
 }
 
 /** Создаёт единственную Vue-проекцию framework-independent модулей Endge. */
 function createDomainView(): DomainView {
   const { refObj: domain } = useSubscribableRef(Endge.domain)
   const { refObj: program } = useSubscribableRef(Endge.program)
-  const { refObj: eventsRef } = useSubscribableRef(Endge.events)
 
   // Все проекты домена
   const projects = computed(() => domain.value.getProjects())
@@ -118,9 +116,6 @@ function createDomainView(): DomainView {
   // Папки редактора
   const folders = computed(() => domain.value.getFolders())
 
-  // Закешированные последние события
-  const events = computed(() => eventsRef.value.lastEvents)
-
   // Параметры (коллекция parameters в Payload)
   const parameters = computed(() => domain.value.getParameters())
 
@@ -188,7 +183,6 @@ function createDomainView(): DomainView {
     i18nBundles,
     mocks,
     authProfiles,
-    events,
   }) as DomainView
 }
 
