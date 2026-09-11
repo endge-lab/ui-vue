@@ -21,7 +21,6 @@ export interface DomainView {
   readonly navigations: ReturnType<typeof Endge.domain.getNavigations>
   readonly folders: ReturnType<typeof Endge.domain.getFolders>
   readonly queriesNames: readonly string[]
-  readonly parameters: ReturnType<typeof Endge.domain.getParameters>
   readonly filters: ReturnType<typeof Endge.domain.getFilters>
   readonly compositions: ReturnType<typeof Endge.domain.getCompositions>
   readonly environments: ReturnType<typeof Endge.domain.getEnvironments>
@@ -116,9 +115,6 @@ function createDomainView(): DomainView {
   // Папки редактора
   const folders = computed(() => domain.value.getFolders())
 
-  // Параметры (коллекция parameters в Payload)
-  const parameters = computed(() => domain.value.getParameters())
-
   // Фильтры (коллекция filters в Payload)
   const filters = computed(() => domain.value.getFilters())
 
@@ -172,7 +168,6 @@ function createDomainView(): DomainView {
     navigations,
     folders,
     queriesNames,
-    parameters,
     filters,
     compositions,
     environments,
