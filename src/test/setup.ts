@@ -6,9 +6,7 @@ import { isVNode } from 'vue'
 
 const TEST_RUNTIME_CONTEXT: EndgeRuntimeContextSnapshot = {
   workspace: null,
-  tenant: null,
-  project: null,
-  environment: null,
+  facets: {},
   user: null,
   locale: 'ru',
   theme: 'light',

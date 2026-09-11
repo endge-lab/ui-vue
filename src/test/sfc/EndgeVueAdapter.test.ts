@@ -12,6 +12,7 @@ import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
 const TEST_WORKSPACE: EndgeWorkspaceDefinition = {
   identity: 'workspace-test',
   displayName: 'Test Workspace',
+  startupCompositionIdentity: null,
   dataMode: 'live',
   managedBy: 'user',
   managedById: null,

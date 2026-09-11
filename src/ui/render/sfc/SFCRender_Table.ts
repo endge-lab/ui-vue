@@ -524,7 +524,7 @@ const SFCRevoGridTable = defineComponent({
           'part': 'selection-cell',
           'data-endge-part': 'selection-cell',
         }),
-        columnTemplate: VGridVueTemplate(SFCRevoGridSelectionHeader, {
+        columnTemplate: VGridVueTemplate(SFCRevoGridSelectionHeader as any, {
           mode: props.selectionMode,
           checked: allSelected,
           indeterminate: someSelected,
@@ -1850,7 +1850,7 @@ function createRevoColumn(
 
       return toRevoGridMarkerProps(withMarkerStates(column.markers.cell, getStates(cellProps)))
     },
-    columnTemplate: VGridVueTemplate(SFCRevoGridColumnHeader, {
+    columnTemplate: VGridVueTemplate(SFCRevoGridColumnHeader as any, {
       title: column.title,
       headerContentAttrs: column.markers.headerContent,
       isSortable: column.sort?.sortable === true,

@@ -5,7 +5,8 @@ import { useSubscribableRef } from '@/reactive/use-subscribable-ref'
 /** Публичная Vue-проекция domain/program модулей Endge. */
 export interface DomainView {
   readonly domain: typeof Endge.domain
-  readonly projects: ReturnType<typeof Endge.domain.getProjects>
+  readonly facets: ReturnType<typeof Endge.domain.getFacets>
+  readonly facetDocuments: ReturnType<typeof Endge.domain.getFacetDocuments>
   readonly types: ReturnType<typeof Endge.domain.getTypes>
   readonly typesPrimitives: ReturnType<typeof Endge.domain.getTypes>
   readonly typesComplex: ReturnType<typeof Endge.domain.getTypes>
@@ -23,8 +24,6 @@ export interface DomainView {
   readonly queriesNames: readonly string[]
   readonly filters: ReturnType<typeof Endge.domain.getFilters>
   readonly compositions: ReturnType<typeof Endge.domain.getCompositions>
-  readonly environments: ReturnType<typeof Endge.domain.getEnvironments>
-  readonly tenants: ReturnType<typeof Endge.domain.getTenants>
   readonly policies: ReturnType<typeof Endge.domain.getPolicies>
   readonly styles: ReturnType<typeof Endge.domain.getStyles>
   readonly vocabs: ReturnType<typeof Endge.domain.getVocabs>
@@ -38,8 +37,8 @@ function createDomainView(): DomainView {
   const { refObj: domain } = useSubscribableRef(Endge.domain)
   const { refObj: program } = useSubscribableRef(Endge.program)
 
-  // Все проекты домена
-  const projects = computed(() => domain.value.getProjects())
+  const facets = computed(() => domain.value.getFacets())
+  const facetDocuments = computed(() => facets.value.flatMap(facet => domain.value.getFacetDocuments(facet.identity)))
 
   // Все типы домена
   const types = computed(() => domain.value.getTypes())
@@ -121,12 +120,6 @@ function createDomainView(): DomainView {
   // Runtime-композиции (коллекция compositions в Payload)
   const compositions = computed(() => domain.value.getCompositions())
 
-  // Окружения (коллекция environments в Payload)
-  const environments = computed(() => domain.value.getEnvironments())
-
-  // Тенанты (коллекция tenants в Payload)
-  const tenants = computed(() => domain.value.getTenants())
-
   // Политики (коллекция policies в Payload)
   const policies = computed(() => domain.value.getPolicies())
 
@@ -152,7 +145,8 @@ function createDomainView(): DomainView {
 
   return reactive({
     domain,
-    projects,
+    facets,
+    facetDocuments,
     types,
     typesPrimitives,
     typesComplex,
@@ -170,8 +164,6 @@ function createDomainView(): DomainView {
     queriesNames,
     filters,
     compositions,
-    environments,
-    tenants,
     policies,
     styles,
     vocabs,

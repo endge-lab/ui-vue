@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ProjectRuntimeSession } from '@endge/core'
+import type { CompositionSession } from '@endge/core'
 
 import { DEFAULT_ENDGE_TOOLTIP_CONFIGURATION, Endge } from '@endge/core'
 import { subscribeKeyboardState } from '@endge/utils'
@@ -21,7 +21,7 @@ const status = ref<'initializing' | 'ready' | 'error'>('initializing')
 const error = ref<unknown>(null)
 
 let disposed = false
-let session: ProjectRuntimeSession | null = null
+let session: CompositionSession | null = null
 const unsubscribeKeyboard = typeof document === 'undefined'
   ? null
   : subscribeKeyboardState(document, state => Endge.context.setKeyboardState(state))
@@ -33,7 +33,7 @@ provide(EndgeVueTooltipManagerKey, tooltipManager)
 
 async function initialize(): Promise<void> {
   try {
-    const mountedSession = await Endge.runtime.project.mount(Endge.context.getCurrentProject())
+    const mountedSession = await Endge.runtime.mountStartup()
     if (disposed) {
       await mountedSession.unmount()
       return
