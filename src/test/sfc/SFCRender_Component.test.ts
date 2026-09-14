@@ -57,6 +57,7 @@ defineProps<{ label: string }>()
         label: {
           kind: 'expression',
           source: 'tail',
+          expression: { kind: 'read', name: 'tail' },
           reads: [{ source: 'props', path: ['tail'], raw: 'tail' }],
         },
       },
@@ -159,6 +160,7 @@ const state = ports.require.state({ value: props.value })
         value: {
           kind: 'expression',
           source: 'value',
+          expression: { kind: 'read', name: 'value' },
           reads: [{ source: 'props', path: ['value'], raw: 'value' }],
         },
       },
@@ -292,7 +294,9 @@ function createArtifact(identity: string, source: string): ProgramArtifact<Compo
     dependencies: [],
     capabilities: ['compilable', 'runnable', 'renderable'],
     metadata,
-    payload,
+    payload: JSON.parse(JSON.stringify(payload, function (key, value) {
+      return key === 'ast' || key === 'sourceParts' || (key === 'source' && this?.kind === 'expression') ? undefined : value
+    })),
   }
 }
 

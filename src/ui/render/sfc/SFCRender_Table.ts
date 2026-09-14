@@ -2677,7 +2677,7 @@ function collectRowDependencies(
 ): void {
   if (node.kind === 'expression') {
     if (node.value.kind === 'expression') {
-      collectRowDependenciesFromSource(node.value.source, result, columnKey)
+      collectRowDependenciesFromReads(node.value.reads, result, columnKey)
     }
     return
   }
@@ -2688,7 +2688,7 @@ function collectRowDependencies(
 
   for (const value of Object.values(node.props)) {
     if (value.kind === 'expression') {
-      collectRowDependenciesFromSource(value.source, result, columnKey)
+      collectRowDependenciesFromReads(value.reads, result, columnKey)
     }
   }
 
@@ -2699,7 +2699,7 @@ function collectRowDependencies(
     node.directives.for?.source,
   ]) {
     if (value?.kind === 'expression') {
-      collectRowDependenciesFromSource(value.source, result, columnKey)
+      collectRowDependenciesFromReads(value.reads, result, columnKey)
     }
   }
 
@@ -2708,14 +2708,14 @@ function collectRowDependencies(
   }
 }
 
-function collectRowDependenciesFromSource(source: string, result: Set<string>, columnKey: string): void {
-  const rowFieldPattern = /\brow\.([A-Za-z_$][\w$]*)/g
-  for (let match = rowFieldPattern.exec(source); match !== null; match = rowFieldPattern.exec(source)) {
-    result.add(match[1])
-  }
-
-  if (/\bvalue\b/.test(source)) {
-    result.add(columnKey)
+function collectRowDependenciesFromReads(reads: Array<{ path: string[] }>, result: Set<string>, columnKey: string): void {
+  for (const read of reads) {
+    if (read.path[0] === 'row' && read.path[1]) {
+      result.add(read.path[1])
+    }
+    if (read.path[0] === 'value') {
+      result.add(columnKey)
+    }
   }
 }
 

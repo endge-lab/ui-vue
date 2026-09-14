@@ -122,7 +122,7 @@ describe('компоновка Table SFC', () => {
               key: 'fueling',
               values: {
                 'groundhandling.process': {
-                  version: 1,
+                  version: 2,
                   critical: true,
                 },
               },
@@ -140,7 +140,7 @@ describe('компоновка Table SFC', () => {
     const grid = (rendered.children as VNode[])[0]
     expect(grid?.props?.columns[0]?.metadata).toEqual({
       'groundhandling.process': {
-        version: 1,
+        version: 2,
         critical: true,
       },
     })

@@ -1,12 +1,16 @@
 import type { RComponentSFC_IR_Value } from '@endge/core'
+import { compileComponentSFCExpression } from '@endge/core'
 import { describe, expect, it, vi } from 'vitest'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import {
-  evaluateSFCExpression,
   evaluateSFCValue,
   readSFCObjectPath,
   readSFCPath,
 } from '@/ui/render/sfc/SFCRender_Evaluator'
+
+function evaluateSFCExpression(source: string, context: ReturnType<typeof createSFCVueRenderContext>): unknown {
+  return evaluateSFCValue(compileComponentSFCExpression(source).value, context)
+}
 
 describe('вычислитель render SFC', () => {
   it('возвращает литеральные значения props', () => {

@@ -1,12 +1,7 @@
+import type { RComponentSFC_IR_ElementNode } from '@endge/core'
 // @vitest-environment jsdom
 
-import type { RComponentSFC_IR_ElementNode } from '@endge/core'
-import {
-  compileComponentSFC,
-  Endge,
-  ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
-  ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
-} from '@endge/core'
+import { compileComponentSFC, compileComponentSFCExpression, Endge, ENDGE_SFC_RENDER_ADAPTER_PROTOCOL, ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION } from '@endge/core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { h, isVNode } from 'vue'
 
@@ -131,11 +126,7 @@ describe('взаимодействия :on SFC в renderer Vue', () => {
   })
 
   it('разрешает TriggerSet из контекста и маршрутизирует совпавший Query без редактирования', async () => {
-    const trigger = {
-      kind: 'expression',
-      source: '$context.config.groundHandling.actualTimeTriggers',
-      reads: [],
-    } as const
+    const trigger = compileComponentSFCExpression('$context.config.groundHandling.actualTimeTriggers').value
     const reaction = {
       kind: 'query',
       identity: 'groundHandling.actualTime.update',

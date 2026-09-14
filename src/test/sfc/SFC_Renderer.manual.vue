@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import type { RComponentSFC_IR } from '@endge/core'
+import { compileComponentSFCExpression } from '@endge/core'
 import SFC_Renderer from '@/ui/render/sfc/SFC_Renderer.vue'
 
 const ir: RComponentSFC_IR = {
-  version: 1,
+  version: 2,
   script: {
     props: [],
     locals: [],
@@ -44,7 +45,7 @@ const ir: RComponentSFC_IR = {
                 kind: 'element',
                 tag: 'Dot',
                 props: {
-                  tone: { kind: 'expression', source: 'flight.statusTone', reads: [] },
+                  tone: compileComponentSFCExpression('flight.statusTone').value,
                 },
                 directives: {},
                 children: [],
@@ -54,14 +55,14 @@ const ir: RComponentSFC_IR = {
                 kind: 'element',
                 tag: 'Badge',
                 props: {
-                  tone: { kind: 'expression', source: 'flight.statusTone', reads: [] },
+                  tone: compileComponentSFCExpression('flight.statusTone').value,
                 },
                 directives: {},
                 children: [
                   {
                     id: 'status',
                     kind: 'expression',
-                    value: { kind: 'expression', source: 'flight.status', reads: [] },
+                    value: compileComponentSFCExpression('flight.status').value,
                   },
                 ],
               },
@@ -73,13 +74,13 @@ const ir: RComponentSFC_IR = {
             tag: 'Text',
             props: {},
             directives: {
-              if: { kind: 'expression', source: '!compact', reads: [] },
+              if: compileComponentSFCExpression('!compact').value,
             },
             children: [
               {
                 id: 'route-value',
                 kind: 'expression',
-                value: { kind: 'expression', source: 'flight.route', reads: [] },
+                value: compileComponentSFCExpression('flight.route').value,
               },
             ],
           },
@@ -92,14 +93,14 @@ const ir: RComponentSFC_IR = {
               for: {
                 item: 'passenger',
                 index: 'index',
-                source: { kind: 'expression', source: 'passengers', reads: [] },
+                source: compileComponentSFCExpression('passengers').value,
               },
             },
             children: [
               {
                 id: 'passenger-name',
                 kind: 'expression',
-                value: { kind: 'expression', source: 'passenger.name', reads: [] },
+                value: compileComponentSFCExpression('passenger.name').value,
               },
             ],
           },
@@ -109,7 +110,7 @@ const ir: RComponentSFC_IR = {
             tag: 'Component',
             props: {
               is: { kind: 'literal', value: 'flight-actions' },
-              flight: { kind: 'expression', source: 'flight', reads: [] },
+              flight: compileComponentSFCExpression('flight').value,
             },
             directives: {},
             children: [],
