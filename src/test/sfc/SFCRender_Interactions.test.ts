@@ -285,7 +285,7 @@ describe('взаимодействия :on SFC в renderer Vue', () => {
     ])
   })
 
-  it('присоединяет взаимодействия Cell к поверхности ячейки RevoGrid с локальными row и column', async () => {
+  it('присоединяет взаимодействия Cell к поверхности ячейки TanStack с локальными row и column', async () => {
     const result = compileComponentSFC(`<template><Table :rows="rows" row-key="id"><Column key="status"><Cell :on.stop="{ event: 'click', modifiers: { shift: true }, held: { code: ['KeyW'] }, reaction: action({ identity: 'cell.inspect' }) }"><Text>{{ value }}</Text></Cell></Column></Table></template>`)
     const node = result.ir?.template?.roots[0]
     if (!node || node.kind !== 'element') {
@@ -305,20 +305,7 @@ describe('взаимодействия :on SFC в renderer Vue', () => {
     const table = (rendered.children as any[])[0]
     const column = table.props.columns[0]
     const row = { id: 7, status: 'ready' }
-    const onClick = vi.fn()
-    const cell = table.props.renderCell({
-      h,
-      column,
-      cellProps: { rowIndex: 0, model: row },
-      rows: [row],
-      rowOffset: 0,
-      selected: () => false,
-      cellSelected: () => false,
-      onClick,
-      onActivate: vi.fn(),
-      onContextMenu: vi.fn(),
-      onKeydown: vi.fn(),
-    })
+    const cell = table.props.renderCell(column, row, 0, '7')
     if (!isVNode(cell)) {
       throw new Error('Cell did not render a VNode')
     }
@@ -336,7 +323,6 @@ describe('взаимодействия :on SFC в renderer Vue', () => {
       0,
       expect.objectContaining({ row, rowKey: 7, columnKey: 'status', value: 'ready' }),
     )
-    expect(onClick).not.toHaveBeenCalled()
     document.dispatchEvent(new KeyboardEvent('keyup', { key: 'w', code: 'KeyW', bubbles: true }))
   })
 })

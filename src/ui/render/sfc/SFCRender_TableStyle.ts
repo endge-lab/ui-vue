@@ -33,6 +33,38 @@ export interface SFCTableColumnMarkers {
   cellContent: SFCTableMarkerAttrs
 }
 
+export interface SFCTablePublicSurface {
+  attrs: SFCTableMarkerAttrs
+}
+
+export interface SFCTableStyleContract {
+  context: SFCVueRenderContext
+  markers: SFCTableMarkers
+  grid: SFCTablePublicSurface
+  header: SFCTablePublicSurface
+  body: SFCTablePublicSurface
+  groupRow: SFCTablePublicSurface
+}
+
+export interface SFCTableColumnStyleSurfaces {
+  headerCell: SFCTablePublicSurface
+  headerContent: SFCTablePublicSurface
+}
+
+export interface SFCTableCellStyleSurfaces {
+  cell: SFCTablePublicSurface
+  cellContent: SFCTablePublicSurface
+}
+
+interface SFCTableRowStyleMeta {
+  contract: SFCTableStyleContract
+  columnMarkers: SFCTableColumnMarkers[]
+  attrs: SFCTableMarkerAttrs
+}
+
+export const SFC_TABLE_ROW_CLASS_FIELD = '__endgeStyleRowClass'
+const SFC_TABLE_ROW_STYLE_META = Symbol('endge.table.row-style-meta')
+
 export function createSFCTableMarkers(context: SFCVueRenderContext): SFCTableMarkers {
   return {
     context,
@@ -56,30 +88,108 @@ export function createSFCTableColumnMarkers(
   }))
 }
 
-export function toRevoGridMarkerProps(attrs: SFCTableMarkerAttrs): Record<string, unknown> {
+/** Семантические DOM surfaces таблицы для renderer-ов без vendor DOM. */
+export function createSFCTableStyleContract(context: SFCVueRenderContext): SFCTableStyleContract {
+  const markers = createSFCTableMarkers(context)
   return {
-    ...attrs,
-    class: Object.fromEntries(attrs.class.map(className => [className, true])),
+    context,
+    markers,
+    grid: { attrs: markers.grid },
+    header: { attrs: markers.header },
+    body: { attrs: markers.body },
+    groupRow: { attrs: markers.groupRow },
   }
 }
 
-/** Помечает только DOM поставщика; всё сопоставление селекторов выполняет нативный CSS. */
-export function syncSFCTableDOMMarkers(grid: HTMLElement, markers: SFCTableMarkers): void {
-  applyMarkerAttrs(grid, markers.grid)
-  grid.querySelectorAll<HTMLElement>('revogr-header')
-    .forEach(element => applyMarkerAttrs(element, markers.header))
-  grid.querySelectorAll<HTMLElement>('revogr-data')
-    .forEach((element) => {
-      const rowType = element.getAttribute('type') ?? (element as HTMLElement & { type?: string }).type
-      if (rowType === 'rgRow') {
-        applyMarkerAttrs(element, markers.body)
-      }
+export function createSFCTableColumnStyleSurfaces(
+  contract: SFCTableStyleContract,
+  columnCount: number,
+): SFCTableColumnStyleSurfaces[] {
+  return createSFCTableColumnMarkers(contract.markers, columnCount).map(markers => ({
+    headerCell: { attrs: markers.headerCell },
+    headerContent: { attrs: markers.headerContent },
+  }))
+}
+
+/**
+ * Добавляет к видимому окну строк семантические attrs. Индексы строк оставляет
+ * браузеру: TanStack рендерит настоящие tr/td, поэтому native CSS selectors
+ * работают без runtime-generated классов.
+ */
+export function decorateSFCTableRowWindow(
+  rows: readonly Record<string, unknown>[],
+  columnCount: number,
+  contract: SFCTableStyleContract,
+  _startIndex: number,
+  _totalRowCount: number,
+): Record<string, unknown>[] {
+  const columnMarkers = createSFCTableColumnMarkers(contract.markers, columnCount)
+  return rows.map((row) => {
+    const decorated = {
+      ...row,
+      [SFC_TABLE_ROW_CLASS_FIELD]: contract.markers.row.class.join(' '),
+    }
+    Object.defineProperty(decorated, SFC_TABLE_ROW_STYLE_META, {
+      configurable: false,
+      enumerable: false,
+      value: {
+        contract,
+        columnMarkers,
+        attrs: contract.markers.row,
+      } satisfies SFCTableRowStyleMeta,
+      writable: false,
     })
-  grid.querySelectorAll<HTMLElement>('.rgRow')
-    .forEach(element => applyMarkerAttrs(
-      element,
-      element.classList.contains('groupingRow') ? markers.groupRow : markers.row,
-    ))
+    return decorated
+  })
+}
+
+export function getSFCTableRowAttrs(
+  row: Record<string, unknown>,
+  states: Iterable<string> = [],
+): SFCTableMarkerAttrs {
+  const metadata = readRowStyleMeta(row)
+  return withStates(metadata?.attrs ?? fallbackMarkerAttrs('row'), states)
+}
+
+export function getSFCTableCellStyleSurfaces(
+  row: Record<string, unknown>,
+  columnIndex: number,
+  states: Iterable<string> = [],
+): SFCTableCellStyleSurfaces | null {
+  const metadata = readRowStyleMeta(row)
+  const markers = metadata?.columnMarkers[columnIndex]
+  if (!markers) {
+    return null
+  }
+  return {
+    cell: { attrs: withStates(markers.cell, states) },
+    cellContent: { attrs: withStates(markers.cellContent, states) },
+  }
+}
+
+function readRowStyleMeta(row: Record<string, unknown>): SFCTableRowStyleMeta | undefined {
+  return (row as Record<PropertyKey, unknown>)[SFC_TABLE_ROW_STYLE_META] as SFCTableRowStyleMeta | undefined
+}
+
+function withStates(attrs: SFCTableMarkerAttrs, states: Iterable<string>): SFCTableMarkerAttrs {
+  const nextStates = new Set<string>()
+  const authoredStates = attrs['data-endge-state']
+  if (typeof authoredStates === 'string') {
+    authoredStates.split(/\s+/).filter(Boolean).forEach(state => nextStates.add(state))
+  }
+  for (const state of states) {
+    if (state) {
+      nextStates.add(state)
+    }
+  }
+  return {
+    ...attrs,
+    ...(nextStates.size ? { 'data-endge-state': [...nextStates].join(' ') } : {}),
+  }
+}
+
+function fallbackMarkerAttrs(part: SFCTablePublicPart): SFCTableMarkerAttrs {
+  return { part, 'data-endge-part': part, 'class': [] }
 }
 
 function createMarkerAttrs(context: SFCVueRenderContext, part: SFCTablePublicPart): SFCTableMarkerAttrs {
@@ -126,19 +236,6 @@ function appendAuthoredAttributes(
     }
     if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
       target[name] = value
-    }
-  }
-}
-
-function applyMarkerAttrs(element: HTMLElement, attrs: SFCTableMarkerAttrs): void {
-  for (const [key, value] of Object.entries(attrs)) {
-    if (key === 'class') {
-      for (const className of attrs.class) {
-        element.classList.add(className)
-      }
-    }
-    else if (value != null) {
-      element.setAttribute(key, String(value))
     }
   }
 }

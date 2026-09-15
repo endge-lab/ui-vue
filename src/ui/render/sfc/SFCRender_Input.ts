@@ -8,10 +8,17 @@ type SFCInputType = Extract<SourceFieldType, 'String' | 'Number' | 'Date' | 'Tim
 /** Рендерит однострочный display-only input без обратной связи с runtime. */
 export const SFCRender_Input: SFCVueRenderAdapterFunction = (input) => {
   const inputType = normalizeInputType(input.props.type)
+  const compactEditor = normalizeEditorVariant(
+    input.props.editorVariant ?? input.props['editor-variant'],
+  ) === 'compact'
 
   return input.h('input', {
     ...input.attrs,
-    class: ['endge-sfc-input', input.props.class],
+    class: [
+      'endge-sfc-input',
+      compactEditor && 'endge-sfc-input--compact-editor',
+      input.props.class,
+    ],
     type: toNativeInputType(inputType),
     value: normalizeInputValue(inputType, input.props.value),
     placeholder: toOptionalString(input.props.placeholder),
@@ -20,7 +27,17 @@ export const SFCRender_Input: SFCVueRenderAdapterFunction = (input) => {
     step: input.props.step,
     readonly: input.props.readonly === true,
     disabled: input.props.disabled === true,
+    ...(compactEditor
+      ? {
+          'data-endge-editor-variant': 'compact',
+          'data-endge-input-type': inputType.toLowerCase(),
+        }
+      : {}),
   })
+}
+
+function normalizeEditorVariant(value: unknown): 'compact' | 'default' | null {
+  return value === 'compact' || value === 'default' ? value : null
 }
 
 function normalizeInputType(value: unknown): SFCInputType {

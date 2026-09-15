@@ -23,6 +23,7 @@ import {
   editableConsumerKey,
   isSFCEditableActive,
   renderSFCEditablePrimitive,
+  resolveSFCEditorVariant,
 } from '@/ui/render/sfc/SFCRender_Editable'
 import { evaluateSFCProps, evaluateSFCValue, isTruthySFCValue } from '@/ui/render/sfc/SFCRender_Evaluator'
 import { attachSFCInteractionAttrs, normalizeSFCInteractionEvent } from '@/ui/render/sfc/SFCRender_Interaction'
@@ -165,6 +166,10 @@ function renderOnceContent(
   renderFn: SFCVueRenderFunction,
 ): SFCVueRenderResult {
   const props = evaluateSFCProps(input.node.props, input.context)
+  const editorVariant = resolveSFCEditorVariant(input.node, props, input.context)
+  if (editorVariant) {
+    props.editorVariant = editorVariant
+  }
   if (input.context.host?.readonly && ['Input', 'Textarea', 'Select', 'Checkbox'].includes(input.node.tag)) {
     props.readonly = true
     props.disabled = true

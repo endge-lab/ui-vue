@@ -8,12 +8,25 @@ export const SFCRender_DateTime: SFCVueRenderAdapterFunction = (input) => {
     input.props.timezone,
     input.props.empty,
   )
+  const compactEditor = normalizeEditorVariant(
+    input.props.editorVariant ?? input.props['editor-variant'],
+  ) === 'compact'
 
   return input.h('time', {
     ...input.attrs,
-    class: ['endge-sfc-datetime', input.props.class],
+    class: [
+      'endge-sfc-datetime',
+      compactEditor && 'endge-sfc-datetime--compact',
+      compactEditor && !value && 'endge-sfc-datetime--compact-empty',
+      input.props.class,
+    ],
     datetime: input.props.value == null ? undefined : String(input.props.value),
+    ...(compactEditor ? { 'data-endge-editor-variant': 'compact' } : {}),
   }, value)
+}
+
+function normalizeEditorVariant(value: unknown): 'compact' | 'default' | null {
+  return value === 'compact' || value === 'default' ? value : null
 }
 
 /** Форматирует SFC DateTime в явно выбранной IANA-зоне или локальной зоне браузера. */

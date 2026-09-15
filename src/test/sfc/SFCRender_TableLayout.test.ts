@@ -58,8 +58,8 @@ describe('компоновка Table SFC', () => {
 
     expect(grid[0]?.props).toMatchObject({
       paging: 'pages',
-      pageSize: 10,
-      pageSizes: [10, 25, 50, 100],
+      pageSize: 25,
+      pageSizes: [25, 50, 100],
       lazy: true,
     })
   })
@@ -70,8 +70,8 @@ describe('компоновка Table SFC', () => {
 
     expect(grid[0]?.props).toMatchObject({
       paging: 'virtual',
-      pageSize: 10,
-      pageSizes: [10, 25, 50, 100],
+      pageSize: 25,
+      pageSizes: [25, 50, 100],
       lazy: false,
     })
   })

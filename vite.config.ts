@@ -19,12 +19,6 @@ export default defineConfig({
         '@endge/utils',
         '@endge/raph',
         'vue',
-        'primevue',
-        '@primevue/themes',
-        'primeicons',
-        'class-transformer',
-        'class-validator',
-        'reflect-metadata',
       ],
       output: {
         assetFileNames: (assetInfo) => {

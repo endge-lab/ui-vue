@@ -150,6 +150,7 @@ const iconPaths: Record<string, string[]> = {
   'table.column.hide': ['M3 3l18 18', 'M10.6 10.6a2 2 0 0 0 2.8 2.8', 'M9.9 4.2A10.5 10.5 0 0 1 21 12a11.8 11.8 0 0 1-2 2.8', 'M6.6 6.6A11.8 11.8 0 0 0 3 12a10.5 10.5 0 0 0 7.4 7.8'],
   'table.sort.setColumnAsc': ['M8 18V6', 'm4 10-4 4-4-4', 'M16 6h4', 'M16 10h3', 'M16 14h2'],
   'table.sort.setColumnDesc': ['M8 6v12', 'm4-4-4-4-4 4', 'M16 18h4', 'M16 14h3', 'M16 10h2'],
+  'table.sort.clearColumn': ['M6 6l12 12', 'M18 6 6 18'],
   'trash': ['M3 6h18', 'M8 6V4h8v2', 'M19 6l-1 15H6L5 6', 'M10 11v6', 'M14 11v6'],
   'copy': ['M8 8h12v12H8z', 'M4 16V4h12'],
   'external-link': ['M14 4h6v6', 'M20 4 10 14', 'M18 13v7H4V6h7'],
@@ -216,10 +217,10 @@ function resolveIconPaths(identity: string | undefined): string[] | null {
   max-height: calc(100vh - 16px);
   overflow-y: auto;
   padding: 5px;
-  border: 1px solid hsl(var(--border, 214 32% 91%));
+  border: 1px solid var(--border, #e4e4e7);
   border-radius: 8px;
-  background: hsl(var(--popover, 0 0% 100%));
-  color: hsl(var(--popover-foreground, var(--foreground, 222 47% 11%)));
+  background: var(--popover, var(--background, #fff));
+  color: var(--popover-foreground, var(--foreground, #18181b));
   box-shadow:
     0 18px 48px rgb(0 0 0 / 0.16),
     0 3px 10px rgb(0 0 0 / 0.08);
@@ -246,9 +247,9 @@ function resolveIconPaths(identity: string | undefined): string[] | null {
 
 .endge-context-menu-root__item:hover,
 .endge-context-menu-root__item:focus-visible {
-  background: hsl(var(--accent, 210 40% 96%));
-  color: hsl(var(--accent-foreground, var(--foreground, 222 47% 11%)));
-  outline: 2px solid hsl(var(--ring, 215 20% 65%) / 0.65);
+  background: var(--accent, var(--muted, #f4f4f5));
+  color: var(--accent-foreground, var(--foreground, #18181b));
+  outline: 2px solid color-mix(in srgb, var(--ring, #a1a1aa) 65%, transparent);
   outline-offset: -2px;
 }
 
@@ -278,7 +279,7 @@ function resolveIconPaths(identity: string | undefined): string[] | null {
 .endge-context-menu-root__separator {
   height: 1px;
   margin: 4px 2px;
-  background: hsl(var(--border, 214 32% 91%));
+  background: var(--border, #e4e4e7);
 }
 
 @keyframes endge-menu-in {

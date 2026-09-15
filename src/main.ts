@@ -52,3 +52,6 @@ export * from '@/ui/render/sfc/SFCRender_Text'
 export * from '@/ui/render/sfc/SFCRender_Textarea'
 
 export * from '@/ui/render/sfc/SFCRender_Tooltip'
+export * from '@/ui/table/tanstack-table.types'
+export { default as TanStackSfcDataTable } from '@/ui/table/TanStackSfcDataTable.vue'
+export { default as TanStackTableRuntimeRenderer } from '@/ui/table/TanStackTableRuntimeRenderer.vue'

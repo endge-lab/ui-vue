@@ -91,9 +91,8 @@ export const SFCRender_Component: SFCVueRenderFunction = SFCRender_Base((input) 
       : child
   }
 
-  // Шаблоны ячеек RevoGrid предоставляют hyperscript-функцию DOM, принимающую
-  // строковые теги, но не основанный на Symbol Fragment из Vue. `display: contents`
-  // сохраняет нейтральность layout авторского многокорневого компонента в обоих renderer.
+  // `display: contents` сохраняет нейтральность layout авторского
+  // многокорневого компонента внутри составных renderer-ов.
   return input.h('span', {
     ...('data-endge-tooltip-trigger' in input.attrs ? input.attrs : {}),
     style: 'data-endge-tooltip-trigger' in input.attrs

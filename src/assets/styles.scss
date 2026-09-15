@@ -1,6 +1,4 @@
-revo-grid * {
-  color: var(--color-text);
-}
+@use './tanstack-table';
 
 .endge-sfc-input,
 .endge-sfc-select,
@@ -83,4 +81,78 @@ revo-grid * {
 .endge-sfc-checkbox-field:has(.endge-sfc-checkbox:disabled) {
   cursor: not-allowed;
   opacity: .55;
+}
+
+.endge-sfc-datetime--compact-empty {
+  cursor: text;
+  display: inline-block;
+  min-block-size: 1lh;
+  min-inline-size: 5ch;
+}
+
+.endge-sfc-input--compact-editor {
+  appearance: none !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: inherit !important;
+  font: inherit !important;
+  font-variant-numeric: inherit;
+  height: 1lh !important;
+  line-height: inherit !important;
+  margin: 0 !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  outline: 0 !important;
+  padding: 0 !important;
+  text-align: inherit;
+  width: auto !important;
+}
+
+.endge-sfc-input--compact-editor:focus,
+.endge-sfc-input--compact-editor:focus-visible {
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+}
+
+.endge-sfc-input--compact-editor::-webkit-calendar-picker-indicator {
+  -webkit-appearance: none;
+  display: none;
+}
+
+.endge-sfc-input--compact-editor::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
+}
+
+.endge-sfc-input--compact-editor[data-endge-input-type="string"],
+.endge-sfc-input--compact-editor[data-endge-input-type="number"] {
+  field-sizing: content;
+  min-width: 1em !important;
+}
+
+.endge-sfc-input--compact-editor[data-endge-input-type="number"] {
+  -moz-appearance: textfield !important;
+}
+
+.endge-sfc-input--compact-editor[data-endge-input-type="number"]::-webkit-inner-spin-button,
+.endge-sfc-input--compact-editor[data-endge-input-type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.endge-sfc-input--compact-editor[data-endge-input-type="time"] {
+  min-width: 5ch !important;
+  width: 5ch !important;
+}
+
+.endge-sfc-input--compact-editor[data-endge-input-type="date"] {
+  min-width: 10ch !important;
+  width: 10ch !important;
+}
+
+.endge-sfc-input--compact-editor[data-endge-input-type="datetime"] {
+  min-width: 16ch !important;
+  width: 16ch !important;
 }

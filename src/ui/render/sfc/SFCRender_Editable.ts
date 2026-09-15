@@ -56,6 +56,23 @@ export function isSFCEditableActive(node: RComponentSFC_IR_ElementNode, context:
   return Boolean(node.editable && context.host?.getEditSession(editableConsumerKey(node, context)))
 }
 
+/** Разрешает renderer-neutral вариант editor-а до вызова visual adapter-а. */
+export function resolveSFCEditorVariant(
+  node: RComponentSFC_IR_ElementNode,
+  props: Record<string, unknown>,
+  context: SFCVueRenderContext,
+): 'compact' | 'default' | null {
+  const explicit = normalizeEditorVariant(props.editorVariant ?? props['editor-variant'])
+  if (explicit) {
+    return explicit
+  }
+  const common = context.context.config.common
+  const configured = common != null && typeof common === 'object'
+    ? normalizeEditorVariant((common as Record<string, unknown>).editorVariant)
+    : null
+  return configured ?? (node.editable ? 'compact' : null)
+}
+
 /** Добавляет listeners входа, отмены и подтверждения без замены авторских семантических handlers. */
 export function attachSFCEditableAttrs(
   attrs: Record<string, unknown>,
@@ -281,6 +298,10 @@ function normalizePrimitiveEditedValue(
   const base = Number.isNaN(originalDate.getTime()) ? new Date().toISOString() : original
   const timezone = evaluateSFCValue(node.props.timezone, context)
   return mergeTimeIntoDateTime(base, value, timezone) ?? value
+}
+
+function normalizeEditorVariant(value: unknown): 'compact' | 'default' | null {
+  return value === 'compact' || value === 'default' ? value : null
 }
 
 function readTargetValue(event: Event, tag: string): unknown {

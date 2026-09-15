@@ -15,7 +15,7 @@ export const SFCRender_Select: SFCVueRenderAdapterFunction = (input) => {
   if (multiple || searchable || virtualized) {
     return input.h(NativeMultiSelect, {
       ...input.attrs,
-      class: ['endge-sfc-select', input.props.class],
+      class: ['endge-sfc-select-control', input.props.class],
       options,
       selectedValues: [...selectedValues],
       placeholder: input.props.placeholder == null ? undefined : String(input.props.placeholder),
