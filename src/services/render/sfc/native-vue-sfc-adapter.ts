@@ -1,0 +1,61 @@
+import type { SFCVueRenderAdapter } from '@/services/render/sfc/sfc-vue-render.type'
+import {
+  ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
+  ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
+} from '@endge/core'
+
+import { markRaw } from 'vue'
+import EndgeFilterRenderer from '@/ui/filter/EndgeFilterRenderer.vue'
+import EndgeShell from '@/ui/layout/EndgeShell.vue'
+import SFC_Renderer from '@/ui/render/sfc/SFC_Renderer.vue'
+import SFC_RuntimeRenderer from '@/ui/render/sfc/SFC_RuntimeRenderer.vue'
+import { SFCRender_Badge } from '@/ui/render/sfc/SFCRender_Badge'
+import { SFCRender_Box } from '@/ui/render/sfc/SFCRender_Box'
+import { SFCRender_Checkbox } from '@/ui/render/sfc/SFCRender_Checkbox'
+import { SFCRender_DateTime } from '@/ui/render/sfc/SFCRender_DateTime'
+import { SFCRender_Divider } from '@/ui/render/sfc/SFCRender_Divider'
+import { SFCRender_Dot } from '@/ui/render/sfc/SFCRender_Dot'
+import { SFCRender_Flex } from '@/ui/render/sfc/SFCRender_Flex'
+import { SFCRender_Grid } from '@/ui/render/sfc/SFCRender_Grid'
+import { SFCRender_Icon } from '@/ui/render/sfc/SFCRender_Icon'
+import { SFCRender_Input } from '@/ui/render/sfc/SFCRender_Input'
+import { SFCRender_Number } from '@/ui/render/sfc/SFCRender_Number'
+import { SFCRender_Select } from '@/ui/render/sfc/SFCRender_Select'
+import { SFCRender_Table } from '@/ui/render/sfc/SFCRender_Table'
+import { SFCRender_Text } from '@/ui/render/sfc/SFCRender_Text'
+import { SFCRender_Textarea } from '@/ui/render/sfc/SFCRender_Textarea'
+import { SFCRender_Tooltip } from '@/ui/render/sfc/SFCRender_Tooltip'
+
+export const NATIVE_VUE_SFC_ADAPTER_ID = 'vue-native'
+
+/** Нативный DOM adapter для Vue render engine. */
+export const NativeVueSFCAdapter: SFCVueRenderAdapter = {
+  id: NATIVE_VUE_SFC_ADAPTER_ID,
+  protocol: ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
+  protocolVersion: ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
+  renderer: 'vue',
+  renderers: {
+    Text: SFCRender_Text,
+    DateTime: SFCRender_DateTime,
+    Number: SFCRender_Number,
+    Icon: SFCRender_Icon,
+    Badge: SFCRender_Badge,
+    Dot: SFCRender_Dot,
+    Box: SFCRender_Box,
+    Flex: SFCRender_Flex,
+    Grid: SFCRender_Grid,
+    Divider: SFCRender_Divider,
+    Input: SFCRender_Input,
+    Textarea: SFCRender_Textarea,
+    Checkbox: SFCRender_Checkbox,
+    Select: SFCRender_Select,
+    Tooltip: SFCRender_Tooltip,
+    Table: SFCRender_Table,
+  },
+  roots: {
+    'shell': markRaw(EndgeShell),
+    'sfc': markRaw(SFC_Renderer),
+    'sfc-runtime': markRaw(SFC_RuntimeRenderer),
+    'filter-view': markRaw(EndgeFilterRenderer),
+  },
+}

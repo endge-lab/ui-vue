@@ -1,0 +1,92 @@
+import type { SourceFieldType } from '@endge/core'
+import type { SFCVueRenderAdapterFunction } from '@/services/render/sfc/sfc-vue-render.type'
+
+import { isoToDateInput, isoToDateTimeLocalInput, timeToTimeInput } from '@endge/utils'
+
+type SFCInputType = Extract<SourceFieldType, 'String' | 'Number' | 'Date' | 'Time' | 'DateTime'>
+
+/** Рендерит однострочный display-only input без обратной связи с runtime. */
+export const SFCRender_Input: SFCVueRenderAdapterFunction = (input) => {
+  const inputType = normalizeInputType(input.props.type)
+  const compactEditor = normalizeEditorVariant(
+    input.props.editorVariant ?? input.props['editor-variant'],
+  ) === 'compact'
+
+  return input.h('input', {
+    ...input.attrs,
+    class: [
+      'endge-sfc-input',
+      compactEditor && 'endge-sfc-input--compact-editor',
+      input.props.class,
+    ],
+    type: toNativeInputType(inputType),
+    value: normalizeInputValue(inputType, input.props.value),
+    placeholder: toOptionalString(input.props.placeholder),
+    min: input.props.min,
+    max: input.props.max,
+    step: input.props.step,
+    readonly: input.props.readonly === true,
+    disabled: input.props.disabled === true,
+    ...(compactEditor
+      ? {
+          'data-endge-editor-variant': 'compact',
+          'data-endge-input-type': inputType.toLowerCase(),
+        }
+      : {}),
+  })
+}
+
+function normalizeEditorVariant(value: unknown): 'compact' | 'default' | null {
+  return value === 'compact' || value === 'default' ? value : null
+}
+
+function normalizeInputType(value: unknown): SFCInputType {
+  if (value === 'Number' || value === 'Date' || value === 'Time' || value === 'DateTime') {
+    return value
+  }
+
+  return 'String'
+}
+
+function toNativeInputType(type: SFCInputType): string {
+  if (type === 'Number') {
+    return 'number'
+  }
+  if (type === 'Date') {
+    return 'date'
+  }
+  if (type === 'Time') {
+    return 'time'
+  }
+  if (type === 'DateTime') {
+    return 'datetime-local'
+  }
+  return 'text'
+}
+
+function normalizeInputValue(type: SFCInputType, value: unknown): string | number {
+  if (value == null) {
+    return ''
+  }
+  if (type === 'Number') {
+    if (typeof value === 'string' && value.trim() === '') {
+      return ''
+    }
+    const numberValue = Number(value)
+    return Number.isFinite(numberValue) ? numberValue : ''
+  }
+  if (type === 'Date') {
+    return isoToDateInput(value)
+  }
+  if (type === 'Time') {
+    return timeToTimeInput(value)
+  }
+  if (type === 'DateTime') {
+    return isoToDateTimeLocalInput(value)
+  }
+  return String(value)
+}
+
+function toOptionalString(value: unknown): string | undefined {
+  return value == null ? undefined : String(value)
+}

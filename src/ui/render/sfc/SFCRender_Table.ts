@@ -1,0 +1,413 @@
+import type { RComponentSFC_IR_ElementNode, RComponentSFC_IR_Node, TableSelectionTrigger } from '@endge/core'
+import type { SFCVueRenderContext, SFCVueRenderFunction } from '@/services/render/sfc/sfc-vue-render.type'
+import type { EndgeTanStackTableColumn, EndgeTanStackTablePaging } from '@/ui/table/tanstack-table.types'
+import {
+  normalizeComponentSFCTableColumnMenu,
+  normalizeComponentSFCTableColumnPin,
+  normalizeComponentSFCTableColumnPinMode,
+  normalizeComponentSFCTableColumnVisibility,
+  normalizeComponentSFCTableRowMenu,
+  normalizeComponentSFCTableSort,
+  normalizeComponentSFCTableSortMode,
+} from '@endge/core'
+import { createSFCNodeEventAttrs, SFCRender_Base } from '@/ui/render/sfc/SFCRender_Base'
+import { computationScopeKey } from '@/ui/render/sfc/SFCRender_Computations'
+import { extendSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
+import { evaluateSFCProps, evaluateSFCValue, readSFCObjectPath } from '@/ui/render/sfc/SFCRender_Evaluator'
+import { renderSFCNodes } from '@/ui/render/sfc/SFCRender_Node'
+import { normalizeSFCTableCellAlignment } from '@/ui/render/sfc/SFCRender_TableAlignment'
+
+import {
+  createSFCTableColumnStyleSurfaces,
+  createSFCTableStyleContract,
+  getSFCTableCellStyleSurfaces,
+} from '@/ui/render/sfc/SFCRender_TableStyle'
+import TanStackSfcDataTable from '@/ui/table/TanStackSfcDataTable.vue'
+
+/** Реализация составного тега SFC Table на TanStack Table. */
+export const SFCRender_Table: SFCVueRenderFunction = SFCRender_Base((input) => {
+  const rows = normalizeSFCTableRows(input.props.rows)
+  const rowState = input.node.props['row-state'] ?? input.node.props.rowState
+  const explicitHeight = input.props.height ?? input.props.h
+  const fillsAvailableHeight = explicitHeight == null || explicitHeight === ''
+  const rowKey = normalizeText(input.props['row-key'] ?? input.props.rowKey, 'id')
+  const sortDescriptor = normalizeComponentSFCTableSort(input.node)
+  const pinDescriptor = normalizeComponentSFCTableColumnPin(input.node)
+  const visibilityDescriptor = normalizeComponentSFCTableColumnVisibility(input.node)
+  const columnMenuDescriptor = input.node.tableMenus?.column ?? normalizeComponentSFCTableColumnMenu(input.node)
+  const rowMenuDescriptor = input.node.tableMenus?.row ?? normalizeComponentSFCTableRowMenu(input.node)
+  const styleContract = createSFCTableStyleContract(input.context)
+  const cellAlignment = normalizeSFCTableCellAlignment(
+    input.props['cell-align'] ?? input.props.cellAlign,
+    input.props['cell-vertical-align'] ?? input.props.cellVerticalAlign,
+  )
+  const pinMode = normalizeComponentSFCTableColumnPinMode(
+    input.props['column-pin'] ?? input.props.columnPin ?? pinDescriptor.mode,
+  )
+  const columns = collectTableColumns(
+    input.node,
+    input.context,
+    sortDescriptor,
+    pinDescriptor,
+    pinMode,
+    cellAlignment,
+    styleContract,
+  )
+  const tableId = normalizeText(input.props.id ?? input.props.tableId ?? input.attrs.id, '')
+  const tableContext = extendSFCVueRenderContext(
+    input.context,
+    {
+      $table: {
+        id: tableId || input.node.id,
+        runtimeId: input.context.runtimeState?.runtimeId ?? input.node.id,
+        state: {},
+      },
+    },
+    input.context.iteration,
+    `${input.context.consumerScope}/table:${input.node.id}`,
+  )
+
+  return input.h('div', {
+    ...input.attrs,
+    'data-endge-layout-fill-height': fillsAvailableHeight ? '' : undefined,
+    'class': ['endge-sfc-table', 'endge-tanstack-sfc-table', input.props.class],
+    'style': {
+      ...(isPlainObject(input.attrs.style) ? input.attrs.style : {}),
+      width: normalizeCssSize(input.props.width ?? input.props.w, '100%'),
+      height: normalizeCssSize(explicitHeight, '100%'),
+      minHeight: normalizeCssSize(input.props.minHeight ?? input.props.minH, '180px'),
+      flex: fillsAvailableHeight ? '1 1 0%' : undefined,
+      overflow: 'hidden',
+    },
+  }, [
+    input.h(TanStackSfcDataTable, {
+      boundaryId: input.node.id,
+      nodeId: input.node.id,
+      tableRef: normalizeOptionalText(input.props.ref ?? input.attrs.ref),
+      tableId,
+      eventBoundary: input.context.eventBoundary,
+      eventBindings: input.node.events ?? [],
+      selectionMode: normalizeSelectionMode(input.props['selection-mode'] ?? input.props.selectionMode),
+      selectionTrigger: normalizeSelectionTrigger(input.props['selection-trigger'] ?? input.props.selectionTrigger),
+      cellSelectionMode: normalizeCellSelectionMode(input.props['cell-selection-mode'] ?? input.props.cellSelectionMode),
+      runtimeState: input.context.runtimeState,
+      columns,
+      source: rows,
+      styleContract,
+      rowKey,
+      sortMode: normalizeComponentSFCTableSortMode(input.props['sort-mode'] ?? input.props.sortMode ?? sortDescriptor.mode),
+      pinMode,
+      columnMenu: columnMenuDescriptor,
+      rowMenu: rowMenuDescriptor,
+      menuContext: tableContext,
+      defaultSort: sortDescriptor.defaultSort,
+      defaultPin: pinDescriptor.defaultPin,
+      defaultHidden: visibilityDescriptor.defaultHidden,
+      rowSize: normalizeNumber(input.props.rowSize, 40),
+      paging: normalizeTablePaging(input.props.paging),
+      pageSize: normalizeNumber(input.props['page-size'] ?? input.props.pageSize, 25),
+      pageSizes: normalizePageSizes(input.props['page-sizes'] ?? input.props.pageSizes),
+      lazy: input.props.lazy === true,
+      renderVersion: input.context.renderVersion,
+      renderCell: (
+        column: EndgeTanStackTableColumn,
+        row: Record<string, unknown>,
+        rowIndex: number,
+        rowId: string,
+      ) => {
+        const value = readSFCObjectPath(column.key, row)
+        const rowContext = { id: rowId, index: rowIndex, data: row }
+        const columnContext = {
+          key: column.key,
+          index: column.index,
+          title: column.title,
+          metadata: column.metadata ?? {},
+        }
+        const cellContext = extendSFCVueRenderContext(tableContext, {
+          $row: rowContext,
+          $column: columnContext,
+          $cell: { value },
+          row,
+          rowIndex,
+          // TanStack требует строковый внутренний идентификатор строки, но лексический
+          // rowKey в SFC должен сохранять авторский тип данных. Селекторы Store
+          // часто сравнивают числовые идентификаторы и должны получать число.
+          rowKey: resolveLexicalRowKey(readSFCObjectPath(rowKey, row), rowId),
+          columnKey: column.key,
+          columnMeta: column.metadata ?? {},
+          value,
+        }, tableContext.iteration, `${tableContext.consumerScope}/row:${computationScopeKey(rowId)}/column:${computationScopeKey(column.key)}`, {
+          kind: 'table-row',
+          boundaryId: input.node.id,
+          rowKey: resolveLexicalRowKey(readSFCObjectPath(rowKey, row), rowId),
+        })
+        const children = renderSFCNodes(input.h, column.cellNodes, cellContext)
+        const rowStates = normalizeTableRowStates(
+          rowState ? evaluateSFCValue(rowState, cellContext) : undefined,
+        )
+        const contentAttrs = getSFCTableCellStyleSurfaces(row, column.index, rowStates)?.cellContent.attrs
+        const cellProps = column.cellNode ? evaluateSFCProps(column.cellNode.props, cellContext) : {}
+        const eventAttrs = column.cellNode
+          ? createSFCNodeEventAttrs(column.cellNode, cellProps, cellContext)
+          : {}
+
+        return input.h('div', {
+          ...eventAttrs,
+          'part': contentAttrs?.part ?? 'cell-content',
+          'data-endge-part': contentAttrs?.['data-endge-part'] ?? 'cell-content',
+          'data-endge-state': contentAttrs?.['data-endge-state'],
+          'class': ['endge-sfc-table-cell-content', 'endge-tanstack-table__cell-content', contentAttrs?.class],
+          'style': {
+            display: 'flex',
+            alignItems: mapVerticalAlignment(column.alignment.vertical),
+            justifyContent: mapHorizontalAlignment(column.alignment.horizontal),
+            width: '100%',
+            minWidth: 0,
+          },
+        }, children)
+      },
+    }),
+  ])
+})
+
+function collectTableColumns(
+  tableNode: RComponentSFC_IR_ElementNode,
+  context: SFCVueRenderContext,
+  sortDescriptor: ReturnType<typeof normalizeComponentSFCTableSort>,
+  pinDescriptor: ReturnType<typeof normalizeComponentSFCTableColumnPin>,
+  pinMode: ReturnType<typeof normalizeComponentSFCTableColumnPinMode>,
+  defaultAlignment: ReturnType<typeof normalizeSFCTableCellAlignment>,
+  styleContract: ReturnType<typeof createSFCTableStyleContract>,
+): EndgeTanStackTableColumn[] {
+  const nodes = tableNode.children.filter(isElementNode).filter(node => node.tag === 'Column')
+  const styleSurfaces = createSFCTableColumnStyleSurfaces(styleContract, nodes.length)
+
+  return nodes.map((node, index) => {
+    const props = evaluateSFCProps(node.props, context)
+    const key = normalizeColumnKey(node, context, props.key, `column_${index}`)
+    const sort = sortDescriptor.columns.find(column => column.key === key) ?? null
+    const pin = pinDescriptor.columns.find(column => column.key === key) ?? null
+    const width = normalizeOptionalNumber(props.width ?? props.size)
+
+    return {
+      index,
+      key,
+      title: normalizeText(props.title ?? props.name, key),
+      width,
+      minWidth: normalizeNumber(props.minWidth ?? props.minSize, 64),
+      maxWidth: normalizeNumber(props.maxWidth ?? props.maxSize, 1200),
+      pinnable: pinMode !== 'disabled' && (pin?.pinnable ?? true),
+      alignment: normalizeSFCTableCellAlignment(
+        props['cell-align'] ?? props.cellAlign ?? props.align ?? defaultAlignment.horizontal,
+        props['cell-vertical-align']
+        ?? props.cellVerticalAlign
+        ?? props.valign
+        ?? defaultAlignment.vertical,
+      ),
+      metadata: context.metadata?.nodes.find(candidate => candidate.nodeId === node.id)?.values ?? {},
+      ...(node.cellMenu ? { cellMenu: node.cellMenu } : {}),
+      sort: sort
+        ? { sortable: sort.sortable, comparator: sort.comparator, paths: [...sort.paths] }
+        : null,
+      cellNode: resolveCellNode(node),
+      cellNodes: resolveCellNodes(node),
+      styleSurfaces: styleSurfaces[index]!,
+    }
+  })
+}
+
+function resolveCellNodes(columnNode: RComponentSFC_IR_ElementNode): RComponentSFC_IR_Node[] {
+  const cell = resolveCellNode(columnNode)
+  return (cell?.children ?? columnNode.children).filter(node => !isTableMenuNode(node))
+}
+
+function resolveCellNode(columnNode: RComponentSFC_IR_ElementNode): RComponentSFC_IR_ElementNode | null {
+  return columnNode.children.filter(isElementNode).find(node => node.tag === 'Cell') ?? null
+}
+
+function normalizeTableRowStates(value: unknown): string[] {
+  const result = new Set<string>()
+  const visit = (item: unknown): void => {
+    if (typeof item === 'string') {
+      item.trim().split(/\s+/).filter(Boolean).forEach(token => result.add(token))
+    }
+    else if (Array.isArray(item)) {
+      item.forEach(visit)
+    }
+    else if (item && typeof item === 'object') {
+      Object.entries(item as Record<string, unknown>).forEach(([state, enabled]) => {
+        if (enabled) {
+          result.add(state)
+        }
+      })
+    }
+  }
+  visit(value)
+  return [...result]
+}
+
+function normalizeColumnKey(
+  columnNode: RComponentSFC_IR_ElementNode,
+  context: SFCVueRenderContext,
+  propValue: unknown,
+  fallback: string,
+): string {
+  const evaluated = propValue ?? evaluateSFCValue(columnNode.directives.key, context)
+  if (evaluated != null) {
+    return normalizeText(evaluated, fallback)
+  }
+  const directiveKey = columnNode.directives.key
+  if (directiveKey?.kind === 'expression' && directiveKey.reads.length === 0) {
+    return normalizeText(directiveKey.source.replace(/^['"]|['"]$/g, ''), fallback)
+  }
+  return fallback
+}
+
+export function normalizeSFCTableRows(value: unknown): Record<string, unknown>[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  return value.map((row, index) => isPlainObject(row) ? row : { id: index, value: row })
+}
+
+/** Сохраняется как публичный helper для совместимости с прежней реализацией Table. */
+export function createInitialTableVisibility<T extends { key: string }>(
+  defaultHidden: readonly string[],
+  columns: readonly T[],
+): Record<string, boolean> {
+  const columnKeys = new Set(columns.map(column => column.key))
+  return Object.fromEntries(
+    defaultHidden
+      .filter(key => columnKeys.has(key))
+      .map(key => [key, false]),
+  )
+}
+
+/** Сохраняется как публичный helper для совместимости с прежней реализацией Table. */
+export function filterVisibleTableColumns<T extends { key: string }>(
+  columns: readonly T[],
+  visibility: Readonly<Record<string, boolean>>,
+): T[] {
+  return columns.filter(column => visibility[column.key] !== false)
+}
+
+/** Применяет immutable snapshots строк без привязки к конкретному table engine. */
+export function applyRowSnapshots(
+  rows: Record<string, unknown>[],
+  patches: Array<{ itemIndex: number | null, itemKey: unknown, itemSnapshot: unknown }>,
+  rowKey: string,
+): Record<string, unknown>[] {
+  const result = [...rows]
+  for (const patch of patches) {
+    const targetIndex = patch.itemKey == null
+      ? patch.itemIndex
+      : result.findIndex(row => Object.is(readSFCObjectPath(rowKey, row), patch.itemKey))
+    if (!isPlainObject(patch.itemSnapshot)) {
+      if (targetIndex != null && targetIndex >= 0) {
+        result.splice(targetIndex, 1)
+      }
+      continue
+    }
+
+    const normalized = { ...patch.itemSnapshot }
+    if (targetIndex != null && targetIndex >= 0) {
+      result[targetIndex] = normalized
+      continue
+    }
+    const insertionIndex = patch.itemIndex == null
+      ? result.length
+      : Math.max(0, Math.min(patch.itemIndex, result.length))
+    result.splice(insertionIndex, 0, normalized)
+  }
+  return result
+}
+
+function resolveLexicalRowKey(value: unknown, fallback: string): unknown {
+  return String(value ?? '').trim() ? value : fallback
+}
+
+function normalizeText(value: unknown, fallback: string): string {
+  const source = String(value ?? '').trim()
+  return source || fallback
+}
+
+function normalizeOptionalText(value: unknown): string | null {
+  const source = String(value ?? '').trim()
+  return source || null
+}
+
+function normalizeSelectionMode(value: unknown): 'none' | 'single' | 'multiple' {
+  return value === 'single' || value === 'multiple' ? value : 'none'
+}
+
+function normalizeCellSelectionMode(value: unknown): 'none' | 'single' {
+  return value === 'single' ? 'single' : 'none'
+}
+
+function normalizeSelectionTrigger(value: unknown): TableSelectionTrigger {
+  return value === 'control' || value === 'row' || value === 'both' ? value : 'auto'
+}
+
+function normalizeNumber(value: unknown, fallback: number): number {
+  const number = Number(value)
+  return Number.isFinite(number) && number > 0 ? number : fallback
+}
+
+function normalizeTablePaging(value: unknown): EndgeTanStackTablePaging {
+  return String(value ?? '').trim().toLowerCase() === 'virtual' ? 'virtual' : 'pages'
+}
+
+function normalizeOptionalNumber(value: unknown): number | null {
+  if (value == null || value === '') {
+    return null
+  }
+  const number = Number(value)
+  return Number.isFinite(number) && number > 0 ? number : null
+}
+
+function normalizePageSizes(value: unknown): number[] {
+  const source = Array.isArray(value)
+    ? value
+    : typeof value === 'string'
+      ? value.split(',')
+      : [25, 50, 100]
+  const sizes = source
+    .map(Number)
+    .filter(size => Number.isFinite(size) && size > 0)
+    .map(Math.floor)
+  return [...new Set(sizes)].sort((left, right) => left - right)
+}
+
+function normalizeCssSize(value: unknown, fallback: string): string {
+  if (value == null || value === '') {
+    return fallback
+  }
+  return typeof value === 'number' ? `${value}px` : String(value)
+}
+
+function mapHorizontalAlignment(value: string): 'flex-start' | 'center' | 'flex-end' {
+  if (value === 'center') {
+    return 'center'
+  }
+  return value === 'right' ? 'flex-end' : 'flex-start'
+}
+
+function mapVerticalAlignment(value: string): 'flex-start' | 'center' | 'flex-end' {
+  if (value === 'middle') {
+    return 'center'
+  }
+  return value === 'bottom' ? 'flex-end' : 'flex-start'
+}
+
+function isElementNode(node: RComponentSFC_IR_Node): node is RComponentSFC_IR_ElementNode {
+  return node.kind === 'element'
+}
+
+function isTableMenuNode(node: RComponentSFC_IR_Node): boolean {
+  return node.kind === 'element'
+    && (node.tag === 'ColumnMenu' || node.tag === 'CellMenu' || node.tag === 'RowMenu' || node.tag === 'MenuItem' || node.tag === 'MenuSeparator')
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === 'object' && !Array.isArray(value)
+}

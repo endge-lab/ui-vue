@@ -1,0 +1,117 @@
+import type {
+  ContextMenuDescriptor,
+  ContextMenuItemDescriptor,
+  ContextMenuNodeDescriptor,
+  RuntimeActionContext,
+} from '@endge/core'
+import { Endge } from '@endge/core'
+import { reactive } from 'vue'
+
+export interface EndgeContextMenuOpenInput<TContext extends RuntimeActionContext = RuntimeActionContext> {
+  ownerId: string
+  x: number
+  y: number
+  menu: ContextMenuDescriptor
+  context: TContext
+}
+
+export interface EndgeContextMenuState {
+  open: boolean
+  ownerId: string | null
+  x: number
+  y: number
+  menu: ContextMenuDescriptor | null
+  context: RuntimeActionContext | null
+}
+
+export const endgeContextMenuState = reactive<EndgeContextMenuState>({
+  open: false,
+  ownerId: null,
+  x: 0,
+  y: 0,
+  menu: null,
+  context: null,
+})
+
+export function openEndgeContextMenu(input: EndgeContextMenuOpenInput): void {
+  endgeContextMenuState.open = true
+  endgeContextMenuState.ownerId = input.ownerId
+  endgeContextMenuState.x = input.x
+  endgeContextMenuState.y = input.y
+  endgeContextMenuState.menu = input.menu
+  endgeContextMenuState.context = input.context
+}
+
+export function closeEndgeContextMenu(ownerId?: string): void {
+  if (ownerId && endgeContextMenuState.ownerId !== ownerId) {
+    return
+  }
+
+  endgeContextMenuState.open = false
+  endgeContextMenuState.ownerId = null
+  endgeContextMenuState.menu = null
+  endgeContextMenuState.context = null
+}
+
+export function getContextMenuItems(): ContextMenuNodeDescriptor[] {
+  const menu = endgeContextMenuState.menu
+  const context = endgeContextMenuState.context
+  if (!menu || !context) {
+    return []
+  }
+
+  return compactSeparators(menu.items)
+}
+
+export const getExecutableContextMenuItems = getContextMenuItems
+
+export async function executeEndgeContextMenuItem(item: ContextMenuItemDescriptor): Promise<void> {
+  const context = endgeContextMenuState.context
+  if (!context) {
+    return
+  }
+
+  try {
+    await Endge.actions.execute(item.action, context, item.input)
+  }
+  finally {
+    closeEndgeContextMenu()
+  }
+}
+
+export function resolveEndgeContextMenuItemLabel(item: ContextMenuItemDescriptor): string {
+  const fallback = item.label
+
+  if (Endge.i18n.te(item.label)) {
+    return Endge.i18n.t(item.label, { defaultValue: fallback })
+  }
+
+  if (item.action !== item.label && Endge.i18n.te(item.action)) {
+    return Endge.i18n.t(item.action, { defaultValue: fallback })
+  }
+
+  return fallback
+}
+
+function compactSeparators(items: ContextMenuNodeDescriptor[]): ContextMenuNodeDescriptor[] {
+  const result: ContextMenuNodeDescriptor[] = []
+
+  for (const item of items) {
+    if (item.kind !== 'separator') {
+      result.push(item)
+      continue
+    }
+
+    if (result.length === 0 || result[result.length - 1]?.kind === 'separator') {
+      continue
+    }
+
+    result.push(item)
+  }
+
+  if (result[result.length - 1]?.kind === 'separator') {
+    result.pop()
+  }
+
+  return result
+}
