@@ -1,0 +1,343 @@
+import type {
+  ComponentSFCProgramPayload,
+  ComputationProgramPayload,
+  ProgramArtifact,
+  RComponentSFC_IR_ElementNode,
+} from '@endge/core'
+import {
+  compileComponentSFC,
+  compileComputation,
+  ComponentSFCRuntimeHost,
+  Endge,
+  ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
+  ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
+  ENDGE_SFC_RENDER_ADAPTER_REQUIRED_KEYS,
+  RComponentSFC,
+} from '@endge/core'
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
+import { h, isVNode } from 'vue'
+
+import { NativeVueSFCAdapter } from '@/services/render/sfc/native-vue-sfc-adapter'
+import { renderEditableBoundaryContent } from '@/test/setup'
+import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
+import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
+
+describe('проверка Render компонента SFC', () => {
+  beforeAll(() => {
+    if (!Endge.uiRegistry.adapters.has(NativeVueSFCAdapter.id)) {
+      Endge.uiRegistry.adapters.register(NativeVueSFCAdapter)
+    }
+    Endge.uiRegistry.adapters.activate({
+      id: NativeVueSFCAdapter.id,
+      protocol: ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
+      protocolVersion: ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
+      renderer: 'vue',
+      requiredRendererKeys: ENDGE_SFC_RENDER_ADAPTER_REQUIRED_KEYS,
+    })
+  })
+
+  afterEach(() => {
+    Endge.computations.setSandboxAdapter(null)
+    Endge.program.clear()
+  })
+
+  it('отрисовывает скомпилированный дочерний артефакт и передаёт вычисленные props', () => {
+    Endge.program.beginCompile('test')
+    Endge.program.addArtifact(createArtifact('aircraft-tail', `<script setup lang="ts">
+defineProps<{ label: string }>()
+</script>
+<template><Text>{{ label }}</Text></template>`))
+
+    const node: RComponentSFC_IR_ElementNode = {
+      id: 'tail-call',
+      kind: 'element',
+      tag: 'Component',
+      props: {
+        is: { kind: 'literal', value: 'aircraft-tail' },
+        label: {
+          kind: 'expression',
+          source: 'tail',
+          expression: { kind: 'read', name: 'tail' },
+          reads: [{ source: 'props', path: ['tail'], raw: 'tail' }],
+        },
+      },
+      directives: {},
+      children: [],
+    }
+
+    const rendered = renderSFCNode(h, node, createSFCVueRenderContext({ tail: 'RA-89001' }))
+
+    expect(isVNode(rendered)).toBe(true)
+    if (!isVNode(rendered)) {
+      return
+    }
+    expect(rendered.type).toBe('span')
+    expect(rendered.children).toEqual(['RA-89001'])
+  })
+
+  it('останавливает рекурсивные вызовы компонентов детерминированным placeholder', () => {
+    Endge.program.beginCompile('test')
+    Endge.program.addArtifact(createArtifact('recursive', '<template><Component is="recursive" /></template>'))
+    const node: RComponentSFC_IR_ElementNode = {
+      id: 'recursive-call',
+      kind: 'element',
+      tag: 'Component',
+      props: { is: { kind: 'literal', value: 'recursive' } },
+      directives: {},
+      children: [],
+    }
+
+    const rendered = renderSFCNode(h, node, createSFCVueRenderContext({}))
+
+    expect(isVNode(rendered)).toBe(true)
+    if (!isVNode(rendered)) {
+      return
+    }
+    expect(rendered.props?.class).toContain('endge-sfc-component-placeholder')
+    expect(String(rendered.children)).toContain('component cycle')
+  })
+
+  it('вычисляет локальный порт Computation и передаёт через порт компонента', () => {
+    Endge.program.beginCompile('test')
+    Endge.program.addArtifact(createComputationArtifact('process-state'))
+    Endge.program.addArtifact(createArtifact('process-cell', `<script setup lang="ts">
+defineProps<{ point?: { value?: string } }>()
+</script>
+<template><Text>{{ point?.value }}</Text></template>`))
+
+    const owner = compileComponentSFC(`<script setup lang="ts">
+interface Input { value?: string }
+interface Output { value?: string }
+interface CellProps { point?: Output }
+const props = defineProps<{ value?: string }>()
+const ports = definePorts({
+  require: {
+    state: computation<Input, Output>({ default: 'process-state' }),
+    cell: component<CellProps>({ tag: 'Process.Cell', default: 'process-cell' }),
+  },
+})
+const state = ports.require.state({ value: props.value })
+</script>
+<template><Process.Cell :point="state.value" /></template>`)
+    const ir = owner.ir!
+
+    const firstContext = createSFCVueRenderContext({ value: 'A' }, 0, null, ir, ['owner'])
+    const secondContext = createSFCVueRenderContext({ value: 'B' }, 1, null, ir, ['owner'])
+    expect((firstContext.locals.state as any).value).toEqual({ value: 'A' })
+    expect((secondContext.locals.state as any).value).toEqual({ value: 'B' })
+    expect(firstContext.locals.state).not.toBe(secondContext.locals.state)
+
+    const rendered = renderSFCNode(h, ir.template.roots[0]!, firstContext)
+    expect(isVNode(rendered)).toBe(true)
+    if (!isVNode(rendered)) {
+      return
+    }
+    expect(rendered.children).toEqual(['A'])
+  })
+
+  it('вычисляет вложенные порты компонентов в изолированном дочернем контексте', () => {
+    Endge.program.beginCompile('test')
+    Endge.program.addArtifact(createComputationArtifact('process-state'))
+    Endge.program.addArtifact(createArtifact('nested-owner', `<script setup lang="ts">
+interface Input { value?: string }
+interface Output { value?: string }
+const props = defineProps<{ value?: string }>()
+const ports = definePorts({
+  require: {
+    state: computation<Input, Output>({ default: 'process-state' }),
+  },
+})
+const state = ports.require.state({ value: props.value })
+</script>
+<template><Text>{{ state.value.value }}</Text></template>`))
+
+    const node: RComponentSFC_IR_ElementNode = {
+      id: 'nested-call',
+      kind: 'element',
+      tag: 'Component',
+      props: {
+        is: { kind: 'literal', value: 'nested-owner' },
+        value: {
+          kind: 'expression',
+          source: 'value',
+          expression: { kind: 'read', name: 'value' },
+          reads: [{ source: 'props', path: ['value'], raw: 'value' }],
+        },
+      },
+      directives: {},
+      children: [],
+    }
+
+    const first = renderSFCNode(h, node, createSFCVueRenderContext({ value: 'nested-A' }))
+    const second = renderSFCNode(h, node, createSFCVueRenderContext({ value: 'nested-B' }))
+    expect(isVNode(first) && first.children).toEqual(['nested-A'])
+    expect(isVNode(second) && second.children).toEqual(['nested-B'])
+  })
+
+  it('предоставляет ошибки выполнения Computation без сбоя контекста render', () => {
+    const owner = compileComponentSFC(`<script setup lang="ts">
+interface Input { value?: string }
+const props = defineProps<{ value?: string }>()
+const ports = definePorts({
+  require: {
+    state: computation<Input, number>({ default: 'missing-computation' }),
+  },
+})
+const state = ports.require.state({ value: props.value })
+</script>
+<template><Text>{{ state }}</Text></template>`)
+
+    const context = createSFCVueRenderContext(
+      { value: 'A' },
+      0,
+      null,
+      owner.ir,
+      ['owner'],
+    )
+
+    expect((context.locals.state as any).status).toBe('error')
+    expect((context.locals.state as any).error).toEqual(expect.objectContaining({
+      kind: 'artifact-missing',
+      computationIdentity: 'missing-computation',
+    }))
+  })
+
+  it('предоставляет состояния pending и success асинхронного порта Computation', async () => {
+    Endge.program.beginCompile('test')
+    Endge.program.addArtifact(createAsyncComputationArtifact('async-state'))
+    Endge.computations.setSandboxAdapter({
+      execute: async request => ({ value: String(request.inputs.value).toUpperCase() }),
+    })
+
+    const owner = compileComponentSFC(`<script setup lang="ts">
+interface Input { value?: string }
+interface Output { value?: string }
+const props = defineProps<{ value?: string }>()
+const ports = definePorts({
+  require: {
+    state: computation<Input, Output>({ default: 'async-state' }),
+  },
+})
+const state = ports.require.state({ value: props.value })
+</script>
+<template><Text>{{ state.value?.value }}</Text></template>`)
+
+    const context = createSFCVueRenderContext({ value: 'ready' }, 0, null, owner.ir, ['owner'])
+    const resource = context.locals.state as any
+    expect(resource.status).toBe('pending')
+    expect(resource.loading).toBe(true)
+    await vi.waitFor(() => expect(resource.status).toBe('success'))
+    expect(resource.value).toEqual({ value: 'READY' })
+  })
+
+  it('переключает пользовательский компонент на Variant редактирования и повторно публикует нормализованный edited', async () => {
+    const childSource = `<script setup lang="ts">defineProps<{ value: string }>()</script>
+<template>
+  <Variant name="default"><Text>{{ value }}</Text></Variant>
+  <Variant name="edit"><Select :value="value" :options="['RUN', 'STOP']" @change="emit('edited', event('value'))" /></Variant>
+</template>`
+    const parentSource = `<script setup lang="ts">defineProps<{ value: string }>()</script>
+<template><Component is="status-cell" :value="value" editable /></template>`
+    const childArtifact = createArtifact('status-cell', childSource)
+    const parentArtifact = createArtifact('status-owner', parentSource)
+    Endge.program.beginCompile('test')
+    Endge.program.addArtifact(childArtifact)
+    Endge.program.addArtifact(parentArtifact)
+    const model = RComponentSFC.fromPlain({ id: 100, identity: 'status-owner', name: 'Status owner', source: parentSource })
+    const host = new ComponentSFCRuntimeHost({
+      id: 'status-owner-runtime',
+      model,
+      entityIdentity: model.identity,
+      artifactReader: Endge.program,
+    })
+    const received: unknown[] = []
+    host.onEventPort('edited', occurrence => received.push(occurrence.payload))
+    const ir = parentArtifact.payload.ir!
+    const context = createSFCVueRenderContext({ value: 'RUN' }, 0, host, ir)
+    const node = ir.template.roots[0]!
+
+    const display = renderEditableBoundaryContent(renderSFCNode(h, node, context))
+    if (!isVNode(display)) {
+      throw new Error('Custom editable display did not render')
+    }
+    display.props?.onClick({ target: display, currentTarget: display, cancelable: true })
+    const edit = renderEditableBoundaryContent(renderSFCNode(h, node, context))
+    if (!isVNode(edit)) {
+      throw new Error('Custom editable edit variant did not render')
+    }
+    const select = (edit.children as any[]).find(child => isVNode(child) && child.type === 'select')
+    expect(select).toBeTruthy()
+    select.props?.onChange({
+      type: 'change',
+      target: { value: 'STOP' },
+      currentTarget: { value: 'STOP' },
+      cancelable: true,
+      altKey: false,
+      ctrlKey: false,
+      metaKey: false,
+      shiftKey: false,
+    })
+    await vi.waitFor(() => expect(received).toEqual([{ value: 'STOP', previousValue: 'RUN' }]))
+    host.destroy()
+  })
+})
+
+function createArtifact(identity: string, source: string): ProgramArtifact<ComponentSFCProgramPayload> {
+  const result = compileComponentSFC(source)
+  const { diagnostics, metadata, ...payload } = result
+  return {
+    ref: { entityType: 'component-sfc', id: identity, identity },
+    sourceHash: identity,
+    compilerVersion: 'test',
+    status: diagnostics.some(diagnostic => diagnostic.severity === 'error') ? 'error' : 'valid',
+    diagnostics,
+    dependencies: [],
+    capabilities: ['compilable', 'runnable', 'renderable'],
+    metadata,
+    payload: JSON.parse(JSON.stringify(payload, function (key, value) {
+      return key === 'ast' || key === 'sourceParts' || (key === 'source' && this?.kind === 'expression') ? undefined : value
+    })),
+  }
+}
+
+function createComputationArtifact(identity: string): ProgramArtifact<ComputationProgramPayload> {
+  const compiled = compileComputation({
+    source: 'defineComputation({ input: field(Input), output: field(Output), outputs: { result: { value: input(\'value\') } }, result: output(\'result\') })',
+  })
+  return {
+    ref: { entityType: 'computation', id: identity, identity },
+    sourceHash: identity,
+    compilerVersion: 'test',
+    status: compiled.diagnostics.some(diagnostic => diagnostic.severity === 'error') ? 'error' : 'valid',
+    diagnostics: compiled.diagnostics,
+    dependencies: [],
+    capabilities: ['compilable', 'runnable'],
+    metadata: { self: {}, nodes: [] },
+    payload: compiled.payload,
+  }
+}
+
+function createAsyncComputationArtifact(identity: string): ProgramArtifact<ComputationProgramPayload> {
+  const compiled = compileComputation({
+    source: `defineComputation({
+      outputs: {
+        result: typescript({
+          inputs: { value: input('value') },
+          compute({ value }) { return { value } },
+        }),
+      },
+      result: output('result'),
+    })`,
+  })
+  return {
+    ref: { entityType: 'computation', id: identity, identity },
+    sourceHash: identity,
+    compilerVersion: 'test',
+    status: compiled.diagnostics.some(diagnostic => diagnostic.severity === 'error') ? 'error' : 'valid',
+    diagnostics: compiled.diagnostics,
+    dependencies: [],
+    capabilities: ['compilable', 'runnable'],
+    metadata: { self: {}, nodes: [] },
+    payload: compiled.payload,
+  }
+}
