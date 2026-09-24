@@ -1,6 +1,6 @@
 import type { SFCVueRenderAdapterFunction } from '@/services/render/sfc/sfc-vue-render.type'
 
-/** Рендерит display-only checkbox с необязательной подписью. */
+// Рендерит display-only checkbox с необязательной подписью.
 export const SFCRender_Checkbox: SFCVueRenderAdapterFunction = (input) => {
   const checkbox = input.h('input', {
     class: 'endge-sfc-checkbox',

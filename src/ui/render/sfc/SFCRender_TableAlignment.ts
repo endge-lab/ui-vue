@@ -9,7 +9,7 @@ export interface SFCTableCellAlignment {
 const HORIZONTAL_ALIGNMENTS = new Set<SFCTableCellAlign>(['left', 'center', 'right'])
 const VERTICAL_ALIGNMENTS = new Set<SFCTableCellVerticalAlign>(['top', 'middle', 'bottom'])
 
-/** Нормализует renderer-neutral значения выравнивания ячеек Table. */
+// Нормализует renderer-neutral значения выравнивания ячеек Table.
 export function normalizeSFCTableCellAlignment(
   horizontal: unknown,
   vertical: unknown,

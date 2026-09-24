@@ -8,7 +8,7 @@ export interface VueUIComponentRendererRegistration extends Omit<UIComponentRend
   component: Component
 }
 
-/** Регистрирует Vue renderer, не передавая Vue-реактивность в Core registry. */
+// Регистрирует Vue renderer, не передавая Vue-реактивность в Core registry.
 export function registerVueUIRenderer(input: VueUIComponentRendererRegistration): void {
   Endge.uiRegistry.registerRenderer({
     ...input,

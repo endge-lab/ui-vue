@@ -1,12 +1,12 @@
 import type { RComponentSFC_IR_ElementNode } from '@endge/core'
 import type { SFCVueRenderContext } from '@/services/render/sfc/sfc-vue-render.type'
 
-/** Ключ строки не должен смешиваться с разделителями иерархии consumer. */
+// Ключ строки не должен смешиваться с разделителями иерархии consumer.
 export function computationScopeKey(key: unknown): string {
   return encodeURIComponent(String(key))
 }
 
-/** Удаляет ресурсы ушедших строк/колонок, сохраняя cache текущего набора данных, включая offscreen строки. */
+// Удаляет ресурсы ушедших строк/колонок, сохраняя cache текущего набора данных, включая offscreen строки.
 export function reconcileTableComputations(
   context: SFCVueRenderContext | null | undefined,
   rows: readonly Record<string, unknown>[],
@@ -28,7 +28,7 @@ export function reconcileTableComputations(
   })
 }
 
-/** For сохраняет только реально присутствующие consumer-ветви. */
+// For сохраняет только реально присутствующие consumer-ветви.
 export function reconcileForComputations(context: SFCVueRenderContext, nodeId: string, keys: readonly unknown[]): void {
   const scope = `${context.consumerScope}/for:${nodeId}`
   const active = new Set(keys.map(computationScopeKey))
@@ -38,7 +38,7 @@ export function reconcileForComputations(context: SFCVueRenderContext, nodeId: s
   })
 }
 
-/** Убирает ресурсы скрытой ветви; Component и Table являются отдельными consumer scopes. */
+// Убирает ресурсы скрытой ветви; Component и Table являются отдельными consumer scopes.
 export function releaseNodeComputations(context: SFCVueRenderContext, node: RComponentSFC_IR_ElementNode): void {
   for (const kind of ['component', 'table', 'for']) {
     context.host?.releaseComputationResources(`${context.consumerScope}/${kind}:${node.id}`)

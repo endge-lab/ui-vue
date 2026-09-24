@@ -5,12 +5,12 @@ import type {
   EndgePlugin,
   EndgeStylePlacement,
 } from '@endge/core'
-import type { PhaseName } from '@endge/raph'
+import type { PhaseName } from '@raphy-js/raph'
 
 import type { Ref } from 'vue'
 import { Endge, ENDGE_SFC_RENDER_ADAPTER_PROTOCOL, ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION, EndgeModule } from '@endge/core'
-import { Raph, RaphNode } from '@endge/raph'
 import { randomString } from '@endge/utils'
+import { Raph, RaphNode } from '@raphy-js/raph'
 
 import { onBeforeUnmount, ref, watch } from 'vue'
 import { createContextStateRef } from '@/reactive/use-context-state'
@@ -19,7 +19,7 @@ import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/services/render/sfc/sfc-
 import { EndgeDOMStyleRuntime } from '@/services/style/EndgeDOMStyleRuntime'
 
 export class EndgeVue_Module extends EndgeModule {
-  /** В debugger участвует только регистрация renderer и отображение наблюдаемых стилей. */
+  // В debugger участвует только регистрация renderer и отображение наблюдаемых стилей.
   public readonly debuggerCompatible = true
   private _started = false
   private _adapterFallbackIds: readonly string[] = []
@@ -135,7 +135,9 @@ export class EndgeVue_Module extends EndgeModule {
     this._started = false
   }
 
-  /** Связывает Vue ref с dynamic state текущего Endge context scope. */
+  /**
+   * Связывает Vue ref с dynamic state текущего Endge context scope.
+   */
   public useContextState<T>(
     key: string,
     defaultFactory: () => T,

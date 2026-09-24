@@ -1,6 +1,6 @@
 import type { SFCVueRenderAdapterFunction } from '@/services/render/sfc/sfc-vue-render.type'
 
-/** Рендерит разделитель SFC primitive. */
+// Рендерит разделитель SFC primitive.
 export const SFCRender_Divider: SFCVueRenderAdapterFunction = (input) => {
   const vertical = input.props.vertical === true || input.props.orientation === 'vertical'
 

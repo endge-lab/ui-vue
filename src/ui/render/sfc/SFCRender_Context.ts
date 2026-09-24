@@ -4,7 +4,7 @@ import type { EndgeVueTooltipManager } from '@/ui/overlay/tooltip/endge-tooltip-
 import { Endge, ComponentSFCEventBoundary as EndgeComponentSFCEventBoundary } from '@endge/core'
 import { evaluateSFCValue } from '@/ui/render/sfc/SFCRender_Evaluator'
 
-/** Создает root context для одного render pass SFC renderer adapter. */
+// Создает root context для одного render pass SFC renderer adapter.
 export function createSFCVueRenderContext(
   props: Record<string, unknown> | undefined,
   renderVersion = 0,
@@ -62,7 +62,7 @@ export function createSFCVueRenderContext(
   return context
 }
 
-/** Создает дочерний context с дополнительными локальными значениями. */
+// Создает дочерний context с дополнительными локальными значениями.
 export function extendSFCVueRenderContext(
   context: SFCVueRenderContext,
   locals: Record<string, unknown>,
@@ -98,7 +98,7 @@ export function extendSFCVueRenderContext(
   }
 }
 
-/** Создаёт логический дочерний frame, не перенося физические Vue-обёртки в семантику селекторов. */
+// Создаёт логический дочерний frame, не перенося физические Vue-обёртки в семантику селекторов.
 export function extendSFCVueStyleContext(
   context: SFCVueRenderContext,
   parent: EndgeStyleMatchNode,
@@ -137,7 +137,7 @@ type SFCComputationResourceView = Pick<
   'status' | 'loading' | 'value' | 'error'
 >
 
-/** Открывает доверенное состояние вычислений через собственные getters, доступные безопасному evaluator SFC. */
+// Открывает доверенное состояние вычислений через собственные getters, доступные безопасному evaluator SFC.
 function createSFCComputationResourceView(
   resource: ComputationResource,
 ): SFCComputationResourceView {

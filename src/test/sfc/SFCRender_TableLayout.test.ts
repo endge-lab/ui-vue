@@ -87,7 +87,7 @@ describe('компоновка Table SFC', () => {
     })
   })
 
-  it('разрешает метаданные Column из текущего артефакта компонента, когда метаданные host принадлежат его владельцу', () => {
+  it('передаёт метаданные Column из текущего артефакта компонента', () => {
     const column: RComponentSFC_IR_ElementNode = {
       id: 'test-table-column',
       kind: 'element',
@@ -110,27 +110,20 @@ describe('компоновка Table SFC', () => {
     }
     const context = createSFCVueRenderContext({})
     context.componentStack = ['groundhandling-tgo-table']
-    context.metadata = { self: {}, nodes: [] }
-    context.host = {
-      getArtifactReader: () => ({
-        getArtifact: () => ({
-          metadata: {
-            self: {},
-            nodes: [{
-              nodeId: column.id,
-              nodeKind: 'Column',
-              key: 'fueling',
-              values: {
-                'groundhandling.process': {
-                  version: 2,
-                  critical: true,
-                },
-              },
-            }],
+    context.metadata = {
+      self: {},
+      nodes: [{
+        nodeId: column.id,
+        nodeKind: 'Column',
+        key: 'fueling',
+        values: {
+          'groundhandling.process': {
+            version: 2,
+            critical: true,
           },
-        }),
-      }),
-    } as any
+        },
+      }],
+    }
 
     const rendered = renderSFCNode(h, tableNode, context)
     if (!isVNode(rendered)) {

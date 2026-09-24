@@ -1,6 +1,6 @@
 import type { SFCVueRenderAdapterFunction } from '@/services/render/sfc/sfc-vue-render.type'
 
-/** Рендерит текстовый SFC primitive. */
+// Рендерит текстовый SFC primitive.
 export const SFCRender_Text: SFCVueRenderAdapterFunction = (input) => {
   const content = input.props.value == null
     ? input.children

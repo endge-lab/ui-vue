@@ -2,7 +2,7 @@ import { Endge } from '@endge/core'
 import { computed, reactive } from 'vue'
 import { useSubscribableRef } from '@/reactive/use-subscribable-ref'
 
-/** Публичная Vue-проекция domain/program модулей Endge. */
+// Публичная Vue-проекция domain/program модулей Endge.
 export interface DomainView {
   readonly domain: typeof Endge.domain
   readonly facets: ReturnType<typeof Endge.domain.getFacets>
@@ -32,7 +32,7 @@ export interface DomainView {
   readonly authProfiles: ReturnType<typeof Endge.domain.getAuthProfiles>
 }
 
-/** Создаёт единственную Vue-проекцию framework-independent модулей Endge. */
+// Создаёт единственную Vue-проекцию framework-independent модулей Endge.
 function createDomainView(): DomainView {
   const { refObj: domain } = useSubscribableRef(Endge.domain)
   const { refObj: program } = useSubscribableRef(Endge.program)
@@ -175,7 +175,7 @@ function createDomainView(): DomainView {
 
 let domainView: DomainView | null = null
 
-/** Возвращает общую readonly-проекцию состояния модулей Endge для Vue UI. */
+// Возвращает общую readonly-проекцию состояния модулей Endge для Vue UI.
 export function useDomainStore(): DomainView {
   domainView ??= createDomainView()
   return domainView

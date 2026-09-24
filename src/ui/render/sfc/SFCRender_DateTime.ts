@@ -1,6 +1,6 @@
 import type { SFCVueRenderAdapterFunction } from '@/services/render/sfc/sfc-vue-render.type'
 
-/** Рендерит дату или время через базовые форматы SFC v1. */
+// Рендерит дату или время через базовые форматы SFC v1.
 export const SFCRender_DateTime: SFCVueRenderAdapterFunction = (input) => {
   const value = formatSFCDateTime(
     input.props.value,
@@ -29,7 +29,7 @@ function normalizeEditorVariant(value: unknown): 'compact' | 'default' | null {
   return value === 'compact' || value === 'default' ? value : null
 }
 
-/** Форматирует SFC DateTime в явно выбранной IANA-зоне или локальной зоне браузера. */
+// Форматирует SFC DateTime в явно выбранной IANA-зоне или локальной зоне браузера.
 export function formatSFCDateTime(
   value: unknown,
   format: unknown,

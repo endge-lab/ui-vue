@@ -1,6 +1,7 @@
 import type { EndgeRuntimeContextSnapshot } from '@endge/core'
 import type { VNode } from 'vue'
 import { Endge } from '@endge/core'
+import { Raph } from '@raphy-js/raph'
 import { beforeEach, vi } from 'vitest'
 import { isVNode } from 'vue'
 
@@ -31,12 +32,15 @@ const TEST_RUNTIME_CONTEXT: EndgeRuntimeContextSnapshot = {
   },
 }
 
-/** Изолирует unit-тесты render adapter от обязательного boot приложения. */
+// Изолирует unit-тесты render adapter от обязательного boot приложения.
 beforeEach(() => {
+  if (!Raph.configured) {
+    Raph.configure({ mode: 'runtime' })
+  }
   vi.spyOn(Endge.context, 'runtimeSnapshot').mockReturnValue(TEST_RUNTIME_CONTEXT)
 })
 
-/** Возвращает фактическое содержимое локальной editable boundary. */
+// Возвращает фактическое содержимое локальной editable boundary.
 export function renderEditableBoundaryContent(rendered: unknown): VNode {
   if (!isVNode(rendered)) {
     throw new TypeError('Editable boundary did not render a VNode')

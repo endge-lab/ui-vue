@@ -1,9 +1,9 @@
 import type { RComponentSFC_IR_Value } from '@endge/core'
 import type { SFCVueRenderBinding, SFCVueRenderContext } from '@/services/render/sfc/sfc-vue-render.type'
 import { evaluateComponentSFCExpression } from '@endge/core'
-import { DataPath } from '@endge/raph'
+import { DataPath } from '@raphy-js/raph'
 
-/** Вычисляет безопасное подмножество SFC IR value без eval и runtime зависимостей. */
+// Вычисляет безопасное подмножество SFC IR value без eval и runtime зависимостей.
 export function evaluateSFCValue(
   value: RComponentSFC_IR_Value | undefined,
   context: SFCVueRenderContext,
@@ -21,7 +21,7 @@ export function evaluateSFCValue(
   return evaluateComponentSFCExpression(value.expression, context)
 }
 
-/** Вычисляет будущий binding-контракт renderer adapter. */
+// Вычисляет будущий binding-контракт renderer adapter.
 export function evaluateSFCBinding(
   binding: SFCVueRenderBinding,
   context: SFCVueRenderContext,
@@ -32,7 +32,7 @@ export function evaluateSFCBinding(
   return readSFCPath(binding.path, context)
 }
 
-/** Вычисляет props object из IR props map. */
+// Вычисляет props object из IR props map.
 export function evaluateSFCProps(
   props: Record<string, RComponentSFC_IR_Value> | undefined,
   context: SFCVueRenderContext,
@@ -46,12 +46,12 @@ export function evaluateSFCProps(
   return result
 }
 
-/** Приводит любое значение к условию control-flow. */
+// Приводит любое значение к условию control-flow.
 export function isTruthySFCValue(value: unknown): boolean {
   return Boolean(value)
 }
 
-/** Читает путь из locals, затем из props. Отсутствующие поля возвращают undefined. */
+// Читает путь из locals, затем из props. Отсутствующие поля возвращают undefined.
 export function readSFCPath(path: string, context: SFCVueRenderContext): unknown {
   const segments = parseSFCPath(path)
   if (segments.length === 0) {
@@ -74,7 +74,7 @@ export function readSFCPath(path: string, context: SFCVueRenderContext): unknown
   return readSFCObjectPathSegments(root, tail)
 }
 
-/** Читает относительный DataPath, включая array selectors, из переданного объекта. */
+// Читает относительный DataPath, включая array selectors, из переданного объекта.
 export function readSFCObjectPath(path: string, source: unknown): unknown {
   return readSFCObjectPathSegments(source, parseSFCPath(path))
 }

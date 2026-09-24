@@ -13,7 +13,7 @@ import { cloneVNode, isVNode } from 'vue'
 import { attachEndgeTooltipTriggerAttrs } from '@/ui/overlay/tooltip/endge-tooltip-manager'
 import { evaluateSFCValue } from '@/ui/render/sfc/SFCRender_Evaluator'
 
-/** Ленивый составной renderer. Trigger отображается сразу, фабрика содержимого tooltip запускается только после openDelay. */
+// Ленивый составной renderer. Trigger отображается сразу, фабрика содержимого tooltip запускается только после openDelay.
 export const SFCRender_Tooltip: SFCVueRenderFunction = (input) => {
   const triggerWrapper = input.node.children.find(isTooltipTrigger)
   const contentWrapper = input.node.children.find(isTooltipContent)

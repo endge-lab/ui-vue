@@ -1,10 +1,8 @@
 import { Endge } from '@endge/core'
 import { onScopeDispose, ref } from 'vue'
 
-/**
- * Текущая пользовательская тема из EndgeContext_Module.
- * Каталог и default theme принадлежат активному workspace.
- */
+// Текущая пользовательская тема из EndgeContext_Module.
+// Каталог и default theme принадлежат активному workspace.
 export function useCurrentTheme() {
   const context = Endge.context
   const current = ref<string>(context.currentTheme)

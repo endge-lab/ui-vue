@@ -5,7 +5,7 @@ import type {
   SFCVueRuntimeInputSource,
 } from '@/services/render/sfc/sfc-vue-render.type'
 
-import { Raph } from '@endge/raph'
+import { Raph } from '@raphy-js/raph'
 
 import { isSFCVueEditableResourceUpdate } from '@/services/render/sfc/SFCVueEditableResource'
 
@@ -102,7 +102,9 @@ export class SFCVueRuntimeBridge {
     this._isMounted = false
   }
 
-  /** Принудительно перечитывает props из текущего input source. */
+  /**
+   * Принудительно перечитывает props из текущего input source.
+   */
   public refresh(): void {
     if (this._isMounted) {
       this._emitResolvedProps()

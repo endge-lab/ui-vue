@@ -1,6 +1,6 @@
 import type { SFCVueRenderAdapterFunction } from '@/services/render/sfc/sfc-vue-render.type'
 
-/** Рендерит числовое значение SFC primitive. */
+// Рендерит числовое значение SFC primitive.
 export const SFCRender_Number: SFCVueRenderAdapterFunction = (input) => {
   const value = formatNumber(input.props.value, input.props)
 

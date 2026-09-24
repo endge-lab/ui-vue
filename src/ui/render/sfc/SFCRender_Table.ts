@@ -24,7 +24,7 @@ import {
 } from '@/ui/render/sfc/SFCRender_TableStyle'
 import TanStackSfcDataTable from '@/ui/table/TanStackSfcDataTable.vue'
 
-/** Реализация составного тега SFC Table на TanStack Table. */
+// Реализация составного тега SFC Table на TanStack Table.
 export const SFCRender_Table: SFCVueRenderFunction = SFCRender_Base((input) => {
   const rows = normalizeSFCTableRows(input.props.rows)
   const rowState = input.node.props['row-state'] ?? input.node.props.rowState
@@ -270,7 +270,7 @@ export function normalizeSFCTableRows(value: unknown): Record<string, unknown>[]
   return value.map((row, index) => isPlainObject(row) ? row : { id: index, value: row })
 }
 
-/** Сохраняется как публичный helper для совместимости с прежней реализацией Table. */
+// Сохраняется как публичный helper для совместимости с прежней реализацией Table.
 export function createInitialTableVisibility<T extends { key: string }>(
   defaultHidden: readonly string[],
   columns: readonly T[],
@@ -283,7 +283,7 @@ export function createInitialTableVisibility<T extends { key: string }>(
   )
 }
 
-/** Сохраняется как публичный helper для совместимости с прежней реализацией Table. */
+// Сохраняется как публичный helper для совместимости с прежней реализацией Table.
 export function filterVisibleTableColumns<T extends { key: string }>(
   columns: readonly T[],
   visibility: Readonly<Record<string, boolean>>,
@@ -291,7 +291,7 @@ export function filterVisibleTableColumns<T extends { key: string }>(
   return columns.filter(column => visibility[column.key] !== false)
 }
 
-/** Применяет immutable snapshots строк без привязки к конкретному table engine. */
+// Применяет immutable snapshots строк без привязки к конкретному table engine.
 export function applyRowSnapshots(
   rows: Record<string, unknown>[],
   patches: Array<{ itemIndex: number | null, itemKey: unknown, itemSnapshot: unknown }>,

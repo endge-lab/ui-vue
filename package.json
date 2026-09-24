@@ -1,9 +1,13 @@
 {
   "name": "@endge/ui-vue",
   "type": "module",
-  "version": "0.36.0",
+  "version": "0.37.0-dev",
   "private": false,
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/endge-lab/ui-vue.git"
+  },
   "exports": {
     ".": {
       "types": "./dist/main.d.ts",
@@ -29,9 +33,9 @@
     "lint-fix": "eslint . --fix --cache"
   },
   "peerDependencies": {
-    "@endge/core": "13.0.0",
-    "@endge/raph": "4.0.0",
+    "@endge/core": "14.0.0-dev.2",
     "@endge/utils": "^0.27.0",
+    "@raphy-js/raph": "1.0.0-dev.2",
     "vue": "^3.3.0"
   },
   "dependencies": {
@@ -42,7 +46,7 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "9.3.0",
-    "@endge/core": "13.0.0",
+    "@endge/core": "14.0.0-dev.2",
     "@endge/utils": "^0.27.0",
     "@types/sortablejs": "^1.15.9",
     "@vitejs/plugin-vue": "^6.0.7",

@@ -5,7 +5,7 @@ import { effectScope, watch } from 'vue'
 import { useSubscribableRef, useSubscribableRefAuto } from '@/reactive/use-subscribable-ref'
 
 describe('vue adapter для Subscribable', () => {
-  /** Проверяет преобразование framework-independent уведомления в обновление shallow ref. */
+  // Проверяет преобразование framework-independent уведомления в обновление shallow ref.
   it('обновляет ref после notify владельца', () => {
     const owner = new Subscribable()
     const { refObj, unsubscribe } = useSubscribableRef(owner)
@@ -18,7 +18,7 @@ describe('vue adapter для Subscribable', () => {
     unsubscribe()
   })
 
-  /** Проверяет освобождение подписки при завершении Vue scope. */
+  // Проверяет освобождение подписки при завершении Vue scope.
   it('отписывается вместе с Vue scope', () => {
     const owner = new Subscribable()
     const scope = effectScope()

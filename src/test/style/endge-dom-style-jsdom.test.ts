@@ -1,4 +1,6 @@
-/** @vitest-environment jsdom */
+/**
+ * @vitest-environment jsdom
+ */
 import { compileEndgeCSS } from '@endge/core'
 import { afterEach, describe, expect, it } from 'vitest'
 
