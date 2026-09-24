@@ -1,6 +1,6 @@
 import type { SFCVueRenderAdapterFunction } from '@/services/render/sfc/sfc-vue-render.type'
 
-/** Рендерит icon placeholder без зависимости от конкретной icon library. */
+// Рендерит icon placeholder без зависимости от конкретной icon library.
 export const SFCRender_Icon: SFCVueRenderAdapterFunction = (input) => {
   const name = input.props.name ?? input.props.icon ?? ''
 

@@ -1,6 +1,6 @@
 import type { SFCVueRenderAdapterFunction } from '@/services/render/sfc/sfc-vue-render.type'
 
-/** Рендерит status dot primitive. */
+// Рендерит status dot primitive.
 export const SFCRender_Dot: SFCVueRenderAdapterFunction = (input) => {
   const size = Number(input.props.size ?? 8)
 

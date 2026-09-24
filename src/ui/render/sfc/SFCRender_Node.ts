@@ -54,7 +54,7 @@ const SFCRender_Adapter: SFCVueRenderFunction = SFCRender_Base((input) => {
   return renderFn(input)
 })
 
-/** Рендерит список SFC IR узлов с учетом sibling if / else-if / else chain. */
+// Рендерит список SFC IR узлов с учетом sibling if / else-if / else chain.
 export function renderSFCNodes(
   h: SFCVueRenderH,
   nodes: RComponentSFC_IR_Node[] | undefined,
@@ -93,7 +93,7 @@ export function renderSFCNodes(
   return result
 }
 
-/** Рендерит один SFC IR узел. */
+// Рендерит один SFC IR узел.
 export function renderSFCNode(
   h: SFCVueRenderH,
   node: RComponentSFC_IR_Node,

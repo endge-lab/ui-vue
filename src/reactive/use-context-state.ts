@@ -4,10 +4,8 @@ import type { Ref } from 'vue'
 import { Endge } from '@endge/core'
 import { getCurrentScope, onScopeDispose, ref, toRaw, watch } from 'vue'
 
-/**
- * Связывает Vue ref с dynamic state текущего Endge context scope.
- * Глубокие изменения записываются автоматически; смена context/user перечитывает значение.
- */
+// Связывает Vue ref с dynamic state текущего Endge context scope.
+// Глубокие изменения записываются автоматически; смена context/user перечитывает значение.
 export function createContextStateRef<T>(
   key: string,
   defaultFactory: () => T,

@@ -28,7 +28,7 @@ import { SFCRender_Tooltip } from '@/ui/render/sfc/SFCRender_Tooltip'
 
 export const NATIVE_VUE_SFC_ADAPTER_ID = 'vue-native'
 
-/** Нативный DOM adapter для Vue render engine. */
+// Нативный DOM adapter для Vue render engine.
 export const NativeVueSFCAdapter: SFCVueRenderAdapter = {
   id: NATIVE_VUE_SFC_ADAPTER_ID,
   protocol: ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,

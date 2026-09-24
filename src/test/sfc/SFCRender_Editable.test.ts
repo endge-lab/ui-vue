@@ -10,7 +10,7 @@ import {
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
   RComponentSFC,
 } from '@endge/core'
-import { Raph } from '@endge/raph'
+import { Raph } from '@raphy-js/raph'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { h, isVNode } from 'vue'
 
@@ -356,7 +356,7 @@ describe('рендерер Editable SFC', () => {
   })
 })
 
-/** Воспроизводит штатный input + Enter контракт встроенного editor adapter. */
+// Воспроизводит штатный input + Enter контракт встроенного editor adapter.
 async function commitEditableValue(editor: VNode, value: unknown): Promise<void> {
   const target = { value }
   editor.props?.onInput({ target })

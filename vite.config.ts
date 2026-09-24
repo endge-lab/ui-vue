@@ -17,7 +17,7 @@ export default defineConfig({
       external: [
         '@endge/core',
         '@endge/utils',
-        '@endge/raph',
+        '@raphy-js/raph',
         'vue',
       ],
       output: {
@@ -46,6 +46,9 @@ export default defineConfig({
     },
   },
   test: {
-    setupFiles: [path.resolve(__dirname, 'src/test/setup.ts')],
+    setupFiles: [
+      path.resolve(__dirname, 'src/test/setup-raph.ts'),
+      path.resolve(__dirname, 'src/test/setup.ts'),
+    ],
   },
 })

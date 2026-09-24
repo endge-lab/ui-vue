@@ -1,7 +1,7 @@
 import { Endge } from '@endge/core'
 import { onScopeDispose, ref } from 'vue'
 
-/** Reactive selection of one dynamic facet in the current execution context. */
+// Reactive selection of one dynamic facet in the current execution context.
 export function useCurrentFacet(facetIdentity: string) {
   const facet = String(facetIdentity ?? '').trim()
   if (!facet) {

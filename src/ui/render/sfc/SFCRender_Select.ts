@@ -3,7 +3,7 @@ import type { SourceFieldOption } from '@endge/core'
 import type { SFCVueRenderAdapterFunction, SFCVueRenderH } from '@/services/render/sfc/sfc-vue-render.type'
 import NativeMultiSelect from '@/ui/render/sfc/NativeMultiSelect.vue'
 
-/** Рендерит одиночный или множественный display-only select. */
+// Рендерит одиночный или множественный display-only select.
 export const SFCRender_Select: SFCVueRenderAdapterFunction = (input) => {
   const multiple = input.props.multiple === true
   const options = normalizeOptions(input.props.options)

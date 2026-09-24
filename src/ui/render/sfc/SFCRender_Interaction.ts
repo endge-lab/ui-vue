@@ -39,7 +39,7 @@ interface EvaluatedSFCInteraction {
   triggerIndex: number
 }
 
-/** Добавляет условные listeners `:on` в один визуальный узел, принадлежащий renderer. */
+// Добавляет условные listeners `:on` в один визуальный узел, принадлежащий renderer.
 export function attachSFCInteractionAttrs(
   attrs: Record<string, unknown>,
   node: RComponentSFC_IR_ElementNode,
@@ -126,7 +126,7 @@ export function attachSFCInteractionAttrs(
   })
 }
 
-/** Проецирует группы `:on` вложенного SFC на его семантическую границу Event. */
+// Проецирует группы `:on` вложенного SFC на его семантическую границу Event.
 export function createSFCSemanticInteractionBindings(
   node: RComponentSFC_IR_ElementNode,
   context: SFCVueRenderContext,

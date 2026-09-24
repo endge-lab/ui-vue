@@ -6,9 +6,9 @@ import { computed, onBeforeMount, onUnmounted, ref } from 'vue'
 
 const props = withDefaults(
   defineProps<{
-    /** Identity страницы в домене (RPage). */
+    // Identity страницы в домене (RPage).
     identity: string
-    /** Параметры страницы (route params, query). */
+    // Параметры страницы (route params, query).
     params?: Record<string, unknown>
   }>(),
   { params: () => ({}) },

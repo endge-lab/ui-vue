@@ -46,17 +46,17 @@ const DEFAULT_COMMIT_TRIGGERS: RComponentSFC_IR_Value = {
   value: [{ event: 'keydown', key: ['Enter'], prevent: true }],
 }
 
-/** Стабильный ключ host, общий для отображения, редактирования и виртуализированных renders Table. */
+// Стабильный ключ host, общий для отображения, редактирования и виртуализированных renders Table.
 export function editableConsumerKey(node: RComponentSFC_IR_ElementNode, context: SFCVueRenderContext): string {
   return `${context.consumerScope}/editable:${node.id}`
 }
 
-/** Возвращает true, пока именно этот потребитель владеет единственной сессией редактирования runtime. */
+// Возвращает true, пока именно этот потребитель владеет единственной сессией редактирования runtime.
 export function isSFCEditableActive(node: RComponentSFC_IR_ElementNode, context: SFCVueRenderContext): boolean {
   return Boolean(node.editable && context.host?.getEditSession(editableConsumerKey(node, context)))
 }
 
-/** Разрешает renderer-neutral вариант editor-а до вызова visual adapter-а. */
+// Разрешает renderer-neutral вариант editor-а до вызова visual adapter-а.
 export function resolveSFCEditorVariant(
   node: RComponentSFC_IR_ElementNode,
   props: Record<string, unknown>,
@@ -73,7 +73,7 @@ export function resolveSFCEditorVariant(
   return configured ?? (node.editable ? 'compact' : null)
 }
 
-/** Добавляет listeners входа, отмены и подтверждения без замены авторских семантических handlers. */
+// Добавляет listeners входа, отмены и подтверждения без замены авторских семантических handlers.
 export function attachSFCEditableAttrs(
   attrs: Record<string, unknown>,
   node: RComponentSFC_IR_ElementNode,
@@ -122,7 +122,7 @@ export function attachSFCEditableAttrs(
   }
 }
 
-/** Отображает встроенные редакторы для сокращений примитивов. */
+// Отображает встроенные редакторы для сокращений примитивов.
 export function renderSFCEditablePrimitive(
   input: SFCVueRenderElementInput & { props: Record<string, unknown>, attrs: Record<string, unknown> },
 ): SFCVueRenderResult | undefined {
@@ -243,7 +243,7 @@ function focusRemainsInside(event: Event): boolean {
   return Boolean(current && related && current.contains(related))
 }
 
-/** Подтверждает событие редактируемого дочернего элемента и возвращает нормализованную нагрузку для маршрутизации родителем. */
+// Подтверждает событие редактируемого дочернего элемента и возвращает нормализованную нагрузку для маршрутизации родителем.
 export function commitSFCEditableChild(
   node: RComponentSFC_IR_ElementNode,
   context: SFCVueRenderContext,

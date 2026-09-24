@@ -88,7 +88,7 @@ export function createSFCTableColumnMarkers(
   }))
 }
 
-/** Семантические DOM surfaces таблицы для renderer-ов без vendor DOM. */
+// Семантические DOM surfaces таблицы для renderer-ов без vendor DOM.
 export function createSFCTableStyleContract(context: SFCVueRenderContext): SFCTableStyleContract {
   const markers = createSFCTableMarkers(context)
   return {
@@ -111,11 +111,9 @@ export function createSFCTableColumnStyleSurfaces(
   }))
 }
 
-/**
- * Добавляет к видимому окну строк семантические attrs. Индексы строк оставляет
- * браузеру: TanStack рендерит настоящие tr/td, поэтому native CSS selectors
- * работают без runtime-generated классов.
- */
+// Добавляет к видимому окну строк семантические attrs. Индексы строк оставляет
+// браузеру: TanStack рендерит настоящие tr/td, поэтому native CSS selectors
+// работают без runtime-generated классов.
 export function decorateSFCTableRowWindow(
   rows: readonly Record<string, unknown>[],
   columnCount: number,

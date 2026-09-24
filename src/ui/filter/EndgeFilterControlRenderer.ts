@@ -16,7 +16,7 @@ import {
 } from '@endge/core'
 import { defineComponent, h } from 'vue'
 
-/** Делегирует один semantic control активному Vue adapter-у. */
+// Делегирует один semantic control активному Vue adapter-у.
 export const EndgeFilterControlRenderer = defineComponent({
   name: 'EndgeFilterControlRenderer',
   props: {
