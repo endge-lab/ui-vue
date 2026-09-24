@@ -19,7 +19,7 @@ export interface EndgeDOMStyleClassEntry {
 
 export interface EndgeDOMStyleMaterialization {
   css: string
-  /** Поле совместимости. Нативным DOM-селекторам больше не нужны сгенерированные классы. */
+  // Поле совместимости. Нативным DOM-селекторам больше не нужны сгенерированные классы.
   classes: EndgeDOMStyleClassEntry[]
   diagnostics: EndgeStyleDiagnostic[]
 }
@@ -54,7 +54,7 @@ function collectCapabilities(rule: EndgeStyleRule): string[] {
   return result
 }
 
-/** Преобразует нейтральные селекторы AST EndgeCSS в нативные браузерные семантические селекторы. */
+// Преобразует нейтральные селекторы AST EndgeCSS в нативные браузерные семантические селекторы.
 export function materializeEndgeCSSForDOM(
   inputs: readonly EndgeDOMStyleInput[],
   target: EndgeStyleTargetProfile = { renderer: 'dom', capabilities: [] },

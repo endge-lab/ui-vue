@@ -28,7 +28,7 @@ import {
 import { evaluateSFCProps, evaluateSFCValue, isTruthySFCValue } from '@/ui/render/sfc/SFCRender_Evaluator'
 import { attachSFCInteractionAttrs, normalizeSFCInteractionEvent } from '@/ui/render/sfc/SFCRender_Interaction'
 
-/** Выполняет общий SFC render pipeline вокруг primitive renderer-а. */
+// Выполняет общий SFC render pipeline вокруг primitive renderer-а.
 export function SFCRender_Base(renderFn: SFCVueRenderFunction): SFCVueRenderFunction {
   return (input) => {
     const repeated = renderForDirective(input, renderFn)
@@ -40,7 +40,7 @@ export function SFCRender_Base(renderFn: SFCVueRenderFunction): SFCVueRenderFunc
   }
 }
 
-/** Вычисляет состояние if / else-if / else для sibling chain. */
+// Вычисляет состояние if / else-if / else для sibling chain.
 export function resolveSFCConditionState(
   node: RComponentSFC_IR_ElementNode,
   context: SFCVueRenderContext,
@@ -94,7 +94,7 @@ export function resolveSFCConditionState(
   }
 }
 
-/** Готовит renderer-neutral attrs для primitive-тега. */
+// Готовит renderer-neutral attrs для primitive-тега.
 export function createSFCBaseAttrs(
   node: RComponentSFC_IR_ElementNode,
   props: Record<string, unknown>,
@@ -249,7 +249,7 @@ function optionalText(value: unknown): string | undefined {
   return normalized || undefined
 }
 
-/** Подключает встроенные `@event` и условные `:on` к поверхности, принадлежащей renderer. */
+// Подключает встроенные `@event` и условные `:on` к поверхности, принадлежащей renderer.
 export function createSFCNodeEventAttrs(
   node: RComponentSFC_IR_ElementNode,
   props: Record<string, unknown>,

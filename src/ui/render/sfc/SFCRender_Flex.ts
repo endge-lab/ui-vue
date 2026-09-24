@@ -1,6 +1,6 @@
 import type { SFCVueRenderAdapterFunction } from '@/services/render/sfc/sfc-vue-render.type'
 
-/** Рендерит flex-контейнер SFC primitive. */
+// Рендерит flex-контейнер SFC primitive.
 export const SFCRender_Flex: SFCVueRenderAdapterFunction = (input) => {
   const isColumn = input.props.col === true || input.props.direction === 'column'
   const gap = normalizeGap(input.props.gap)

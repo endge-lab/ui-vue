@@ -9,7 +9,7 @@ import { commitSFCEditableChild, editableConsumerKey } from '@/ui/render/sfc/SFC
 import { createSFCSemanticInteractionBindings } from '@/ui/render/sfc/SFCRender_Interaction'
 import { renderSFCNodes } from '@/ui/render/sfc/SFCRender_Node'
 
-/** Рендерит вложенный SFC artifact через тот же renderer-neutral IR pipeline. */
+// Рендерит вложенный SFC artifact через тот же renderer-neutral IR pipeline.
 export const SFCRender_Component: SFCVueRenderFunction = SFCRender_Base((input) => {
   const identity = String(
     (input.node.port

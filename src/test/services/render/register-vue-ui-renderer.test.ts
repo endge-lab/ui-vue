@@ -5,7 +5,7 @@ import { reactive } from 'vue'
 import { registerVueUIRenderer } from '@/services/render/register-vue-ui-renderer'
 
 describe('регистрация Vue renderer', () => {
-  /** Проверяет, что Vue component помечается raw до передачи в Core. */
+  // Проверяет, что Vue component помечается raw до передачи в Core.
   it('изолирует component от Vue reactivity на границе adapter', () => {
     const component = { name: 'TestRenderer' }
     const register = vi.spyOn(Endge.uiRegistry, 'registerRenderer').mockImplementation(() => {})

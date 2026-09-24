@@ -5,7 +5,7 @@ import { isoToDateInput, isoToDateTimeLocalInput, timeToTimeInput } from '@endge
 
 type SFCInputType = Extract<SourceFieldType, 'String' | 'Number' | 'Date' | 'Time' | 'DateTime'>
 
-/** Рендерит однострочный display-only input без обратной связи с runtime. */
+// Рендерит однострочный display-only input без обратной связи с runtime.
 export const SFCRender_Input: SFCVueRenderAdapterFunction = (input) => {
   const inputType = normalizeInputType(input.props.type)
   const compactEditor = normalizeEditorVariant(

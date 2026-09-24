@@ -1,6 +1,6 @@
 import type { SFCVueRenderAdapterFunction } from '@/services/render/sfc/sfc-vue-render.type'
 
-/** Рендерит renderer-neutral Grid через нативный CSS Grid. */
+// Рендерит renderer-neutral Grid через нативный CSS Grid.
 export const SFCRender_Grid: SFCVueRenderAdapterFunction = (input) => {
   const gap = normalizeLength(input.props.gap, 4)
   const columnGap = normalizeLength(input.props.columnGap, 4)

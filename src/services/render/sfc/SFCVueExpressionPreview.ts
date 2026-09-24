@@ -2,10 +2,8 @@ import type { SFCVueRenderContext } from '@/services/render/sfc/sfc-vue-render.t
 import { compileComponentSFCExpression } from '@endge/core'
 import { evaluateSFCValue } from '@/ui/render/sfc/SFCRender_Evaluator'
 
-/**
- * Preview несохранённого Source для редактора; сохраняет публичный authoring API.
- * Render готового artifact использует evaluateSFCValue и не вызывает этот compiler path.
- */
+// Preview несохранённого Source для редактора; сохраняет публичный authoring API.
+// Render готового artifact использует evaluateSFCValue и не вызывает этот compiler path.
 export function evaluateSFCExpression(source: string, context: SFCVueRenderContext): unknown {
   if (!source.trim()) {
     return undefined

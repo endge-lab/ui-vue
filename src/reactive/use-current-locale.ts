@@ -1,10 +1,8 @@
 import { Endge } from '@endge/core'
 import { onScopeDispose, ref } from 'vue'
 
-/**
- * Текущая локаль (Endge.context.currentLocale).
- * Список доступных локалей задается Endge.workspace. Синхронизируется с localStorage через Endge.context.
- */
+// Текущая локаль (Endge.context.currentLocale).
+// Список доступных локалей задается Endge.workspace. Синхронизируется с localStorage через Endge.context.
 export function useCurrentLocale() {
   const context = Endge.context
   const current = ref<string>(context.currentLocale)

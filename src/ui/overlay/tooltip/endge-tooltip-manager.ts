@@ -10,7 +10,7 @@ import {
   matchesComponentSFCInteractionKeyboardCondition,
   normalizeComponentSFCInteractionKeyboardCondition,
 } from '@endge/core'
-import { Raph } from '@endge/raph'
+import { Raph } from '@raphy-js/raph'
 import { shallowReactive } from 'vue'
 
 export type EndgeTooltipContentKind = 'text' | 'markdown' | 'rich'
@@ -43,7 +43,9 @@ export interface EndgeVueTooltipState {
   content: VNodeChild | null
 }
 
-/** Один ленивый manager overlay, принадлежащий одному смонтированному EndgeShell. */
+/**
+ * Один ленивый manager overlay, принадлежащий одному смонтированному EndgeShell.
+ */
 export class EndgeVueTooltipManager {
   public readonly state: EndgeVueTooltipState
   public readonly adapterId: string

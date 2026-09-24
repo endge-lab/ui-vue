@@ -216,10 +216,8 @@ const stableCells = new WeakMap<
   Map<string, Cell<Record<string, unknown>, unknown>>
 >()
 
-/**
- * Сохраняет Cell context при чистой перестановке колонок, чтобы не рендерить
- * повторно всё SFC-содержимое строки.
- */
+// Сохраняет Cell context при чистой перестановке колонок, чтобы не рендерить
+// повторно всё SFC-содержимое строки.
 function getStableVisibleCells(
   row: Row<Record<string, unknown>>,
 ): Cell<Record<string, unknown>, unknown>[] {

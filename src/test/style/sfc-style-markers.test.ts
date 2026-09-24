@@ -1,4 +1,4 @@
-import type { SFCTableMarkers } from '@/ui/render/sfc/SFCRender_TableStyle'
+import type { SFCTableStyleContract } from '@/ui/render/sfc/SFCRender_TableStyle'
 import {
   compileComponentSFC,
   Endge,
@@ -13,6 +13,7 @@ import { NativeVueSFCAdapter } from '@/services/render/sfc/native-vue-sfc-adapte
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
 import { normalizeSFCTableRows } from '@/ui/render/sfc/SFCRender_Table'
+import { decorateSFCTableRowWindow, getSFCTableCellStyleSurfaces } from '@/ui/render/sfc/SFCRender_TableStyle'
 
 describe('проверка Runtime-markers EndgeCSS для SFC', () => {
   beforeAll(() => {
@@ -79,28 +80,31 @@ describe('проверка Runtime-markers EndgeCSS для SFC', () => {
       return
     }
 
-    const markers = grid.props?.styleMarkers as SFCTableMarkers
+    const styleContract = grid.props?.styleContract as SFCTableStyleContract
+    const markers = styleContract.markers
     const column = (grid.props?.columns as any[])[0]
+    const decoratedRow = decorateSFCTableRowWindow([{}], 1, styleContract, 0, 1)[0]!
+    const cellSurfaces = getSFCTableCellStyleSurfaces(decoratedRow, 0)!
     expect(markers.grid).toMatchObject({ 'part': 'grid', 'data-endge-part': 'grid' })
     expect(markers.grid['data-endge-id']).toBe('groundhandling-control')
     expect(markers.grid.id).toBeUndefined()
     expect(markers.header).toMatchObject({ 'part': 'header', 'data-endge-part': 'header' })
     expect(markers.body).toMatchObject({ 'part': 'body', 'data-endge-part': 'body' })
     expect(markers.groupRow).toMatchObject({ 'part': 'group-row', 'data-endge-part': 'group-row' })
-    expect(column.markers.headerCell).toMatchObject({
+    expect(column.styleSurfaces.headerCell.attrs).toMatchObject({
       'part': 'header-cell',
       'data-endge-part': 'header-cell',
     })
-    expect(column.markers.headerContent).toMatchObject({
+    expect(column.styleSurfaces.headerContent.attrs).toMatchObject({
       'part': 'header-content',
       'data-endge-part': 'header-content',
     })
 
-    expect(column.markers.cell).toMatchObject({
+    expect(cellSurfaces.cell.attrs).toMatchObject({
       'part': 'cell',
       'data-endge-part': 'cell',
     })
-    expect(column.markers.cellContent).toMatchObject({
+    expect(cellSurfaces.cellContent.attrs).toMatchObject({
       'part': 'cell-content',
       'data-endge-part': 'cell-content',
     })
@@ -108,8 +112,8 @@ describe('проверка Runtime-markers EndgeCSS для SFC', () => {
     expect(markers.header.class).toEqual([])
     expect(markers.body.class).toEqual([])
     expect(markers.groupRow.class).toEqual([])
-    expect(column.markers.headerCell.class).toEqual([])
-    expect(column.markers.headerContent.class).toEqual([])
+    expect(column.styleSurfaces.headerCell.attrs.class).toEqual([])
+    expect(column.styleSurfaces.headerContent.attrs.class).toEqual([])
   })
 
   it('не изменяет объекты 10 тысяч строк и не создаёт cache стилей ячеек', () => {
