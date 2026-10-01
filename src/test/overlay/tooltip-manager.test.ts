@@ -1,13 +1,18 @@
 // @vitest-environment jsdom
+import { Raph } from '@raphy-js/raph'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { EndgeVueTooltipManager } from '@/ui/overlay/tooltip/endge-tooltip-manager'
 
 describe('менеджер tooltip Endge Vue', () => {
-  beforeEach(() => vi.useFakeTimers())
+  beforeEach(() => {
+    vi.useFakeTimers()
+    Raph.definePhases([{ name: 'watch' }])
+  })
   afterEach(() => {
     vi.useRealTimers()
     document.body.replaceChildren()
+    Raph.reset()
   })
 
   it('создаёт содержимое только после openDelay и освобождает после closeDelay', () => {

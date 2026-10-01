@@ -12,8 +12,8 @@ importers:
         specifier: ^1.14.0
         version: 1.46.0(vue@3.5.38(typescript@6.0.3))
       '@raphy-js/raph':
-        specifier: 1.0.0-dev.2
-        version: 1.0.0-dev.2
+        specifier: 1.0.0-dev.18
+        version: 1.0.0-dev.18
       '@tanstack/vue-table':
         specifier: ^8.21.3
         version: 8.21.3(vue@3.5.38(typescript@6.0.3))
@@ -28,8 +28,8 @@ importers:
         specifier: 9.3.0
         version: 9.3.0(@typescript-eslint/typescript-estree@8.68.0(typescript@6.0.3))(@typescript-eslint/utils@8.68.0(eslint@10.9.1(jiti@1.21.7))(typescript@6.0.3))(@vue/compiler-sfc@3.5.38)(eslint@10.9.1(jiti@1.21.7))(typescript@6.0.3)(vitest@2.1.9(jsdom@26.1.0)(sass-embedded@1.100.0)(sass@1.100.0))
       '@endge/core':
-        specifier: 1.0.0-dev
-        version: 1.0.0-dev(@raphy-js/raph@1.0.0-dev.2)(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)
+        specifier: 1.0.0-dev.3
+        version: 1.0.0-dev.3(@raphy-js/raph@1.0.0-dev.18)(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)
       '@endge/utils':
         specifier: 1.0.0-dev
         version: 1.0.0-dev
@@ -342,10 +342,10 @@ packages:
       oxlint:
         optional: true
 
-  '@endge/core@1.0.0-dev':
-    resolution: {integrity: sha512-trTrfEYfIsGa43bVz7OMxXrCXfp/HevA5HO8uItF2d2HCyCkCei93/YLbGKI5ttcMBWO/XP1TVSCqwa7/nfyaQ==}
+  '@endge/core@1.0.0-dev.3':
+    resolution: {integrity: sha512-577NlKB3Ec52KbZS4sbpIASMtSAvRll0NUqMeANr7g/BlY9com984Z+lKvgcsrsDDexKvHYhObkg7BlQ3m6e4Q==}
     peerDependencies:
-      '@raphy-js/raph': 1.0.0-dev.2
+      '@raphy-js/raph': 1.0.0-dev.18
       class-transformer: ^0.5.1
       class-validator: ^0.14.1
       reflect-metadata: ^0.2.2
@@ -887,8 +887,8 @@ packages:
     resolution: {integrity: sha512-SEeaJLb3qBNF/OaXnaR1NmmBbFYk1zC0ZH/52fATcRPLFg/p791YrcyFFy44Bo9sLaGuSuLp5Q6axbb/O+v/RA==}
     engines: {node: ^14.18.0 || >=16.0.0}
 
-  '@raphy-js/raph@1.0.0-dev.2':
-    resolution: {integrity: sha512-Bg6IgOypTJiMZyc/IiJpQt2jlnrPm0r+tDgDAbVCGQETL9GpIDkrjYpxIc5v6fcw+pDytlwbSjb/vpl+vN9Jsg==}
+  '@raphy-js/raph@1.0.0-dev.18':
+    resolution: {integrity: sha512-k2SRIuAGbfClmyNXiuOkMB2HUtioeBVwhBVOyjUlVEN9osiedKs2VKc++H6fnVuHClZgotXEJlvZkSoDBMcu1Q==}
 
   '@rolldown/pluginutils@1.0.1':
     resolution: {integrity: sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==}
@@ -3788,13 +3788,13 @@ snapshots:
     optionalDependencies:
       eslint: 10.9.1(jiti@1.21.7)
 
-  '@endge/core@1.0.0-dev(@raphy-js/raph@1.0.0-dev.2)(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)':
+  '@endge/core@1.0.0-dev.3(@raphy-js/raph@1.0.0-dev.18)(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)':
     dependencies:
       '@babel/generator': 7.29.7
       '@babel/parser': 7.29.7
       '@babel/types': 7.29.7
       '@endge/utils': 1.0.0-dev
-      '@raphy-js/raph': 1.0.0-dev.2
+      '@raphy-js/raph': 1.0.0-dev.18
       '@vue/compiler-dom': 3.5.38
       '@vue/compiler-sfc': 3.5.38
       axios: 1.18.1
@@ -4232,7 +4232,7 @@ snapshots:
 
   '@pkgr/core@0.3.6': {}
 
-  '@raphy-js/raph@1.0.0-dev.2': {}
+  '@raphy-js/raph@1.0.0-dev.18': {}
 
   '@rolldown/pluginutils@1.0.1': {}
 

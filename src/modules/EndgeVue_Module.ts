@@ -85,27 +85,6 @@ export class EndgeVue_Module extends EndgeModule {
 
     Raph.addPhase({
       name: 'watch' as PhaseName,
-      routes: ['*'],
-      traversal: 'dirty-only',
-
-      // берём только root-ноды таблицы (их ты сам track-ишь на `${basePath}.*`)
-      nodes: (node: RaphNode) => node?.meta.type === 'watch',
-
-      all: (ctxs) => {
-        if (!ctxs.length) {
-          return
-        }
-
-        ctxs.forEach((ctx) => {
-          const path = ctx.node?.meta?.path
-
-          if (!ctx.node?.meta?.ref || typeof path !== 'string') {
-            return
-          }
-
-          (ctx.node.meta.ref as Ref<unknown>).value = Raph.get(path)
-        })
-      },
     })
 
     this._unsubscribeWorkspace = Endge.workspace.subscribe(() => {
@@ -149,17 +128,20 @@ export class EndgeVue_Module extends EndgeModule {
   public makeRaphRef<T>(path: string): Ref<T> {
     const newRef = ref<T>(Raph.get(path) as T)
 
-    const raphNode = new RaphNode(Raph.runtime, {
+    const raphNode = new RaphNode(Raph.runtime(), {
       id: `watch:${randomString(5)}`,
       meta: {
-        ref: newRef,
         type: 'watch',
         path,
       },
     })
-    const stopTracking = Raph.runtime.track(raphNode, `${path}[*]`, {
-      wildcardDynamic: true,
-    })
+    const stopTracking = raphNode.watch(
+      Raph.runtime().path(path),
+      'watch',
+      () => {
+        newRef.value = Raph.get(path) as T
+      },
+    )
 
     onBeforeUnmount(() => {
       stopTracking()
