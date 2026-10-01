@@ -3,6 +3,7 @@ import type {
   EndgeTooltipConfiguration,
   EndgeTooltipSide,
 } from '@endge/core'
+import type { RaphScope } from '@raphy-js/raph'
 import type { InjectionKey, VNodeChild } from 'vue'
 import {
   Endge,
@@ -43,6 +44,8 @@ export interface EndgeVueTooltipState {
   content: VNodeChild | null
 }
 
+let tooltipScopeSequence = 0
+
 /**
  * Один ленивый manager overlay, принадлежащий одному смонтированному EndgeShell.
  */
@@ -58,6 +61,7 @@ export class EndgeVueTooltipManager {
   private _disposed = false
   private readonly _defaults: EndgeTooltipConfiguration
   private readonly _disposeKeyboardWatch: () => void
+  private readonly _raphScope: RaphScope
 
   public constructor(adapterId: string, defaults: EndgeTooltipConfiguration) {
     this.adapterId = adapterId
@@ -74,10 +78,12 @@ export class EndgeVueTooltipManager {
       part: null,
       content: null,
     })
-    this._disposeKeyboardWatch = Raph.watch([
-      ENDGE_KEYBOARD_CONTEXT_RAPH_PATH,
-      `${ENDGE_KEYBOARD_CONTEXT_RAPH_PATH}.*`,
-    ], () => this._reconcileActivation())
+    this._raphScope = Raph.runtime().scope(`tooltip:${adapterId}:${tooltipScopeSequence++}`)
+    this._disposeKeyboardWatch = this._raphScope.watch(
+      Raph.runtime().path(ENDGE_KEYBOARD_CONTEXT_RAPH_PATH),
+      'watch',
+      () => this._reconcileActivation(),
+    )
   }
 
   public activate(request: EndgeVueTooltipRequest, reason: EndgeTooltipActivationReason): void {
@@ -133,6 +139,7 @@ export class EndgeVueTooltipManager {
     }
     this._disposed = true
     this._disposeKeyboardWatch()
+    this._raphScope.dispose()
     this._reasons.clear()
     this._hideNow()
   }
