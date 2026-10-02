@@ -19,12 +19,9 @@ export function createSFCVueRenderContext(
   variant = 'default',
   tooltipManager: EndgeVueTooltipManager | null = null,
   portBindings: readonly ComponentSFCRequiredPortBinding[] = [],
+  parentContext?: SFCVueRenderContext,
 ): SFCVueRenderContext {
-  const lifecycleScope = host && !host.readonly ? Endge.runtime.getRuntimeScopeByHost(host.id) : null
-  const runtimeScopeIds: string[] = [...(host?.runtimeScopeIds ?? [])]
-  for (let current = lifecycleScope; current; current = current.parent) {
-    runtimeScopeIds.unshift(current.id)
-  }
+  const runtimeScopeIds = parentContext?.runtimeScopeIds ?? resolveRuntimeScopeIds(host)
   const styleArtifacts = inheritedStyleArtifacts
     ? [...inheritedStyleArtifacts]
     : [...(host?.styleArtifacts ?? Endge.styles.getActiveArtifacts())]
@@ -33,7 +30,7 @@ export function createSFCVueRenderContext(
   }
   const context: SFCVueRenderContext = {
     props: props ?? {},
-    context: Object.freeze(Endge.context.runtimeSnapshot()),
+    context: parentContext?.context ?? Object.freeze(Endge.context.runtimeSnapshot()),
     locals: {},
     iteration: null,
     dataScope: null,
@@ -60,6 +57,15 @@ export function createSFCVueRenderContext(
   }
   context.locals = evaluatePortLocals(ir, context)
   return context
+}
+
+function resolveRuntimeScopeIds(host: ComponentSFCRenderPort | null): string[] {
+  const ids = [...(host?.runtimeScopeIds ?? [])]
+  const lifecycleScope = host && !host.readonly ? Endge.runtime.getRuntimeScopeByHost(host.id) : null
+  for (let current = lifecycleScope; current; current = current.parent) {
+    ids.unshift(current.id)
+  }
+  return ids
 }
 
 // Создает дочерний context с дополнительными локальными значениями.

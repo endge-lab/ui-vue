@@ -1,5 +1,15 @@
 import type { SFCVueRenderAdapterFunction } from '@/services/render/sfc/sfc-vue-render.type'
 
+type DateTimeFormat = 'time' | 'date' | 'datetime'
+
+const dateTimeFormatOptions: Record<DateTimeFormat, Intl.DateTimeFormatOptions> = {
+  time: { hour: '2-digit', minute: '2-digit', hour12: false },
+  date: {},
+  datetime: { dateStyle: 'medium', timeStyle: 'short' },
+}
+const dateTimeFormatters = new Map<string, Intl.DateTimeFormat>()
+const MAX_CACHED_FORMATTERS = 32
+
 // Рендерит дату или время через базовые форматы SFC v1.
 export const SFCRender_DateTime: SFCVueRenderAdapterFunction = (input) => {
   const value = formatSFCDateTime(
@@ -55,21 +65,14 @@ export function formatSFCDateTime(
   const timeZone = normalizeTimezone(timezone)
 
   if (format === 'HH:mm') {
-    return formatInTimezone(date, {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    }, timeZone)
+    return formatInTimezone(date, 'time', timeZone)
   }
 
   if (format === 'date') {
-    return formatInTimezone(date, {}, timeZone)
+    return formatInTimezone(date, 'date', timeZone)
   }
 
-  return formatInTimezone(date, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }, timeZone)
+  return formatInTimezone(date, 'datetime', timeZone)
 }
 
 function normalizeTimezone(value: unknown): string | undefined {
@@ -79,13 +82,32 @@ function normalizeTimezone(value: unknown): string | undefined {
 
 function formatInTimezone(
   date: Date,
-  options: Intl.DateTimeFormatOptions,
+  format: DateTimeFormat,
   timeZone: string | undefined,
 ): string {
-  try {
-    return new Intl.DateTimeFormat(undefined, { ...options, timeZone }).format(date)
-  }
-  catch {
+  const options = dateTimeFormatOptions[format]
+  if (!timeZone) {
     return new Intl.DateTimeFormat(undefined, options).format(date)
   }
+
+  const key = `${format}:${timeZone}`
+  let formatter = dateTimeFormatters.get(key)
+  if (!formatter) {
+    try {
+      formatter = new Intl.DateTimeFormat(undefined, {
+        ...options,
+        timeZone,
+      })
+    }
+    catch {
+      return new Intl.DateTimeFormat(undefined, options).format(date)
+    }
+
+    if (dateTimeFormatters.size >= MAX_CACHED_FORMATTERS) {
+      dateTimeFormatters.delete(dateTimeFormatters.keys().next().value!)
+    }
+    dateTimeFormatters.set(key, formatter)
+  }
+
+  return formatter.format(date)
 }
