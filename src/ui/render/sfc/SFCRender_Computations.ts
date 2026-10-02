@@ -1,6 +1,8 @@
 import type { RComponentSFC_IR_ElementNode } from '@endge/core'
 import type { SFCVueRenderContext } from '@/services/render/sfc/sfc-vue-render.type'
 
+const hiddenConsumerScopes = new WeakMap<RComponentSFC_IR_ElementNode, readonly string[]>()
+
 // Ключ строки не должен смешиваться с разделителями иерархии consumer.
 export function computationScopeKey(key: unknown): string {
   return encodeURIComponent(String(key))
@@ -40,12 +42,36 @@ export function reconcileForComputations(context: SFCVueRenderContext, nodeId: s
 
 // Убирает ресурсы скрытой ветви; Component и Table являются отдельными consumer scopes.
 export function releaseNodeComputations(context: SFCVueRenderContext, node: RComponentSFC_IR_ElementNode): void {
-  for (const kind of ['component', 'table', 'for']) {
-    context.host?.releaseComputationResources(`${context.consumerScope}/${kind}:${node.id}`)
+  if (!context.host) {
+    return
   }
-  for (const child of node.children ?? []) {
-    if (child.kind === 'element') {
-      releaseNodeComputations(context, child)
-    }
+
+  for (const scope of getHiddenConsumerScopes(node)) {
+    context.host.releaseComputationResources(`${context.consumerScope}/${scope}`)
   }
+}
+
+function getHiddenConsumerScopes(node: RComponentSFC_IR_ElementNode): readonly string[] {
+  const cached = hiddenConsumerScopes.get(node)
+  if (cached) {
+    return cached
+  }
+
+  // A boundary owns all resources below it; primitive nodes have no scope to
+  // release. IR is immutable, so this walk is needed only once per hidden node.
+  let scopes: readonly string[]
+  if (node.directives.for) {
+    scopes = [`for:${node.id}`]
+  }
+  else if (node.tag === 'Component') {
+    scopes = [`component:${node.id}`]
+  }
+  else if (node.tag === 'Table') {
+    scopes = [`table:${node.id}`]
+  }
+  else {
+    scopes = (node.children ?? []).flatMap(child => child.kind === 'element' ? getHiddenConsumerScopes(child) : [])
+  }
+  hiddenConsumerScopes.set(node, scopes)
+  return scopes
 }

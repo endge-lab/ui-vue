@@ -3,6 +3,9 @@ import type { SFCVueRenderBinding, SFCVueRenderContext } from '@/services/render
 import { evaluateComponentSFCExpression } from '@endge/core'
 import { DataPath } from '@raphy-js/raph'
 
+const pathSegments = new Map<string, ReturnType<DataPath['segments']>>()
+const MAX_CACHED_PATHS = 256
+
 // Вычисляет безопасное подмножество SFC IR value без eval и runtime зависимостей.
 export function evaluateSFCValue(
   value: RComponentSFC_IR_Value | undefined,
@@ -58,7 +61,7 @@ export function readSFCPath(path: string, context: SFCVueRenderContext): unknown
     return undefined
   }
 
-  const [head, ...tail] = segments
+  const head = segments[0]!
   if (head.kind !== 'key') {
     return undefined
   }
@@ -71,7 +74,7 @@ export function readSFCPath(path: string, context: SFCVueRenderContext): unknown
         ? context.locals[head.key]
         : context.props[head.key]
 
-  return readSFCObjectPathSegments(root, tail)
+  return readSFCObjectPathSegments(root, segments, 1)
 }
 
 // Читает относительный DataPath, включая array selectors, из переданного объекта.
@@ -82,8 +85,11 @@ export function readSFCObjectPath(path: string, source: unknown): unknown {
 function readSFCObjectPathSegments(
   source: unknown,
   segments: ReturnType<DataPath['segments']>,
+  start = 0,
 ): unknown {
-  return segments.reduce<unknown>((current, segment) => {
+  let current = source
+  for (let index = start; index < segments.length; index++) {
+    const segment = segments[index]!
     if (current == null) {
       return undefined
     }
@@ -92,28 +98,27 @@ function readSFCObjectPathSegments(
       if (typeof current !== 'object' && typeof current !== 'function') {
         return undefined
       }
-      return (current as Record<string, unknown>)[segment.key]
+      current = (current as Record<string, unknown>)[segment.key]
     }
-
-    if (segment.kind === 'index') {
-      return Array.isArray(current) ? current[segment.index] : undefined
+    else if (segment.kind === 'index') {
+      current = Array.isArray(current) ? current[segment.index] : undefined
     }
-
-    if (segment.kind === 'selector') {
+    else if (segment.kind === 'selector') {
       if (!Array.isArray(current)) {
         return undefined
       }
-
-      return current.find((item) => {
+      current = current.find((item) => {
         if (item == null || typeof item !== 'object') {
           return false
         }
         return Object.is((item as Record<string, unknown>)[segment.key], segment.value)
       })
     }
-
-    return undefined
-  }, source)
+    else {
+      return undefined
+    }
+  }
+  return current
 }
 
 function isSupportedPath(source: string): boolean {
@@ -134,9 +139,19 @@ function isSupportedPath(source: string): boolean {
 
 function parseSFCPath(path: string): ReturnType<DataPath['segments']> {
   const source = path.trim()
+  const cached = pathSegments.get(source)
+  if (cached) {
+    return cached
+  }
+
   if (!isSupportedPath(source)) {
     return []
   }
 
-  return DataPath.from(source).segments()
+  const segments = DataPath.from(source).segments()
+  if (pathSegments.size >= MAX_CACHED_PATHS) {
+    pathSegments.delete(pathSegments.keys().next().value!)
+  }
+  pathSegments.set(source, segments)
+  return segments
 }

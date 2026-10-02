@@ -64,6 +64,7 @@ export const SFCRender_Component: SFCVueRenderFunction = SFCRender_Base((input) 
     activeEdit ? 'edit' : String(input.props.variant ?? 'default'),
     input.context.tooltipManager ?? null,
     childPortBindings,
+    input.context,
   )
   childContext.styleParent = input.context.styleParent
   childContext.inspectionParentId = input.context.inspectionParentId

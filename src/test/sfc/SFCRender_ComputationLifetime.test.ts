@@ -43,8 +43,36 @@ describe('время жизни computation consumers renderer', () => {
     reconcileForComputations(f.context, 'list', ['a/b:c'])
     expect(old).toHaveBeenCalledOnce()
     expect(retained).not.toHaveBeenCalled()
-    releaseNodeComputations(f.context, { id: 'list', kind: 'element', children: [] } as any)
+    releaseNodeComputations(f.context, { id: 'list', kind: 'element', tag: 'Flex', directives: { for: {} }, children: [] } as any)
     expect(retained).toHaveBeenCalledOnce()
+    expect(adjacent).not.toHaveBeenCalled()
+    f.registry.dispose()
+  })
+
+  it('не сканирует host для примитивов и освобождает ближайшие consumer boundaries', () => {
+    const f = fixture('renderer:1')
+    const hiddenComponent = f.add('renderer:1/component:child:aircraft/port:state')
+    const hiddenTable = f.add('renderer:1/table:table/row:old/column:value/port:state')
+    const adjacent = f.add('renderer:1/component:other:aircraft/port:state')
+
+    releaseNodeComputations(f.context, {
+      id: 'branch',
+      kind: 'element',
+      tag: 'Flex',
+      directives: {},
+      children: [
+        { id: 'text', kind: 'element', tag: 'Text', directives: {}, children: [] },
+        { id: 'child', kind: 'element', tag: 'Component', directives: {}, children: [] },
+        { id: 'table', kind: 'element', tag: 'Table', directives: {}, children: [] },
+      ],
+    } as any)
+
+    expect(f.host.releaseComputationResources.mock.calls.map(call => call[0])).toEqual([
+      'renderer:1/component:child',
+      'renderer:1/table:table',
+    ])
+    expect(hiddenComponent).toHaveBeenCalledOnce()
+    expect(hiddenTable).toHaveBeenCalledOnce()
     expect(adjacent).not.toHaveBeenCalled()
     f.registry.dispose()
   })
