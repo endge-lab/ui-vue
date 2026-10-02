@@ -53,6 +53,7 @@ const SFCRender_Adapter: SFCVueRenderFunction = SFCRender_Base((input) => {
   const renderFn = requireSFCAdapterRenderer(input.node.tag as SFCVueRenderAdapterKey)
   return renderFn(input)
 })
+const elementRenderers = new WeakMap<RComponentSFC_IR_ElementNode, SFCVueRenderFunction>()
 
 // Рендерит список SFC IR узлов с учетом sibling if / else-if / else chain.
 export function renderSFCNodes(
@@ -76,6 +77,13 @@ export function renderSFCNodes(
       continue
     }
     if (node.directives.else && !chainActive) {
+      continue
+    }
+
+    if (!node.directives.if && !node.directives.elseIf && !node.directives.else) {
+      appendRenderedNode(result, renderSFCElement(h, node, context))
+      chainActive = false
+      previousMatched = false
       continue
     }
 
@@ -137,7 +145,18 @@ function renderSFCElement(
 
 function getSFCElementRenderer(
   node: RComponentSFC_IR_ElementNode,
-) {
+): SFCVueRenderFunction {
+  const cached = elementRenderers.get(node)
+  if (cached) {
+    return cached
+  }
+
+  const renderer = resolveSFCElementRenderer(node)
+  elementRenderers.set(node, renderer)
+  return renderer
+}
+
+function resolveSFCElementRenderer(node: RComponentSFC_IR_ElementNode): SFCVueRenderFunction {
   if (node.tag === 'Table' || node.tag === 'Tooltip') {
     return SFCRender_CompoundAdapter
   }
