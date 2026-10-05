@@ -215,7 +215,7 @@ function renderOnceContent(
   })
 }
 
-function attachSFCShorthandTooltip(
+export function attachSFCShorthandTooltip(
   attrs: Record<string, unknown>,
   node: RComponentSFC_IR_ElementNode,
   props: Record<string, unknown>,
