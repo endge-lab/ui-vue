@@ -10,7 +10,7 @@ import {
   normalizeComponentSFCTableSort,
   normalizeComponentSFCTableSortMode,
 } from '@endge/core'
-import { createSFCNodeEventAttrs, SFCRender_Base } from '@/ui/render/sfc/SFCRender_Base'
+import { attachSFCShorthandTooltip, createSFCNodeEventAttrs, SFCRender_Base } from '@/ui/render/sfc/SFCRender_Base'
 import { computationScopeKey } from '@/ui/render/sfc/SFCRender_Computations'
 import { extendSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { evaluateSFCProps, evaluateSFCValue, readSFCObjectPath } from '@/ui/render/sfc/SFCRender_Evaluator'
@@ -150,6 +150,9 @@ export const SFCRender_Table: SFCVueRenderFunction = SFCRender_Base((input) => {
         const eventAttrs = column.cellNode
           ? createSFCNodeEventAttrs(column.cellNode, cellProps, cellContext)
           : {}
+        if (column.cellNode) {
+          attachSFCShorthandTooltip(eventAttrs, column.cellNode, cellProps, cellContext)
+        }
 
         return input.h('div', {
           ...eventAttrs,
