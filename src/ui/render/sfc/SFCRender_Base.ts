@@ -226,7 +226,7 @@ export function attachSFCShorthandTooltip(
   }
   const boundaryId = (context.host?.id ?? context.componentStack.join('>')) || 'sfc'
   const ownerId = `${boundaryId}:${context.consumerScope}:${node.id}`
-  attachEndgeTooltipTriggerAttrs(attrs, context.tooltipManager ?? null, anchor => ({
+  attachEndgeTooltipTriggerAttrs(attrs, context.tooltipManager ?? null, ownerId, anchor => ({
     ownerId,
     domId: createEndgeTooltipDomId(ownerId),
     anchor,
