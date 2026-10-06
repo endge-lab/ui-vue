@@ -4,7 +4,7 @@ import type {
   EndgeTooltipSide,
 } from '@endge/core'
 import type { RaphScope } from '@raphy-js/raph'
-import type { InjectionKey, VNodeChild } from 'vue'
+import type { InjectionKey, VNode, VNodeChild } from 'vue'
 import {
   Endge,
   ENDGE_KEYBOARD_CONTEXT_RAPH_PATH,
@@ -57,6 +57,8 @@ export class EndgeVueTooltipManager {
   private _reasons = new Set<EndgeTooltipActivationReason>()
   private _openTimer: ReturnType<typeof setTimeout> | null = null
   private _closeTimer: ReturnType<typeof setTimeout> | null = null
+  private _detachTimer: ReturnType<typeof setTimeout> | null = null
+  private _detachedAnchor: HTMLElement | null = null
   private _generation = 0
   private _disposed = false
   private readonly _defaults: EndgeTooltipConfiguration
@@ -91,6 +93,7 @@ export class EndgeVueTooltipManager {
       return
     }
     this._clearCloseTimer()
+    this._clearDetachTimer()
 
     if (this._request?.ownerId !== request.ownerId) {
       this._hideNow()
@@ -99,11 +102,27 @@ export class EndgeVueTooltipManager {
 
     this._request = request
     this._reasons.add(reason)
+    if (this.state.phase === 'visible' && this.state.ownerId === request.ownerId && this.state.anchor !== request.anchor) {
+      if (this.state.anchor && this.state.domId) {
+        removeDescribedBy(this.state.anchor, this.state.domId)
+      }
+      this.state.anchor = request.anchor
+      this.state.policy = this._resolvePolicy(request.policy)
+      this.state.className = request.className ?? null
+      this.state.authoredId = request.authoredId ?? null
+      this.state.part = request.part ?? null
+      this.state.content = request.renderContent()
+      addDescribedBy(request.anchor, request.domId)
+    }
     this._reconcileActivation()
   }
 
-  public deactivate(ownerId: string, reason: EndgeTooltipActivationReason): void {
-    if (this._request?.ownerId !== ownerId) {
+  public deactivate(ownerId: string, reason: EndgeTooltipActivationReason, anchor?: HTMLElement): void {
+    if (this._request?.ownerId !== ownerId || (anchor && this._request.anchor !== anchor)) {
+      return
+    }
+    if (anchor && (this._detachedAnchor === anchor || !anchor.isConnected)) {
+      this.detachTrigger(ownerId, anchor)
       return
     }
     this._reasons.delete(reason)
@@ -123,6 +142,72 @@ export class EndgeVueTooltipManager {
         this._hideNow()
       }
     }, delay)
+  }
+
+  public detachTrigger(ownerId: string, anchor: HTMLElement): void {
+    if (this._request?.ownerId !== ownerId || this._request.anchor !== anchor || this._detachedAnchor === anchor) {
+      return
+    }
+    this._detachedAnchor = anchor
+    this._reasons.clear()
+    this._clearOpenTimer()
+    this._clearCloseTimer()
+    if (this.state.phase === 'pending') {
+      this.state.phase = 'idle'
+      this.state.ownerId = null
+    }
+    const generation = ++this._generation
+    const delay = Math.min(150, Math.max(50, this._resolvePolicy(this._request.policy).closeDelay))
+    this._detachTimer = setTimeout(() => {
+      this._detachTimer = null
+      this._detachedAnchor = null
+      if (generation === this._generation && this._request?.anchor === anchor) {
+        this._hideNow()
+      }
+    }, delay)
+  }
+
+  public reattachIfHovered(
+    ownerId: string,
+    anchor: HTMLElement,
+    createRequest: (anchor: HTMLElement) => EndgeVueTooltipRequest,
+  ): void {
+    if (this._request?.ownerId !== ownerId || this._request.anchor === anchor) {
+      return
+    }
+    const reattach = () => {
+      if (!anchor.isConnected || this._request?.ownerId !== ownerId || this._request.anchor === anchor) {
+        return
+      }
+      if (anchor.matches(':hover')) {
+        this.activate(createRequest(anchor), 'pointer')
+      }
+      if (anchor.contains(document.activeElement)) {
+        this.activate(createRequest(anchor), 'focus')
+      }
+    }
+    reattach()
+    if (this._request?.anchor !== anchor) {
+      requestAnimationFrame(reattach)
+    }
+  }
+
+  public refreshTrigger(
+    ownerId: string,
+    anchor: HTMLElement,
+    createRequest: (anchor: HTMLElement) => EndgeVueTooltipRequest,
+  ): void {
+    if (this._request?.ownerId !== ownerId || this._request.anchor !== anchor) {
+      return
+    }
+    const request = createRequest(anchor)
+    this._request = request
+    if (this.state.phase === 'visible' && request.kind === 'text') {
+      const content = request.renderContent()
+      if (this.state.content !== content) {
+        this.state.content = content
+      }
+    }
   }
 
   public close(ownerId?: string): void {
@@ -180,6 +265,7 @@ export class EndgeVueTooltipManager {
   private _suspend(): void {
     this._clearOpenTimer()
     this._clearCloseTimer()
+    this._clearDetachTimer()
     this._generation += 1
     if (this.state.anchor && this.state.domId) {
       removeDescribedBy(this.state.anchor, this.state.domId)
@@ -254,6 +340,14 @@ export class EndgeVueTooltipManager {
     }
     this._closeTimer = null
   }
+
+  private _clearDetachTimer(): void {
+    if (this._detachTimer != null) {
+      clearTimeout(this._detachTimer)
+    }
+    this._detachTimer = null
+    this._detachedAnchor = null
+  }
 }
 
 export const EndgeVueTooltipManagerKey: InjectionKey<EndgeVueTooltipManager> = Symbol('EndgeVueTooltipManager')
@@ -261,34 +355,44 @@ export const EndgeVueTooltipManagerKey: InjectionKey<EndgeVueTooltipManager> = S
 export function attachEndgeTooltipTriggerAttrs(
   attrs: Record<string, unknown>,
   manager: EndgeVueTooltipManager | null,
+  ownerId: string,
   createRequest: (anchor: HTMLElement) => EndgeVueTooltipRequest,
 ): void {
   if (!manager) {
     return
   }
-  let ownerId = ''
   appendHandler(attrs, 'onMouseenter', (event: MouseEvent) => {
     const anchor = event.currentTarget as HTMLElement
-    const request = createRequest(anchor)
-    ownerId = request.ownerId
-    manager.activate(request, 'pointer')
+    manager.activate(createRequest(anchor), 'pointer')
   })
-  appendHandler(attrs, 'onMouseleave', () => ownerId && manager.deactivate(ownerId, 'pointer'))
+  appendHandler(attrs, 'onMouseleave', (event: MouseEvent) => manager.deactivate(ownerId, 'pointer', event.currentTarget as HTMLElement))
   appendHandler(attrs, 'onFocusin', (event: FocusEvent) => {
     const anchor = event.currentTarget as HTMLElement
-    const request = createRequest(anchor)
-    ownerId = request.ownerId
-    manager.activate(request, 'focus')
+    manager.activate(createRequest(anchor), 'focus')
   })
-  appendHandler(attrs, 'onFocusout', () => ownerId && manager.deactivate(ownerId, 'focus'))
+  appendHandler(attrs, 'onFocusout', (event: FocusEvent) => manager.deactivate(ownerId, 'focus', event.currentTarget as HTMLElement))
   appendHandler(attrs, 'onKeydown', (event: KeyboardEvent) => {
-    if (event.key !== 'Escape' || !ownerId) {
+    if (event.key !== 'Escape') {
       return
     }
     event.stopPropagation()
     manager.close(ownerId)
   })
-  appendHandler(attrs, 'onVnodeUnmounted', () => ownerId && manager.close(ownerId))
+  appendHandler(attrs, 'onVnodeMounted', (vnode: VNode) => {
+    if (vnode.el instanceof HTMLElement) {
+      manager.reattachIfHovered(ownerId, vnode.el, createRequest)
+    }
+  })
+  appendHandler(attrs, 'onVnodeUpdated', (vnode: VNode) => {
+    if (vnode.el instanceof HTMLElement) {
+      manager.refreshTrigger(ownerId, vnode.el, createRequest)
+    }
+  })
+  appendHandler(attrs, 'onVnodeUnmounted', (vnode: VNode) => {
+    if (vnode.el instanceof HTMLElement) {
+      manager.detachTrigger(ownerId, vnode.el)
+    }
+  })
   attrs['data-endge-tooltip-trigger'] = ''
 }
 
