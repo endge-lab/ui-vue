@@ -28,7 +28,7 @@ export const SFCRender_Tooltip: SFCVueRenderFunction = (input) => {
   const boundaryId = (input.context.host?.id ?? input.context.componentStack.join('>')) || 'sfc'
   const ownerId = `${boundaryId}:${input.context.consumerScope}:${input.node.id}`
   const attrs: Record<string, unknown> = {}
-  attachEndgeTooltipTriggerAttrs(attrs, input.context.tooltipManager ?? null, anchor => ({
+  attachEndgeTooltipTriggerAttrs(attrs, input.context.tooltipManager ?? null, ownerId, anchor => ({
     ownerId,
     domId: createEndgeTooltipDomId(ownerId),
     anchor,

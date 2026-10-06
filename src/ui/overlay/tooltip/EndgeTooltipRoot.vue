@@ -24,15 +24,25 @@ const ContentRenderer = defineComponent({
 })
 
 watch(
-  () => state.phase,
-  async (phase) => {
+  [() => state.phase, () => state.anchor],
+  async ([phase, anchor], _, onCleanup) => {
+    let cancelled = false
+    onCleanup(() => {
+      cancelled = true
+      cleanupPlacement()
+    })
     cleanupPlacement()
     if (phase !== 'visible') {
       return
     }
     await nextTick()
-    if (!state.anchor?.isConnected) {
-      props.manager.close(state.ownerId ?? undefined)
+    if (cancelled || state.phase !== 'visible' || state.anchor !== anchor) {
+      return
+    }
+    if (!anchor?.isConnected) {
+      if (anchor && state.ownerId) {
+        props.manager.detachTrigger(state.ownerId, anchor)
+      }
       return
     }
     updatePosition()
@@ -40,9 +50,7 @@ watch(
     window.addEventListener('scroll', updatePosition, { passive: true, capture: true })
     if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(updatePosition)
-      if (state.anchor) {
-        resizeObserver.observe(state.anchor)
-      }
+      resizeObserver.observe(anchor)
       if (tooltipRef.value) {
         resizeObserver.observe(tooltipRef.value)
       }
@@ -63,10 +71,13 @@ function cleanupPlacement(): void {
 function updatePosition(): void {
   const anchor = state.anchor
   const tooltip = tooltipRef.value
-  if (!anchor?.isConnected || !tooltip) {
-    if (state.phase === 'visible') {
-      props.manager.close(state.ownerId ?? undefined)
+  if (!anchor?.isConnected) {
+    if (anchor && state.ownerId) {
+      props.manager.detachTrigger(state.ownerId, anchor)
     }
+    return
+  }
+  if (!tooltip) {
     return
   }
   const placement = placeTooltip(
