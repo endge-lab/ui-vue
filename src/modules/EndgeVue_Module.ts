@@ -83,9 +83,13 @@ export class EndgeVue_Module extends EndgeModule {
       return
     }
 
-    Raph.addPhase({
-      name: 'watch' as PhaseName,
-    })
+    // Повторный start после reset (switchContext/смена фасета) не должен заново
+    // объявлять фазу: после первого кадра Raph запрещает менять pipeline.
+    if (!Raph.phases.some(phase => phase.name === 'watch')) {
+      Raph.addPhase({
+        name: 'watch' as PhaseName,
+      })
+    }
 
     this._unsubscribeWorkspace = Endge.workspace.subscribe(() => {
       this._activateWorkspaceAdapter()
