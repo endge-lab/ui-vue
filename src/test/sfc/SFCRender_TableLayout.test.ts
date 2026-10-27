@@ -52,6 +52,42 @@ describe('компоновка Table SFC', () => {
     expect(table.props?.style?.flex).toBeUndefined()
   })
 
+  it('переводит числовую строку статического атрибута высоты в пиксели', () => {
+    const table = renderTable({ 'height': '560', 'row-size': '48' })
+    const grid = table.children as VNode[]
+
+    expect(table.props?.style).toMatchObject({ height: '560px' })
+    expect(grid[0]?.props).toMatchObject({ rowSize: 48 })
+  })
+
+  it('показывает значение поля в Column без Cell', () => {
+    const column = (key: string, children: RComponentSFC_IR_ElementNode['children'] = []): RComponentSFC_IR_ElementNode => ({
+      id: `column-${key}`,
+      kind: 'element',
+      tag: 'Column',
+      props: { key: literal(key) },
+      directives: {},
+      children,
+    })
+    const tableNode: RComponentSFC_IR_ElementNode = {
+      id: 'test-table',
+      kind: 'element',
+      tag: 'Table',
+      props: { rows: literal([]) },
+      directives: {},
+      children: [column('clock'), column('zone.name'), column('missing')],
+    }
+    const rendered = renderSFCNode(h, tableNode, createSFCVueRenderContext({}))
+    if (!isVNode(rendered)) {
+      throw new Error('Table did not render a VNode')
+    }
+    const grid = (rendered.children as VNode[])[0]!
+    const row = { id: 1, clock: '09:05', zone: { name: 'Центр' } }
+    const cells = (grid.props?.columns as any[]).map(item => grid.props?.renderCell(item, row, 0, '1') as VNode)
+
+    expect(cells.map(cell => cell.children)).toEqual(['09:05', 'Центр', ''])
+  })
+
   it('по умолчанию включает постраничность и передаёт marker lazy', () => {
     const table = renderTable({ lazy: true })
     const grid = table.children as VNode[]

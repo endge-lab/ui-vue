@@ -116,6 +116,31 @@ describe('проверка Runtime-markers EndgeCSS для SFC', () => {
     expect(column.styleSurfaces.headerContent.attrs.class).toEqual([])
   })
 
+  it('не переносит в parts Table атрибуты размера и поведения HTML', () => {
+    const compiled = compileComponentSFC(`<template>
+      <Table id="orders" class="board" :rows="[]" paging="pages" height="560" title="Заказы" hidden="false">
+        <Column key="number" title="Номер" />
+      </Table>
+    </template>`, { identity: 'orders-board' })
+    const ir = compiled.ir!
+    const rendered = renderSFCNode(h, ir.template.roots[0], createSFCVueRenderContext({}, 0, null, ir))
+    if (!isVNode(rendered) || !Array.isArray(rendered.children)) {
+      throw new Error('Table root is not rendered.')
+    }
+    expect((rendered.props?.style as Record<string, unknown>).height).toBe('560px')
+    const grid = rendered.children[0]
+    if (!isVNode(grid)) {
+      throw new Error('Table grid is not rendered.')
+    }
+    const markers = (grid.props?.styleContract as SFCTableStyleContract).markers
+    for (const attrs of [markers.grid, markers.header, markers.body, markers.row]) {
+      expect(attrs.paging).toBe('pages')
+      expect(attrs.height).toBeUndefined()
+      expect(attrs.title).toBeUndefined()
+      expect(attrs.hidden).toBeUndefined()
+    }
+  })
+
   it('не изменяет объекты 10 тысяч строк и не создаёт cache стилей ячеек', () => {
     const compiled = compileComponentSFC(`<template>
       <Table id="large-schedule" :rows="[]">

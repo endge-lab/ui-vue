@@ -221,6 +221,40 @@ function createMarkerAttrs(context: SFCVueRenderContext, part: SFCTablePublicPar
   return attrs
 }
 
+// Атрибуты с собственным смыслом в HTML: на thead, tr, th и td браузер применяет их как
+// presentational hints или поведение (`height="560"` растягивает строку заголовка), поэтому
+// размер и поведение Table остаются у корня и не копируются в parts.
+const NON_MARKER_HTML_ATTRIBUTES = new Set([
+  'width',
+  'height',
+  'align',
+  'valign',
+  'bgcolor',
+  'background',
+  'border',
+  'cellpadding',
+  'cellspacing',
+  'nowrap',
+  'colspan',
+  'rowspan',
+  'span',
+  'hidden',
+  'title',
+  'tabindex',
+  'contenteditable',
+  'draggable',
+  'dir',
+  'lang',
+  'role',
+  'inert',
+  'popover',
+  'accesskey',
+  'autofocus',
+  'scope',
+  'headers',
+  'abbr',
+])
+
 function appendAuthoredAttributes(
   target: SFCTableMarkerAttrs,
   attributes: Record<string, unknown> | undefined,
@@ -228,6 +262,7 @@ function appendAuthoredAttributes(
   for (const [name, value] of Object.entries(attributes ?? {})) {
     if (
       ['class', 'style', 'part', 'id', 'state', 'component', 'identity', 'ref', 'key'].includes(name)
+      || NON_MARKER_HTML_ATTRIBUTES.has(name.toLowerCase())
       || name.startsWith('on')
     ) {
       continue
