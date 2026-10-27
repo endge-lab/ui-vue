@@ -103,7 +103,7 @@ export const SFCRender_Table: SFCVueRenderFunction = SFCRender_Base((input) => {
       defaultSort: sortDescriptor.defaultSort,
       defaultPin: pinDescriptor.defaultPin,
       defaultHidden: visibilityDescriptor.defaultHidden,
-      rowSize: normalizeNumber(input.props.rowSize, 40),
+      rowSize: normalizeNumber(input.props['row-size'] ?? input.props.rowSize, 40),
       paging: normalizeTablePaging(input.props.paging),
       pageSize: normalizeNumber(input.props['page-size'] ?? input.props.pageSize, 25),
       pageSizes: normalizePageSizes(input.props['page-sizes'] ?? input.props.pageSizes),
@@ -141,7 +141,10 @@ export const SFCRender_Table: SFCVueRenderFunction = SFCRender_Base((input) => {
           boundaryId: input.node.id,
           rowKey: resolveLexicalRowKey(readSFCObjectPath(rowKey, row), rowId),
         })
-        const children = renderSFCNodes(input.h, column.cellNodes, cellContext)
+        // Column без Cell и содержимого показывает значение поля, как описано в контракте Table.
+        const children = column.cellNodes.length
+          ? renderSFCNodes(input.h, column.cellNodes, cellContext)
+          : formatDefaultCellValue(value)
         const rowStates = normalizeTableRowStates(
           rowState ? evaluateSFCValue(rowState, cellContext) : undefined,
         )
@@ -381,11 +384,31 @@ function normalizePageSizes(value: unknown): number[] {
   return [...new Set(sizes)].sort((left, right) => left - right)
 }
 
+function formatDefaultCellValue(value: unknown): string {
+  if (value == null) {
+    return ''
+  }
+  if (typeof value === 'object') {
+    try {
+      return JSON.stringify(value)
+    }
+    catch {
+      return ''
+    }
+  }
+  return String(value)
+}
+
 function normalizeCssSize(value: unknown, fallback: string): string {
   if (value == null || value === '') {
     return fallback
   }
-  return typeof value === 'number' ? `${value}px` : String(value)
+  if (typeof value === 'number') {
+    return `${value}px`
+  }
+  // Статический атрибут `height="560"` приходит строкой: число без единицы — пиксели, как у number.
+  const text = String(value).trim()
+  return /^\d+(?:\.\d+)?$/.test(text) ? `${text}px` : text
 }
 
 function mapHorizontalAlignment(value: string): 'flex-start' | 'center' | 'flex-end' {
