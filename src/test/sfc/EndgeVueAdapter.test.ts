@@ -1,6 +1,7 @@
 import type { EndgeWorkspaceDefinition, RComponentSFC_IR_ElementNode } from '@endge/core'
 import type { SFCVueRenderAdapter } from '@/services/render/sfc/sfc-vue-render.type'
 import { Endge } from '@endge/core'
+import { Raph } from '@raphy-js/raph'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { h, isVNode } from 'vue'
@@ -88,6 +89,21 @@ describe('проверка SFC-адаптер модуля Endge Vue', () => {
     module.build()
 
     expect(Endge.uiRegistry.adapters.active?.id).toBe(NativeVueSFCAdapter.id)
+  })
+
+  it('повторный start после reset не объявляет фазу watch заново (смена фасета)', () => {
+    const module = new EndgeVue_Module()
+    module.setup()
+    module.build()
+    module.start()
+    const watchPhases = () => Raph.phases.filter(phase => phase.name === 'watch').length
+    expect(watchPhases()).toBe(1)
+    // switchContext: reset + start; после первого кадра Raph запрещает definePhases.
+    Raph.flush()
+    module.reset()
+    expect(() => module.start()).not.toThrow()
+    expect(watchPhases()).toBe(1)
+    module.reset()
   })
 
   it('завершается ошибкой до запуска runtime, если выбранный адаптер не зарегистрирован', () => {
