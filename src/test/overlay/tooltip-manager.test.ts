@@ -55,7 +55,7 @@ describe('менеджер tooltip Endge Vue', () => {
     const anchor = document.createElement('span')
     document.body.append(anchor)
     const renderContent = vi.fn(() => 'never')
-    const manager = new EndgeVueTooltipManager('ramax-aodb', {
+    const manager = new EndgeVueTooltipManager('example-app', {
       side: 'bottom',
       align: 'center',
       openDelay: 100,

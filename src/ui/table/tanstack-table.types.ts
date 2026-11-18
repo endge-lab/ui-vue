@@ -13,6 +13,7 @@ import type {
   TableCellSelectionMode,
   TableSelectionMode,
   TableSelectionTrigger,
+  TableViewportOptions,
 } from '@endge/core'
 import type {
   SFCVueRenderContext,
@@ -47,7 +48,7 @@ export interface EndgeTanStackTableColumn {
 
 export type EndgeTanStackTablePaging = 'pages' | 'virtual'
 
-export interface EndgeTanStackTableProps {
+export interface EndgeTanStackTableProps extends TableViewportOptions {
   boundaryId: string
   nodeId?: string
   tableRef?: string | null

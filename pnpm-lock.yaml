@@ -25,8 +25,8 @@ importers:
         specifier: 9.3.0
         version: 9.3.0(@typescript-eslint/typescript-estree@8.68.0(typescript@6.0.3))(@typescript-eslint/utils@8.68.0(eslint@10.9.1(jiti@1.21.7))(typescript@6.0.3))(@vue/compiler-sfc@3.5.38)(eslint@10.9.1(jiti@1.21.7))(typescript@6.0.3)(vitest@2.1.9(jsdom@26.1.0)(sass-embedded@1.100.0)(sass@1.100.0))
       '@endge/core':
-        specifier: 1.1.0-dev.13
-        version: 1.1.0-dev.13(@raphy-js/raph@1.0.1-dev.55)(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)
+        specifier: 1.2.0-dev.15
+        version: 1.2.0-dev.15(@raphy-js/raph@1.0.1-dev.55)(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)
       '@endge/utils':
         specifier: 1.0.0-dev.6
         version: 1.0.0-dev.6
@@ -342,8 +342,8 @@ packages:
       oxlint:
         optional: true
 
-  '@endge/core@1.1.0-dev.13':
-    resolution: {integrity: sha512-8ZrQ6N6Cye3JITe4etngd81/Kp7jp7MYS6FCx3iq0rldSL+W/NU7n26TlRQtaKr40jYxuKJnhUKI2d+aaph0bw==}
+  '@endge/core@1.2.0-dev.15':
+    resolution: {integrity: sha512-N9ofxwyhgl+5mrPc4qkbFCN5geGVTvo6zgrtlkhDI50eNmrOkifSEkoqqeyt8tVOQfmwOkIzCncHqvqsG6DuFQ==}
     peerDependencies:
       '@raphy-js/raph': '>=1.0.0-dev.18 <2 || >=1.0.1-dev.25 <2'
       class-transformer: ^0.5.1
@@ -2152,6 +2152,9 @@ packages:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
     engines: {node: '>=0.10.0'}
 
+  idb@8.0.3:
+    resolution: {integrity: sha512-LtwtVyVYO5BqRvcsKuB2iUMnHwPVByPCXFXOpuU96IZPPoPN6xjOGxZQ74pgSVVLQWtUOYgyeL4GE98BY5D3wg==}
+
   identifier-regex@1.1.0:
     resolution: {integrity: sha512-SLX4H/vtcYlYnL7XqnuJKHU7Z8517TgsW9nmQiGOgMCjQ8V/deLYu6bEmbGoXe7WMMhc9+EUGyFFneHja8KabA==}
     engines: {node: '>=18'}
@@ -3791,7 +3794,7 @@ snapshots:
     optionalDependencies:
       eslint: 10.9.1(jiti@1.21.7)
 
-  '@endge/core@1.1.0-dev.13(@raphy-js/raph@1.0.1-dev.55)(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)':
+  '@endge/core@1.2.0-dev.15(@raphy-js/raph@1.0.1-dev.55)(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)':
     dependencies:
       '@babel/generator': 7.29.7
       '@babel/parser': 7.29.7
@@ -3807,6 +3810,7 @@ snapshots:
       date-fns: 4.4.0
       fflate: 0.8.3
       graphql: 16.14.2
+      idb: 8.0.3
       lodash: 4.18.1
       mitt: 3.0.1
       oidc-client-ts: 3.5.0
@@ -5602,6 +5606,8 @@ snapshots:
   iconv-lite@0.6.3:
     dependencies:
       safer-buffer: 2.1.2
+
+  idb@8.0.3: {}
 
   identifier-regex@1.1.0:
     dependencies:

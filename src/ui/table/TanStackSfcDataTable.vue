@@ -14,6 +14,7 @@ import type {
   TableRuntimeActionTarget,
   TableSelectedCell,
   TableSortDirection,
+  TableViewportChangedEvent,
 } from '@endge/core'
 import type {
   Cell,
@@ -88,6 +89,8 @@ const props = withDefaults(defineProps<EndgeTanStackTableProps>(), {
   defaultPin: () => [],
   defaultHidden: () => [],
   rowSize: 40,
+  rowsRevision: 0,
+  preserveScrollAnchor: false,
   paging: 'pages',
   pageSize: 25,
   pageSizes: () => [25, 50, 100],
@@ -115,6 +118,12 @@ const showFilters = computed(() => (
 const showRuntimeControls = computed(() => showSearch.value || showFilters.value)
 const filtersVisible = computed(() => runtimeContext?.filtersVisible.value === true)
 const scrollRoot = ref<HTMLElement | null>(null)
+const headerRoot = ref<HTMLElement | null>(null)
+let viewportFrame: number | null = null
+let viewportReason: TableViewportChangedEvent['reason'] = 'mount'
+let lastViewportSignature = ''
+let viewportObserver: ResizeObserver | null = null
+let tableDisposed = false
 const baseRows = shallowRef(copyRows(props.source))
 const i18nVersion = ref(0)
 let unsubscribeI18n: (() => void) | null = null
@@ -341,6 +350,7 @@ interface VirtualTableRow {
 }
 
 const tableActionTarget: TableRuntimeActionTarget = {
+  scrollToRow,
   setColumnVisibility: async (columnKey, visible) => {
     table.getColumn(columnKey)?.toggleVisibility(visible)
   },
@@ -364,13 +374,19 @@ const unregisterBoundary = boundaryRegistry?.register(props.boundaryId, {
 })
 
 watch(
-  () => [props.source, props.renderVersion] as const,
+  () => [props.source, props.renderVersion, props.rowsRevision] as const,
   async ([source]) => {
+    const anchor = captureScrollAnchor()
     baseRows.value = copyRows(source)
     await nextTick()
     clampPagination()
+    if (scrollRoot.value && (props.paging === 'pages' || !props.preserveScrollAnchor)) {
+      scrollRoot.value.scrollTop = 0
+    }
     reconcileSelection()
     reconcileCellSelection()
+    restoreScrollAnchor(anchor)
+    scheduleViewport('data')
   },
 )
 watch(
@@ -402,11 +418,18 @@ watch(
   },
 )
 
+watch(() => visibleRowIds.value.join('\u0000'), () => scheduleViewport('data'), { flush: 'post' })
+
 watch(() => [baseRows.value, tableColumns.value] as const, ([rows, columns]) => {
   reconcileTableComputations(props.menuContext, rows, props.rowKey, columns)
 }, { flush: 'sync' })
 
 onBeforeUnmount(() => {
+  tableDisposed = true
+  viewportObserver?.disconnect()
+  if (viewportFrame != null) {
+    cancelAnimationFrame(viewportFrame)
+  }
   props.menuContext?.host?.releaseComputationResources(props.menuContext.consumerScope)
   if (columnSizeTimer) {
     clearTimeout(columnSizeTimer)
@@ -418,10 +441,170 @@ onBeforeUnmount(() => {
 })
 
 onMounted(() => {
+  if (typeof ResizeObserver !== 'undefined') {
+    viewportObserver = new ResizeObserver(() => scheduleViewport('resize'))
+    if (scrollRoot.value) {
+      viewportObserver.observe(scrollRoot.value)
+    }
+    if (headerRoot.value) {
+      viewportObserver.observe(headerRoot.value)
+    }
+  }
+  scheduleViewport('mount')
   unsubscribeI18n = Endge.i18n.subscribe(() => {
     i18nVersion.value += 1
   })
 })
+
+// Geometry belongs to Table. Sticky header and overscan never enter the visible range.
+function visibleRange(): { first: number, last: number } | null {
+  const root = scrollRoot.value
+  const height
+    = (root?.clientHeight ?? 0)
+      - (headerRoot.value?.getBoundingClientRect().height ?? 0)
+  if (!root || height <= 0 || tableRows.value.length === 0) {
+    return null
+  }
+  const first = Math.max(
+    0,
+    Math.min(
+      tableRows.value.length - 1,
+      Math.floor(root.scrollTop / props.rowSize),
+    ),
+  )
+  const last = Math.max(
+    first,
+    Math.min(
+      tableRows.value.length - 1,
+      Math.ceil((root.scrollTop + height) / props.rowSize) - 1,
+    ),
+  )
+  return { first, last }
+}
+
+function scheduleViewport(reason: TableViewportChangedEvent['reason']): void {
+  if (tableDisposed || typeof requestAnimationFrame === 'undefined') {
+    return
+  }
+  // An explicit occurrence must survive a following native scroll in the same frame.
+  if (
+    (viewportFrame == null || reason !== 'scroll')
+    && !(
+      viewportFrame != null
+      && viewportReason === 'mount'
+      && !lastViewportSignature
+    )
+  ) {
+    viewportReason = reason
+  }
+  if (viewportFrame != null) {
+    return
+  }
+  viewportFrame = requestAnimationFrame(() => {
+    viewportFrame = null
+    const range = visibleRange()
+    const point = (index: number) => ({
+      key: tableRows.value[index]!.id,
+      index: pageOffset.value + index,
+    })
+    const payload: TableViewportChangedEvent = {
+      tableId: effectiveTableId(),
+      rowsRevision: props.rowsRevision,
+      firstVisible: range ? point(range.first) : null,
+      lastVisible: range ? point(range.last) : null,
+      rowCount: totalRowCount.value,
+      reason: viewportReason,
+    }
+    const signature = JSON.stringify([
+      payload.rowsRevision,
+      payload.firstVisible,
+      payload.lastVisible,
+      payload.rowCount,
+    ])
+    if (payload.reason !== 'scroll' || signature !== lastViewportSignature) {
+      lastViewportSignature = signature
+      emitTableEvent('viewportChanged', payload)
+    }
+  })
+}
+
+function captureScrollAnchor(): {
+  key: string
+  index: number
+  offset: number
+} | null {
+  if (!props.preserveScrollAnchor || props.paging !== 'virtual') {
+    return null
+  }
+  const range = visibleRange()
+  if (!range || !scrollRoot.value) {
+    return null
+  }
+  return {
+    key: tableRows.value[range.first]!.id,
+    index: range.first,
+    offset: scrollRoot.value.scrollTop - range.first * props.rowSize,
+  }
+}
+
+function restoreScrollAnchor(
+  anchor: ReturnType<typeof captureScrollAnchor>,
+): void {
+  if (!anchor || !scrollRoot.value || tableDisposed) {
+    return
+  }
+  const found = tableRows.value.findIndex(row => row.id === anchor.key)
+  // If the key disappeared, keep the nearest surviving ordinal and clamp at the end.
+  const index
+    = found >= 0
+      ? found
+      : Math.min(anchor.index, Math.max(0, tableRows.value.length - 1))
+  scrollRoot.value.scrollTop = index * props.rowSize + anchor.offset
+}
+
+async function scrollToRow(
+  rowId: string,
+  align: 'start' | 'center' | 'end' | 'auto' = 'auto',
+): Promise<void> {
+  const rows = table.getPrePaginationRowModel().rows
+  const index = rows.findIndex(row => row.id === rowId)
+  if (index < 0) {
+    throw new Error(`Table row is not loaded: ${rowId}`)
+  }
+  if (props.paging === 'pages') {
+    updatePagination({
+      ...pagination.value,
+      pageIndex: Math.floor(index / pagination.value.pageSize),
+    })
+    await nextTick()
+  }
+  const root = scrollRoot.value
+  if (!root || tableDisposed) {
+    return
+  }
+  const localIndex
+    = props.paging === 'pages' ? index % pagination.value.pageSize : index
+  const height = Math.max(
+    0,
+    root.clientHeight - (headerRoot.value?.getBoundingClientRect().height ?? 0),
+  )
+  const start = localIndex * props.rowSize
+  const end = start + props.rowSize - height
+  const target
+    = align === 'start'
+      ? start
+      : align === 'center'
+        ? start - (height - props.rowSize) / 2
+        : align === 'end'
+          ? end
+          : start < root.scrollTop
+            ? start
+            : end > root.scrollTop
+              ? end
+              : root.scrollTop
+  root.scrollTop = Math.max(0, target)
+  scheduleViewport('position')
+}
 
 function translateTableText(
   key: TanStackTableMessageKey,
@@ -458,10 +641,11 @@ function updatePagination(updater: Updater<PaginationState>): void {
     pageSize,
   }
   persistTableState('pagination', pagination.value)
-  if (scrollRoot.value) {
-    scrollRoot.value.scrollTop = 0
-  }
   if (previous.pageIndex !== pagination.value.pageIndex || previous.pageSize !== pagination.value.pageSize) {
+    if (scrollRoot.value) {
+      scrollRoot.value.scrollTop = 0
+    }
+    scheduleViewport('data')
     emitTableEvent('pageChanged', {
       tableId: effectiveTableId(),
       pageIndex: pagination.value.pageIndex,
@@ -827,6 +1011,7 @@ async function applyRuntimePatch(patch: RuntimeBoundaryPatch): Promise<boolean> 
   next[rowIndex] = { ...patch.itemSnapshot }
   baseRows.value = next
   await nextTick()
+  scheduleViewport('data')
   return true
 }
 
@@ -1491,6 +1676,7 @@ function menuItem(id: string, label: string) {
       ref="scrollRoot"
       v-bind="styleContract.grid.attrs"
       class="endge-tanstack-table__viewport"
+      @scroll.passive="scheduleViewport('scroll')"
     >
       <table
         data-slot="table"
@@ -1500,7 +1686,7 @@ function menuItem(id: string, label: string) {
         class="endge-tanstack-table__table"
         :style="{ width: tableWidth }"
       >
-        <thead v-bind="styleContract.header.attrs" class="endge-tanstack-table__header">
+        <thead ref="headerRoot" v-bind="styleContract.header.attrs" class="endge-tanstack-table__header">
           <tr>
             <th
               v-for="header in flatHeaders"
@@ -1566,6 +1752,7 @@ function menuItem(id: string, label: string) {
             :key="String(virtualRow.virtualItem.key)"
             v-bind="getRowAttrs(virtualRow.styledRow, virtualRow.row.id)"
             :data-index="virtualRow.rowIndex"
+            :data-row-key="virtualRow.row.id"
             class="endge-tanstack-table__row"
             :class="[getRowClass(virtualRow.styledRow), {
               'endge-tanstack-table__row--selected': selectedRowIds.has(virtualRow.row.id),
