@@ -93,6 +93,8 @@ export const SFCRender_Table: SFCVueRenderFunction = SFCRender_Base((input) => {
       runtimeState: input.context.runtimeState,
       columns,
       source: rows,
+      rowsRevision: Number(input.props['rows-revision'] ?? input.props.rowsRevision ?? 0),
+      preserveScrollAnchor: (input.props['preserve-scroll-anchor'] ?? input.props.preserveScrollAnchor) === true,
       styleContract,
       rowKey,
       sortMode: normalizeComponentSFCTableSortMode(input.props['sort-mode'] ?? input.props.sortMode ?? sortDescriptor.mode),
