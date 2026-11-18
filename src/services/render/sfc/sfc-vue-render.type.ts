@@ -30,7 +30,10 @@ export const SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS = [
   'Table',
 ] as const
 
-export type SFCVueRenderAdapterKey = typeof SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS[number]
+export const SFC_VUE_RENDER_ADAPTER_OPTIONAL_KEYS = ['TimelineChart', 'TimelineGroup'] as const
+type SFCVueRequiredRenderAdapterKey = typeof SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS[number]
+type SFCVueOptionalRenderAdapterKey = typeof SFC_VUE_RENDER_ADAPTER_OPTIONAL_KEYS[number]
+export type SFCVueRenderAdapterKey = SFCVueRequiredRenderAdapterKey | SFCVueOptionalRenderAdapterKey
 
 // Поддерживаемые SFC primitive-теги во Vue adapter.
 export type SFCVueRenderPrimitive = RComponentSFC_IR_Tag
@@ -186,9 +189,9 @@ export type SFCVueRenderFunction = (
 
 // Полный набор visual и compound renderers Vue adapter-а.
 export type SFCVueRenderAdapterRendererMap = Record<
-  SFCVueRenderAdapterKey,
+  SFCVueRequiredRenderAdapterKey,
   SFCVueRenderFunction
->
+> & Partial<Record<SFCVueOptionalRenderAdapterKey, SFCVueRenderFunction>>
 
 // Типизированный SFC adapter для Vue render engine.
 export interface SFCVueRenderAdapter extends UIRenderAdapter<SFCVueRenderFunction> {

@@ -24,6 +24,8 @@ import { SFCRender_Select } from '@/ui/render/sfc/SFCRender_Select'
 import { SFCRender_Table } from '@/ui/render/sfc/SFCRender_Table'
 import { SFCRender_Text } from '@/ui/render/sfc/SFCRender_Text'
 import { SFCRender_Textarea } from '@/ui/render/sfc/SFCRender_Textarea'
+import { SFCRender_TimelineChart, SFCRender_TimelineGroup } from '@/ui/render/sfc/SFCRender_Timeline'
+
 import { SFCRender_Tooltip } from '@/ui/render/sfc/SFCRender_Tooltip'
 
 export const NATIVE_VUE_SFC_ADAPTER_ID = 'vue-native'
@@ -51,6 +53,8 @@ export const NativeVueSFCAdapter: SFCVueRenderAdapter = {
     Select: SFCRender_Select,
     Tooltip: SFCRender_Tooltip,
     Table: SFCRender_Table,
+    TimelineChart: SFCRender_TimelineChart,
+    TimelineGroup: SFCRender_TimelineGroup,
   },
   roots: {
     'shell': markRaw(EndgeShell),

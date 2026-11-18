@@ -11,6 +11,9 @@ importers:
       '@lucide/vue':
         specifier: ^1.14.0
         version: 1.46.0(vue@3.5.38(typescript@6.0.3))
+      '@nova-lab/timeline':
+        specifier: 1.2.0-dev.26
+        version: 1.2.0-dev.26
       '@tanstack/vue-table':
         specifier: ^8.21.3
         version: 8.21.3(vue@3.5.38(typescript@6.0.3))
@@ -25,8 +28,8 @@ importers:
         specifier: 9.3.0
         version: 9.3.0(@typescript-eslint/typescript-estree@8.68.0(typescript@6.0.3))(@typescript-eslint/utils@8.68.0(eslint@10.9.1(jiti@1.21.7))(typescript@6.0.3))(@vue/compiler-sfc@3.5.38)(eslint@10.9.1(jiti@1.21.7))(typescript@6.0.3)(vitest@2.1.9(jsdom@26.1.0)(sass-embedded@1.100.0)(sass@1.100.0))
       '@endge/core':
-        specifier: 1.2.0-dev.15
-        version: 1.2.0-dev.15(@raphy-js/raph@1.0.1-dev.55)(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)
+        specifier: 1.2.0-dev.16
+        version: 1.2.0-dev.16(@raphy-js/raph@1.0.1-dev.55)(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)
       '@endge/utils':
         specifier: 1.0.0-dev.6
         version: 1.0.0-dev.6
@@ -342,8 +345,8 @@ packages:
       oxlint:
         optional: true
 
-  '@endge/core@1.2.0-dev.15':
-    resolution: {integrity: sha512-N9ofxwyhgl+5mrPc4qkbFCN5geGVTvo6zgrtlkhDI50eNmrOkifSEkoqqeyt8tVOQfmwOkIzCncHqvqsG6DuFQ==}
+  '@endge/core@1.2.0-dev.16':
+    resolution: {integrity: sha512-YBNklkItUoGAdnRJ74ZPQDbV1q7wMsrEqirL96uVs1gxz+o2EIJpawM1vi3eY6OSiyzAnCi19wtiDw0MmBcyjQ==}
     peerDependencies:
       '@raphy-js/raph': '>=1.0.0-dev.18 <2 || >=1.0.1-dev.25 <2'
       class-transformer: ^0.5.1
@@ -793,6 +796,35 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
+  '@nova-lab/core@1.2.2-dev.272':
+    resolution: {integrity: sha512-j4WkN7IrpH3OaWPomP32X0hVRMbq7WWfuyKaw5C6qXNL7fGPY6lyUlPWSWtBge+y6JivWOw1FMq1176fePqYqA==}
+    peerDependencies:
+      '@dimforge/rapier3d-compat': 0.21.0
+      '@typedworks/color': '>=1.0.0-beta.2 <2'
+      '@typedworks/commands': '>=1.0.0-dev.14 <2 || >=1.1.0-dev.16 <2'
+      '@typedworks/history': '>=1.0.0-dev.16 <2 || >=1.1.0-dev.19 <2'
+      '@typedworks/json': '>=1.0.0-dev.7 <2'
+      '@typedworks/schema': '>=1.0.0-dev.56 <2'
+      '@typedworks/token': '>=1.0.0-dev.2 <2'
+    peerDependenciesMeta:
+      '@dimforge/rapier3d-compat':
+        optional: true
+      '@typedworks/color':
+        optional: true
+      '@typedworks/commands':
+        optional: true
+      '@typedworks/history':
+        optional: true
+      '@typedworks/json':
+        optional: true
+      '@typedworks/schema':
+        optional: true
+      '@typedworks/token':
+        optional: true
+
+  '@nova-lab/timeline@1.2.0-dev.26':
+    resolution: {integrity: sha512-43oUGiJYCEaJmj1X7+PFKnGg4vrSNgp6GbeyXt9/QHKyrpzvF7B6qGi80dk/xK7Xh6Ejt2edgyYzUfMhrvh0bg==}
+
   '@ota-meshi/ast-token-store@0.3.0':
     resolution: {integrity: sha512-XRO0zi2NIUKq2lUk3T1ecFSld1fMWRKE6naRFGkgkdeosx7IslyUKNv5Dcb5PJTja9tHJoFu0v/7yEpAkrkrTg==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
@@ -1087,6 +1119,9 @@ packages:
 
   '@typedworks/federation@1.0.0-dev.1':
     resolution: {integrity: sha512-h2PrLkQfrLYHOTu4PpYCqlcCkP3n3C0HmgcOUVqe9/ZXE69WiSxRO+v1+Q/PBQIaWRlvcgTFwOstlKIBhDaixg==}
+
+  '@typedworks/geometry@1.0.0-dev.5':
+    resolution: {integrity: sha512-AWujhtT1DEviB8XkIM6+V+6vJcCMCnaisozAyVwzsgj6bkTMPNssYX97mUWQ/75/pM2dKmFuyhNzVXqe0dElNg==}
 
   '@types/argparse@1.0.38':
     resolution: {integrity: sha512-ebDJ9b0e702Yr7pWgB0jzm+CX4Srzz8RcXtLJDJB+BSccqMa36uyH/zUsSYao5+BD1ytv3k3rPYCq4mAE1hsXA==}
@@ -1656,6 +1691,9 @@ packages:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
     engines: {node: '>= 0.4'}
 
+  earcut@3.2.3:
+    resolution: {integrity: sha512-vnS4AVwp1KHAF13i1vp1/2D5evWy3k5u/iW/B81QVsUZtV8cv2tU0b2VNFlqvh4kYwrFMDdjPCfAmfyJW9y14Q==}
+
   eastasianwidth@0.2.0:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
 
@@ -1987,6 +2025,9 @@ packages:
       picomatch:
         optional: true
 
+  fenwick-tree@0.0.0:
+    resolution: {integrity: sha512-pbeS9AhYPlscDywIz48j3I2dA8NlZZHkLwHhwcVIl1/Z7pN6ek6ZNSSA1OsQwHICflKfGLzeCnhhDa7+iYq46g==}
+
   fflate@0.8.3:
     resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
 
@@ -2070,6 +2111,9 @@ packages:
 
   github-slugger@2.0.0:
     resolution: {integrity: sha512-IaOQ9puYtjrkq7Y0Ygl9KDZnrf/aiUJYUpVf89y8kyaxbRG7Y1SrX/jaumrv81vc61+kiMempujsM3Yw7w5qcw==}
+
+  gl-matrix@3.4.4:
+    resolution: {integrity: sha512-latSnyDNt/8zYUB6VIJ6PCh2jBjJX6gnDsoCZ7LyW7GkqrD51EWwa9qCoGixj8YqBtETQK/xY7OmpTF8xz1DdQ==}
 
   glob-parent@5.1.2:
     resolution: {integrity: sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow==}
@@ -2181,6 +2225,9 @@ packages:
   indent-string@5.0.0:
     resolution: {integrity: sha512-m6FAo/spmsW2Ab2fU35JTYwtOKa2yAwXSwgjSv1TJzh4Mh7mC3lzAOVLBprb72XsTrgkEIsl7YrFNAiDiRhIGg==}
     engines: {node: '>=12'}
+
+  interval-tree-type@1.0.1:
+    resolution: {integrity: sha512-8+IvfEoQzDwz0ZfSGkqMotISJOxOxrim4TtxfPal0FG6k18gDCCH3GrKOgp0qSotiqPLLdOpRK3r+gyHITuPfA==}
 
   is-binary-path@2.1.0:
     resolution: {integrity: sha512-ZMERYes6pDydyuGidse7OsHxtbI7WVeUEozgR/g7rd0xUimYNlvZRE/K2MgZTjWy725IfelLeVcEM97mmtRGXw==}
@@ -2783,9 +2830,15 @@ packages:
   queue-microtask@1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
 
+  quickselect@3.0.0:
+    resolution: {integrity: sha512-XdjUArbK4Bm5fLLvlm5KpTFOiOThgfWWI4axAZDWg4E/0mKdZyI9tNEfds27qCi1ze/vwTR16kvmmGhRra3c2g==}
+
   quote-js-string@0.1.0:
     resolution: {integrity: sha512-Y3NoRtprEEZQD8RfxMCfS0ZTqc4e+i18OrXEXAvpM6TfC/3y+0L5rNbZiSnbBBEkDfFzbpd8o+cE8q3/anjMGA==}
     engines: {node: '>=22'}
+
+  rbush@4.0.1:
+    resolution: {integrity: sha512-IP0UpfeWQujYC8Jg162rMNc01Rf0gWMMAb2Uxus/Q0qOFw4lCcq6ZnQEZwUoJqWyUGJ9th7JjwI4yIWo+uvoAQ==}
 
   read-cache@1.0.0:
     resolution: {integrity: sha512-Owdv/Ft7IjOgm/i0xvNDZ1LrRANRfew4b2prF3OWMQLxLfu3bS8FVhCsrSCMK4lR56Y9ya+AThoTpDCTxCmpRA==}
@@ -3011,6 +3064,9 @@ packages:
 
   sortablejs@1.15.7:
     resolution: {integrity: sha512-Kk8wLQPlS+yi1ZEf48a4+fzHa4yxjC30M/Sr2AnQu+f/MPwvvX9XjZ6OWejiz8crBsLwSq8GHqaxaET7u6ux0A==}
+
+  sorted-array-type@1.2.1:
+    resolution: {integrity: sha512-wRoVqMJ3BSANyHrKfDs3GpHaLm4DLNJdP4HQerrhQzprOUtFWCqETT/UFFh0rqdWCSJ/RA9QsWBsAtHHbrU4BA==}
 
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
@@ -3794,7 +3850,7 @@ snapshots:
     optionalDependencies:
       eslint: 10.9.1(jiti@1.21.7)
 
-  '@endge/core@1.2.0-dev.15(@raphy-js/raph@1.0.1-dev.55)(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)':
+  '@endge/core@1.2.0-dev.16(@raphy-js/raph@1.0.1-dev.55)(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)':
     dependencies:
       '@babel/generator': 7.29.7
       '@babel/parser': 7.29.7
@@ -4173,6 +4229,33 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.1
 
+  '@nova-lab/core@1.2.2-dev.272':
+    dependencies:
+      '@endge/utils': 1.0.0-dev.6
+      '@raphy-js/raph': 1.0.1-dev.55
+      '@typedworks/geometry': 1.0.0-dev.5
+      class-transformer: 0.5.1
+      earcut: 3.2.3
+      gl-matrix: 3.4.4
+      rbush: 4.0.1
+
+  '@nova-lab/timeline@1.2.0-dev.26':
+    dependencies:
+      '@endge/utils': 1.0.0-dev.6
+      '@nova-lab/core': 1.2.2-dev.272
+      date-fns: 2.30.0
+      fenwick-tree: 0.0.0
+      gl-matrix: 3.4.4
+      interval-tree-type: 1.0.1
+    transitivePeerDependencies:
+      - '@dimforge/rapier3d-compat'
+      - '@typedworks/color'
+      - '@typedworks/commands'
+      - '@typedworks/history'
+      - '@typedworks/json'
+      - '@typedworks/schema'
+      - '@typedworks/token'
+
   '@ota-meshi/ast-token-store@0.3.0': {}
 
   '@parcel/watcher-android-arm64@2.5.6':
@@ -4393,6 +4476,8 @@ snapshots:
       vue: 3.5.38(typescript@6.0.3)
 
   '@typedworks/federation@1.0.0-dev.1': {}
+
+  '@typedworks/geometry@1.0.0-dev.5': {}
 
   '@types/argparse@1.0.38':
     optional: true
@@ -5012,6 +5097,8 @@ snapshots:
       es-errors: 1.3.0
       gopd: 1.2.0
 
+  earcut@3.2.3: {}
+
   eastasianwidth@0.2.0: {}
 
   electron-to-chromium@1.5.377: {}
@@ -5444,6 +5531,8 @@ snapshots:
     optionalDependencies:
       picomatch: 4.0.4
 
+  fenwick-tree@0.0.0: {}
+
   fflate@0.8.3: {}
 
   file-entry-cache@8.0.0:
@@ -5526,6 +5615,8 @@ snapshots:
       resolve-pkg-maps: 1.0.0
 
   github-slugger@2.0.0: {}
+
+  gl-matrix@3.4.4: {}
 
   glob-parent@5.1.2:
     dependencies:
@@ -5625,6 +5716,10 @@ snapshots:
   imurmurhash@0.1.4: {}
 
   indent-string@5.0.0: {}
+
+  interval-tree-type@1.0.1:
+    dependencies:
+      sorted-array-type: 1.2.1
 
   is-binary-path@2.1.0:
     dependencies:
@@ -6388,7 +6483,13 @@ snapshots:
 
   queue-microtask@1.2.3: {}
 
+  quickselect@3.0.0: {}
+
   quote-js-string@0.1.0: {}
+
+  rbush@4.0.1:
+    dependencies:
+      quickselect: 3.0.0
 
   read-cache@1.0.0:
     dependencies:
@@ -6606,6 +6707,8 @@ snapshots:
   sisteransi@1.0.5: {}
 
   sortablejs@1.15.7: {}
+
+  sorted-array-type@1.2.1: {}
 
   source-map-js@1.2.1: {}
 

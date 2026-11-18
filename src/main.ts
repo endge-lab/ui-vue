@@ -15,9 +15,9 @@ export * from '@/services/render/sfc/native-vue-sfc-adapter'
 export * from '@/services/render/sfc/sfc-vue-render.type'
 export * from '@/services/render/sfc/SFCVueExpressionPreview'
 export * from '@/services/render/sfc/SFCVueRuntimeBridge'
-
 export * from '@/services/style'
 export * from '@/store/domain'
+
 export * from '@/ui/filter'
 export { default as EndgeShell } from '@/ui/layout/EndgeShell.vue'
 export * from '@/ui/overlay/context-menu-manager'
@@ -50,8 +50,10 @@ export { resolveSFCTableMenu } from '@/ui/render/sfc/SFCRender_TableMenu'
 export * from '@/ui/render/sfc/SFCRender_TableStyle'
 export * from '@/ui/render/sfc/SFCRender_Text'
 export * from '@/ui/render/sfc/SFCRender_Textarea'
-
 export * from '@/ui/render/sfc/SFCRender_Tooltip'
 export * from '@/ui/table/tanstack-table.types'
+
 export { default as TanStackSfcDataTable } from '@/ui/table/TanStackSfcDataTable.vue'
 export { default as TanStackTableRuntimeRenderer } from '@/ui/table/TanStackTableRuntimeRenderer.vue'
+export { listTimelinePresets, registerTimelinePreset } from '@/ui/timeline/timeline-presets'
+export type { TimelinePresetContext, TimelinePresetDescriptor, TimelinePresetField, TimelinePresetProvider } from '@/ui/timeline/timeline-presets'

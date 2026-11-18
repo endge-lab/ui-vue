@@ -7,7 +7,7 @@ import type {
   SFCVueRenderListResult,
   SFCVueRenderResult,
 } from '@/services/render/sfc/sfc-vue-render.type'
-import { SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/services/render/sfc/sfc-vue-render.type'
+import { SFC_VUE_RENDER_ADAPTER_OPTIONAL_KEYS, SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/services/render/sfc/sfc-vue-render.type'
 import { registerSFCInspectionDefinitionTree, registerSFCInspectionValueNode } from '@/services/render/sfc/SFCVueRenderInspection'
 import { requireSFCAdapterRenderer } from '@/ui/render/sfc/SFCRender_Adapter'
 import { resolveSFCConditionState, SFCRender_Base } from '@/ui/render/sfc/SFCRender_Base'
@@ -187,6 +187,7 @@ function resolveSFCElementRenderer(node: RComponentSFC_IR_ElementNode): SFCVueRe
 
 function isAdapterRenderKey(tag: RComponentSFC_IR_ElementNode['tag']): tag is SFCVueRenderAdapterKey {
   return (SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS as readonly string[]).includes(tag)
+    || (SFC_VUE_RENDER_ADAPTER_OPTIONAL_KEYS as readonly string[]).includes(tag)
 }
 
 function appendRenderedNode(
