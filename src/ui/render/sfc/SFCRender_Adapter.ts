@@ -57,8 +57,8 @@ function renderModuleRenderer(entry: ModuleContribution<SFCVueRenderFunction>, i
 }
 
 export function readWorkspaceRendererReferences() {
-  return Endge.workspace.isLoaded && Endge.mode !== 'debugger'
-    ? Endge.workspace.current.configuration.defaultRenderers
+  return Endge.configuration.isResolved && Endge.mode !== 'debugger'
+    ? Endge.configuration.current.defaultRenderers
     : undefined
 }
 

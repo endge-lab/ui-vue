@@ -3,13 +3,11 @@ import type {
   EndgeContextStateTransform,
   EndgeFederationContext,
   EndgePlugin,
-  EndgeSFCRendererTag,
   EndgeStylePlacement,
 } from '@endge/core'
 import type { PhaseName } from '@raphy-js/raph'
 
 import type { Ref } from 'vue'
-import type { SFCVueRenderAdapter, SFCVueRenderFunction } from '@/services/render/sfc/sfc-vue-render.type'
 import { Endge, ENDGE_SFC_RENDER_ADAPTER_PROTOCOL, ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION, EndgeModule } from '@endge/core'
 import { randomString } from '@endge/utils'
 import { Raph, RaphNode } from '@raphy-js/raph'
@@ -32,13 +30,9 @@ export class EndgeVue_Module extends EndgeModule {
   private _unsubscribeRuntimeScopes: (() => void) | null = null
   private readonly _styleRuntime = new EndgeDOMStyleRuntime()
 
-  public constructor(private readonly _adapter: SFCVueRenderAdapter = NativeVueSFCAdapter) {
-    super()
-  }
-
   public override setup(ctx?: EndgeFederationContext): void {
     this._adapterFallbackIds = (ctx as EndgeBootContext | undefined)?.ui?.adapterFallbackIds ?? []
-    Endge.uiRegistry.adapters.register(this._adapter)
+    Endge.uiRegistry.adapters.register(NativeVueSFCAdapter)
   }
 
   public override build(): void {
@@ -192,26 +186,14 @@ declare module '@endge/core' {
   }
 }
 
-export interface EndgeVuePluginOptions {
-  defaultRenderers?: Readonly<Partial<Record<EndgeSFCRendererTag, SFCVueRenderFunction>>>
+export const EndgeVuePlugin: EndgePlugin = {
+  id: '@endge/ui-vue',
+  modules: [
+    {
+      key: 'vue',
+      create: () => new EndgeVue_Module(),
+      after: ['configuration', 'uiRegistry'],
+      before: 'runtime',
+    },
+  ],
 }
-
-export function createEndgeVuePlugin(options: EndgeVuePluginOptions = {}): EndgePlugin {
-  const renderers = options.defaultRenderers
-  const adapter = renderers
-    ? { ...NativeVueSFCAdapter, renderers: { ...NativeVueSFCAdapter.renderers, ...renderers } }
-    : NativeVueSFCAdapter
-  return {
-    id: '@endge/ui-vue',
-    modules: [
-      {
-        key: 'vue',
-        create: () => new EndgeVue_Module(adapter),
-        after: ['configuration', 'uiRegistry'],
-        before: 'runtime',
-      },
-    ],
-  }
-}
-
-export const EndgeVuePlugin = createEndgeVuePlugin()

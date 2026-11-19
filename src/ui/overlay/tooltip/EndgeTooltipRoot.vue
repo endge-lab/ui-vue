@@ -2,7 +2,6 @@
 import type { EndgeTooltipAlign, EndgeTooltipSide } from '@endge/core'
 import type { EndgeVueTooltipManager } from './endge-tooltip-manager'
 
-import { ENDGE_VUE_SFC_ADAPTER_ID } from '@endge/core'
 import { computed, defineComponent, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
 const props = defineProps<{ manager: EndgeVueTooltipManager }>()
@@ -15,7 +14,6 @@ const state = props.manager.state
 const classes = computed(() => [
   'endge-tooltip',
   `endge-tooltip--${props.manager.adapterId}`,
-  props.manager.adapterId === ENDGE_VUE_SFC_ADAPTER_ID && 'endge-tooltip--vue-native',
   `endge-tooltip--${state.kind}`,
   state.className,
 ])
