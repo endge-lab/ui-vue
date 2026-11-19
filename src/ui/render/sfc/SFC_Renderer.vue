@@ -20,21 +20,29 @@ const unsubscribeUIRegistry = Endge.uiRegistry.subscribe(() => {
   adapterVersion.value += 1
 })
 onScopeDispose(unsubscribeUIRegistry)
+onScopeDispose(Endge.runtime.modules.subscribe(() => {
+  adapterVersion.value += 1
+}))
 
-const context = computed(() => createSFCVueRenderContext(
-  props.props,
-  props.renderVersion ?? 0,
-  props.host ?? null,
-  props.ir,
-  undefined,
-  consumerScope,
-  undefined,
-  undefined,
-  props.inspection ?? null,
-  undefined,
-  'default',
-  tooltipManager,
-))
+const context = computed(() => {
+  const context = createSFCVueRenderContext(
+    props.props,
+    props.renderVersion ?? 0,
+    props.host ?? null,
+    props.ir,
+    undefined,
+    consumerScope,
+    undefined,
+    undefined,
+    props.inspection ?? null,
+    undefined,
+    'default',
+    tooltipManager,
+  )
+  return props.runtimeScopeId
+    ? { ...context, runtimeScopeIds: [...context.runtimeScopeIds, props.runtimeScopeId] }
+    : context
+})
 
 const RenderRoot = defineComponent({
   name: 'SFCRenderRoot',

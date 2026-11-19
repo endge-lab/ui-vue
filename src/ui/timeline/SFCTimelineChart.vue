@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { TimelineTaskSelectedEvent } from '@endge/core'
 import type { TimelineChartHandle, TimelineChartMountConfig } from '@nova-lab/timeline'
-import type { TimelinePresetContext } from './timeline-presets'
+import type { TimelinePresetContext, TimelinePresetEntry, TimelinePresetProvider } from './timeline-presets'
 import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { timelineGroupKey } from './timeline-group-context'
 import { EMPTY_TIMELINE_DATA, inferTimelineRange, isTimelineRecord, mergeTimelineOptions, nextTimelineId, readTimelineColumns, readTimelineData, readTimelineRange, sameTimelineRange, timelinePixels } from './timeline-input'
@@ -11,6 +11,7 @@ defineOptions({ inheritAttrs: false })
 const props = defineProps<{
   input: Record<string, unknown>
   chartKey: string
+  modulePreset?: TimelinePresetEntry
   readonly?: boolean
   theme?: 'light' | 'dark'
   splitAfter?: boolean
@@ -32,7 +33,7 @@ const panelHeight = computed(() => clampHeight(group?.height(props.chartKey) ?? 
 const viewportHeight = computed(() => collapsed.value ? 32 : panelHeight.value)
 const preset = computed(() => {
   try {
-    return { value: resolveTimelinePreset(props.input.preset, props.input.settings), error: '' }
+    return { value: resolveTimelinePreset(props.input.preset, props.input.settings, props.modulePreset), error: '' }
   }
   catch (cause) {
     return { value: undefined, error: errorMessage(cause) }
@@ -48,6 +49,7 @@ const cleanup: Array<() => void> = []
 let generation = 0
 let active = false
 let mountedPreset: { name: unknown, settings: unknown, compact: boolean } | undefined
+let mountedProvider: TimelinePresetProvider | undefined
 let appliedOptions: TimelineChartMountConfig['options']
 let appliedData: TimelineChartMountConfig['data']
 let presetConfig: Partial<TimelineChartMountConfig> = {}
@@ -168,8 +170,8 @@ async function reconcile(): Promise<void> {
       return
     }
     const nextPreset = { name: props.input.preset, settings: props.input.settings, compact: compact.value }
-    const presetChanged = !sameValue(nextPreset, mountedPreset)
     const selectedPreset = preset.value.value
+    const presetChanged = selectedPreset?.provider !== mountedProvider || !sameValue(nextPreset, mountedPreset)
     const context: TimelinePresetContext = { settings: selectedPreset?.settings ?? {}, collapsed: collapsed.value }
     const base = presetChanged ? selectedPreset?.provider.configure?.(context) ?? {} : presetConfig
     const { data, options } = configuration(base)
@@ -240,6 +242,7 @@ async function reconcile(): Promise<void> {
       }
     }
     mountedPreset = nextPreset
+    mountedProvider = selectedPreset?.provider
     presetConfig = base
     presetHeight.value = base.height
     appliedOptions = options
@@ -292,7 +295,7 @@ function resizeWithKey(event: KeyboardEvent): void {
 watch(() => props.input.collapsed, (value) => {
   collapsed.value = value === true
 }, { immediate: true })
-watch([() => props.input, () => props.readonly, () => props.theme, showCanvas, compact, () => group?.labelWidth.value], () => {
+watch([() => props.input, () => props.modulePreset, () => props.readonly, () => props.theme, showCanvas, compact, () => group?.labelWidth.value], () => {
   void reconcile()
 }, { flush: 'post' })
 onMounted(() => {

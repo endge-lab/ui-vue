@@ -117,6 +117,7 @@ export interface SFCVueRenderAdapterProps {
   ir: RComponentSFC_IR | null
   props?: Record<string, unknown>
   renderVersion?: number
+  runtimeScopeId?: string
   host?: ComponentSFCRenderPort | null
   inspection?: SFCRenderInspectionSessionLike | null
 }
