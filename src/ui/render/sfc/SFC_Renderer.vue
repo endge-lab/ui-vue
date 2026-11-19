@@ -28,6 +28,9 @@ const workspaceRevision = ref(0)
 onScopeDispose(Endge.workspace.subscribe(() => {
   workspaceRevision.value += 1
 }))
+onScopeDispose(Endge.configuration.subscribe(() => {
+  workspaceRevision.value += 1
+}))
 const workspaceReferences = computed(() => {
   void workspaceRevision.value
   return new Map(Object.values(readWorkspaceRendererReferences() ?? {}).map(reference => [
