@@ -1,12 +1,14 @@
-import type { EndgeWorkspaceDefinition, RComponentSFC_IR_ElementNode } from '@endge/core'
+import type { EndgeWorkspaceDefinition, RComponentSFC_IR_ElementNode, ScopedModuleContext } from '@endge/core'
 import type { SFCVueRenderAdapter } from '@/services/render/sfc/sfc-vue-render.type'
-import { Endge } from '@endge/core'
+import { createLocalModuleLoader, Endge, EndgeModule, RuntimeScope } from '@endge/core'
 import { Raph } from '@raphy-js/raph'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { h, isVNode } from 'vue'
-import { EndgeVue_Module } from '@/modules/EndgeVue_Module'
+import { createEndgeVuePlugin, EndgeVue_Module } from '@/modules/EndgeVue_Module'
+import { registerNamedScopedVueRenderer } from '@/services/modules/vue-module'
 import { NativeVueSFCAdapter } from '@/services/render/sfc/native-vue-sfc-adapter'
+import { workspaceRendererAttachment } from '@/ui/render/sfc/SFCRender_Adapter'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNode } from '@/ui/render/sfc/SFCRender_Node'
 
@@ -82,13 +84,64 @@ describe('проверка SFC-адаптер модуля Endge Vue', () => {
     Endge.workspace.apply(TEST_WORKSPACE)
   })
 
-  it('регистрирует и активирует vue-native для выбранного Workspace', () => {
+  it('регистрирует и активирует vue для выбранного Workspace', () => {
     const module = new EndgeVue_Module()
 
     module.setup()
     module.build()
 
     expect(Endge.uiRegistry.adapters.active?.id).toBe(NativeVueSFCAdapter.id)
+  })
+
+  it('использует штатный рендерер приложения, пока workspace не закрепил версию из каталога', async () => {
+    const plugin = createEndgeVuePlugin({ defaultRenderers: { Input: () => 'app default' } })
+    const module = plugin.modules![0]!.create({ getModule: vi.fn(), createDiagnosticsSnapshot: vi.fn() }) as EndgeVue_Module
+    module.setup()
+    module.build()
+    expect(Endge.uiRegistry.adapters.active?.id).toBe('vue')
+
+    const node: RComponentSFC_IR_ElementNode = {
+      id: 'input',
+      kind: 'element',
+      tag: 'Input',
+      props: {},
+      directives: {},
+      children: [],
+    }
+    const render = () => renderSFCNode(h, node, createSFCVueRenderContext({}))
+    expect(render()).toBe('app default')
+
+    const reference = { identity: 'catalog-fixture', version: '1.0.1', rendererId: 'preview' }
+    const scope = new RuntimeScope({ id: 'renderer-workspace', path: 'renderer-workspace' })
+    const workspaceScope = vi.spyOn(Endge.runtime, 'workspaceModuleScope', 'get').mockReturnValue(scope)
+    const modules = Endge.runtime.modules
+    modules.setup(createLocalModuleLoader([{
+      reference,
+      artifact: {
+        create: () => new class extends EndgeModule<ScopedModuleContext> {
+          override setup(context: ScopedModuleContext): void {
+            registerNamedScopedVueRenderer(context, 'Input', 'preview', () => 'catalog version')
+          }
+        }(),
+      },
+    }]))
+    try {
+      await scope.activate()
+      await modules.attach(scope, workspaceRendererAttachment(reference), reference)
+      Endge.workspace.apply({
+        ...TEST_WORKSPACE,
+        configuration: { ...TEST_WORKSPACE.configuration, defaultRenderers: { Input: reference } },
+      })
+      expect(render()).toBe('catalog version')
+
+      Endge.workspace.apply(TEST_WORKSPACE)
+      expect(render()).toBe('app default')
+    }
+    finally {
+      workspaceScope.mockRestore()
+      await scope.dispose()
+      modules.setup(undefined)
+    }
   })
 
   it('повторный start после reset не объявляет фазу watch заново (смена фасета)', () => {
@@ -119,7 +172,7 @@ describe('проверка SFC-адаптер модуля Endge Vue', () => {
     })
 
     expect(() => module.build()).toThrow(
-      'adapter "customer-aodb" is not registered. Registered adapters: vue-native',
+      'adapter "customer-aodb" is not registered. Registered adapters: vue',
     )
   })
 

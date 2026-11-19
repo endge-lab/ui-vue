@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { CompositionSession } from '@endge/core'
+import { DEFAULT_ENDGE_TOOLTIP_CONFIGURATION, Endge, ENDGE_VUE_SFC_ADAPTER_ID } from '@endge/core'
 
-import { DEFAULT_ENDGE_TOOLTIP_CONFIGURATION, Endge } from '@endge/core'
 import { subscribeKeyboardState } from '@endge/utils'
 import { onBeforeUnmount, provide, ref } from 'vue'
 import EndgeContextMenuRoot from '@/ui/overlay/EndgeContextMenuRoot.vue'
@@ -15,7 +15,7 @@ const props = withDefaults(defineProps<{
   tooltipAdapterId?: string
   mountStartup?: boolean
 }>(), {
-  tooltipAdapterId: 'vue-native',
+  tooltipAdapterId: ENDGE_VUE_SFC_ADAPTER_ID,
   mountStartup: true,
 })
 

@@ -2,6 +2,7 @@ import type { SFCVueRenderAdapter } from '@/services/render/sfc/sfc-vue-render.t
 import {
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL,
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
+  ENDGE_VUE_SFC_ADAPTER_ID,
 } from '@endge/core'
 
 import { markRaw } from 'vue'
@@ -28,7 +29,7 @@ import { SFCRender_TimelineChart, SFCRender_TimelineGroup } from '@/ui/render/sf
 
 import { SFCRender_Tooltip } from '@/ui/render/sfc/SFCRender_Tooltip'
 
-export const NATIVE_VUE_SFC_ADAPTER_ID = 'vue-native'
+export const NATIVE_VUE_SFC_ADAPTER_ID = ENDGE_VUE_SFC_ADAPTER_ID
 
 // Нативный DOM adapter для Vue render engine.
 export const NativeVueSFCAdapter: SFCVueRenderAdapter = {
