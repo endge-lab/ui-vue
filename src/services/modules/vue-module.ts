@@ -1,6 +1,7 @@
 import type { ModuleArtifact, ScopedModule, ScopedModuleContext } from '@endge/core'
 import type { SFCVueRenderAdapterKey, SFCVueRenderFunction } from '@/services/render/sfc/sfc-vue-render.type'
 import type { TimelinePresetDescriptor, TimelinePresetEntry, TimelinePresetProvider } from '@/ui/timeline/timeline-presets'
+import { isModuleRendererId } from '@endge/core'
 
 export const MODULE_VISUAL_ATTRIBUTE = 'data-endge-module-visual'
 export const VUE_MODULE_RENDERERS = 'endge.vue.renderers'
@@ -12,6 +13,18 @@ export function registerScopedVueRenderer(
   renderer: SFCVueRenderFunction,
 ): () => void {
   return context.register(VUE_MODULE_RENDERERS, tag, renderer)
+}
+
+export function registerNamedScopedVueRenderer(
+  context: ScopedModuleContext,
+  primitive: SFCVueRenderAdapterKey,
+  id: string,
+  renderer: SFCVueRenderFunction,
+): () => void {
+  if (!isModuleRendererId(id)) {
+    throw new Error(`Invalid renderer ID "${id}".`)
+  }
+  return context.register(VUE_MODULE_RENDERERS, `${primitive}/${id}`, renderer)
 }
 
 export function registerScopedTimelinePreset(
