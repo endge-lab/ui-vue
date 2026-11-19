@@ -1,4 +1,8 @@
+import type { RuntimeScope } from '@endge/core'
 import type { TimelineChartHandle, TimelineChartMountConfig } from '@nova-lab/timeline'
+
+import { Endge } from '@endge/core'
+import { VUE_MODULE_TIMELINE_PRESETS } from '@/services/modules/vue-module'
 
 interface TimelinePresetFieldBase {
   label: string
@@ -27,7 +31,12 @@ export interface TimelinePresetProvider {
   mounted?: (chart: TimelineChartHandle, context: TimelinePresetContext) => void | (() => void)
 }
 
-const presets = new Map<string, { descriptor: TimelinePresetDescriptor, provider?: TimelinePresetProvider }>()
+export interface TimelinePresetEntry {
+  descriptor: TimelinePresetDescriptor
+  provider?: TimelinePresetProvider
+}
+
+const presets = new Map<string, TimelinePresetEntry>()
 
 // Компоненты разрешают только те реализации, которые явно зарегистрировал Vue-хост.
 export function registerTimelinePreset(descriptor: TimelinePresetDescriptor, provider?: TimelinePresetProvider): () => void {
@@ -44,18 +53,22 @@ export function registerTimelinePreset(descriptor: TimelinePresetDescriptor, pro
   }
 }
 
-export function listTimelinePresets(): TimelinePresetDescriptor[] {
-  return [...presets.values()].map(({ descriptor }) => structuredClone(descriptor))
+export function listTimelinePresets(scope?: RuntimeScope | null): TimelinePresetDescriptor[] {
+  const available = new Map(presets)
+  for (const [name, { value }] of Endge.runtime.modules.list<TimelinePresetEntry>(scope ?? null, VUE_MODULE_TIMELINE_PRESETS)) {
+    available.set(name, value)
+  }
+  return [...available.values()].map(({ descriptor }) => structuredClone(descriptor))
 }
 
-export function resolveTimelinePreset(name: unknown, settings: unknown) {
+export function resolveTimelinePreset(name: unknown, settings: unknown, entry?: TimelinePresetEntry) {
   if (name == null || name === '') {
     if (settings != null && Object.keys(settings).length) {
       throw new Error('Укажите пресет Timeline для settings.')
     }
     return undefined
   }
-  const preset = typeof name === 'string' ? presets.get(name) : undefined
+  const preset = entry ?? (typeof name === 'string' ? presets.get(name) : undefined)
   if (!preset?.provider) {
     throw new Error(`Реализация пресета Timeline "${String(name)}" недоступна в текущем хосте.`)
   }

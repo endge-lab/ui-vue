@@ -9,7 +9,7 @@ import type {
 } from '@/services/render/sfc/sfc-vue-render.type'
 import { SFC_VUE_RENDER_ADAPTER_OPTIONAL_KEYS, SFC_VUE_RENDER_ADAPTER_REQUIRED_KEYS } from '@/services/render/sfc/sfc-vue-render.type'
 import { registerSFCInspectionDefinitionTree, registerSFCInspectionValueNode } from '@/services/render/sfc/SFCVueRenderInspection'
-import { requireSFCAdapterRenderer } from '@/ui/render/sfc/SFCRender_Adapter'
+import { renderWithSFCAdapter } from '@/ui/render/sfc/SFCRender_Adapter'
 import { resolveSFCConditionState, SFCRender_Base } from '@/ui/render/sfc/SFCRender_Base'
 import { SFCRender_Component } from '@/ui/render/sfc/SFCRender_Component'
 import { releaseNodeComputations } from '@/ui/render/sfc/SFCRender_Computations'
@@ -46,12 +46,10 @@ const SFCRender_Structural: SFCVueRenderFunction = (input) => {
   return null
 }
 const SFCRender_CompoundAdapter: SFCVueRenderFunction = (input) => {
-  const renderFn = requireSFCAdapterRenderer(input.node.tag as SFCVueRenderAdapterKey)
-  return renderFn(input)
+  return renderWithSFCAdapter(input.node.tag as SFCVueRenderAdapterKey, input)
 }
 const SFCRender_Adapter: SFCVueRenderFunction = SFCRender_Base((input) => {
-  const renderFn = requireSFCAdapterRenderer(input.node.tag as SFCVueRenderAdapterKey)
-  return renderFn(input)
+  return renderWithSFCAdapter(input.node.tag as SFCVueRenderAdapterKey, input)
 })
 const elementRenderers = new WeakMap<RComponentSFC_IR_ElementNode, SFCVueRenderFunction>()
 
