@@ -1,7 +1,7 @@
 {
   "name": "@endge/ui-vue",
   "type": "module",
-  "version": "2.4.1-dev.24",
+  "version": "2.4.2-dev.25",
   "private": false,
   "license": "Apache-2.0",
   "repository": {
@@ -33,7 +33,7 @@
     "lint-fix": "eslint . --fix --cache"
   },
   "peerDependencies": {
-    "@endge/core": "1.8.0-dev.25",
+    "@endge/core": "1.8.0-dev.25 || 1.9.0-dev.26",
     "@endge/utils": ">=1.0.0-dev <2",
     "@raphy-js/raph": ">=1.0.0-dev.18 <2 || >=1.0.1-dev.25 <2",
     "vue": "^3.3.0"
@@ -47,7 +47,7 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "9.3.0",
-    "@endge/core": "1.8.0-dev.25",
+    "@endge/core": "1.9.0-dev.26",
     "@endge/utils": "1.0.0-dev.9",
     "@raphy-js/raph": "1.0.1-dev.55",
     "@types/sortablejs": "^1.15.9",
