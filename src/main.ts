@@ -58,6 +58,7 @@ export * from '@/ui/render/sfc/SFCRender_Tooltip'
 export * from '@/ui/table/tanstack-table.types'
 export { default as TanStackSfcDataTable } from '@/ui/table/TanStackSfcDataTable.vue'
 export { default as TanStackTableRuntimeRenderer } from '@/ui/table/TanStackTableRuntimeRenderer.vue'
+export { timelinePreviewGroupsHiddenKey } from '@/ui/timeline/timeline-group-context'
 export { listTimelinePresets, registerTimelinePreset } from '@/ui/timeline/timeline-presets'
 export type { TimelinePresetContext, TimelinePresetDescriptor, TimelinePresetEditableRecipe, TimelinePresetField, TimelinePresetProvider } from '@/ui/timeline/timeline-presets'
 

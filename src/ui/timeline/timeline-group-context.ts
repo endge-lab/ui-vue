@@ -14,3 +14,4 @@ export interface TimelineGroupContext {
 }
 
 export const timelineGroupKey: InjectionKey<TimelineGroupContext> = Symbol('TimelineGroup')
+export const timelinePreviewGroupsHiddenKey: InjectionKey<Readonly<Ref<boolean>>> = Symbol('TimelinePreviewGroupsHidden')
