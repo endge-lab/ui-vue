@@ -1,14 +1,13 @@
 import type { ComponentSFCEventRuntimeSource } from '@endge/core'
 import type { VNode } from 'vue'
 import type { SFCVueRenderElementInput, SFCVueRenderFunction } from '@/services/render/sfc/sfc-vue-render.type'
-import type { TimelinePresetEntry } from '@/ui/timeline/timeline-presets'
-import { Endge } from '@endge/core'
 import { cloneVNode, isVNode } from 'vue'
-import { MODULE_VISUAL_ATTRIBUTE, VUE_MODULE_TIMELINE_PRESETS } from '@/services/modules/vue-module'
+import { MODULE_VISUAL_ATTRIBUTE } from '@/services/modules/vue-module'
 import { resolveSFCModuleScope } from '@/ui/render/sfc/SFCRender_Adapter'
 import { evaluateSFCValue } from '@/ui/render/sfc/SFCRender_Evaluator'
 import SFCTimelineChart from '@/ui/timeline/SFCTimelineChart.vue'
 import SFCTimelineGroup from '@/ui/timeline/SFCTimelineGroup.vue'
+import { resolveTimelinePresetContribution } from '@/ui/timeline/timeline-presets'
 
 export const SFCRender_TimelineChart: SFCVueRenderFunction = (input) => {
   if (input.props.hidden === true) {
@@ -20,12 +19,15 @@ export const SFCRender_TimelineChart: SFCVueRenderFunction = (input) => {
   const key = String(declaredKey ?? input.context.iteration?.key ?? input.node.id)
   const presetName = input.props.preset
   const entry = typeof presetName === 'string'
-    ? Endge.runtime.modules.resolve<TimelinePresetEntry>(resolveSFCModuleScope(input.context), VUE_MODULE_TIMELINE_PRESETS, presetName)
+    ? resolveTimelinePresetContribution(resolveSFCModuleScope(input.context), presetName)
     : undefined
   return input.h(SFCTimelineChart, {
     ...input.attrs,
     [MODULE_VISUAL_ATTRIBUTE]: entry?.visualToken,
     modulePreset: entry?.value,
+    sourceStart: input.node.sourceRange?.start,
+    sourceChildren: input.node.children,
+    recipeContext: input.context,
     key,
     chartKey: key,
     input: input.props,

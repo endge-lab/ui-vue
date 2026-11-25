@@ -171,6 +171,7 @@ function resolveSFCElementRenderer(node: RComponentSFC_IR_ElementNode): SFCVueRe
       return SFCRender_Variant
     case 'TooltipTrigger':
     case 'TooltipContent':
+    case 'TimelineTaskRecipe':
     case 'Column':
     case 'Cell':
     case 'ColumnMenu':

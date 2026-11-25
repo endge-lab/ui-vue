@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import type { SFCVueRenderAdapterProps } from '@/services/render/sfc/sfc-vue-render.type'
-import { Endge } from '@endge/core'
+import { Endge, moduleReferenceKey } from '@endge/core'
 import { computed, defineComponent, Fragment, getCurrentInstance, h, inject, onScopeDispose, ref, watch } from 'vue'
+import { useCurrentLocale } from '@/reactive/use-current-locale'
+import { useCurrentTimezone } from '@/reactive/use-current-timezone'
 import { registerSFCInspectionRoot } from '@/services/render/sfc/SFCVueRenderInspection'
 import { EndgeVueTooltipManagerKey } from '@/ui/overlay/tooltip/endge-tooltip-manager'
-import { readWorkspaceRendererReferences, workspaceRendererAttachment } from '@/ui/render/sfc/SFCRender_Adapter'
 import { createSFCVueRenderContext } from '@/ui/render/sfc/SFCRender_Context'
 import { renderSFCNodes } from '@/ui/render/sfc/SFCRender_Node'
 
 const props = defineProps<SFCVueRenderAdapterProps>()
 const adapterVersion = ref(0)
+const { current: currentLocale } = useCurrentLocale()
+const { current: currentTimezone } = useCurrentTimezone()
 const consumerScope = `renderer:${getCurrentInstance()!.uid}`
 watch(() => [props.host, props.ir] as const, (_next, previous) => {
   previous?.[0]?.releaseComputationResources(consumerScope)
@@ -31,18 +34,18 @@ onScopeDispose(Endge.workspace.subscribe(() => {
 onScopeDispose(Endge.configuration.subscribe(() => {
   workspaceRevision.value += 1
 }))
-const workspaceReferences = computed(() => {
+const workspaceModuleKeys = computed(() => {
   void workspaceRevision.value
-  return new Map(Object.values(readWorkspaceRendererReferences() ?? {}).map(reference => [
-    workspaceRendererAttachment(reference),
-    reference,
-  ]))
+  if (!Endge.configuration.isResolved || Endge.mode === 'debugger') {
+    return ''
+  }
+  const { defaultRenderers, timelinePresets } = Endge.configuration.current
+  const references = [...Object.values(defaultRenderers ?? {}), ...timelinePresets ?? []]
+  return [...new Set(references.map(moduleReferenceKey))].sort().join('\n')
 })
-const workspaceModuleKeys = computed(() => [...workspaceReferences.value.keys()].sort().join('\n'))
 const loadingRenderers = ref(false)
-watch([() => Boolean(props.ir), workspaceModuleKeys], async ([hasIR], _previous, onCleanup) => {
-  const references = workspaceReferences.value
-  loadingRenderers.value = hasIR && references.size > 0
+watch([() => Boolean(props.ir), workspaceModuleKeys], async ([hasIR, keys], _previous, onCleanup) => {
+  loadingRenderers.value = hasIR && keys.length > 0
   if (!loadingRenderers.value) {
     return
   }
@@ -51,10 +54,7 @@ watch([() => Boolean(props.ir), workspaceModuleKeys], async ([hasIR], _previous,
     active = false
   })
   try {
-    const scope = await Endge.runtime.activateWorkspaceModuleScope()
-    if (active) {
-      await Promise.allSettled(Array.from(references, ([key, reference]) => Endge.runtime.modules.attach(scope, key, reference)))
-    }
+    await Endge.runtime.prepareWorkspaceModules()
   }
   finally {
     if (active) {
@@ -64,6 +64,12 @@ watch([() => Boolean(props.ir), workspaceModuleKeys], async ([hasIR], _previous,
 }, { immediate: true })
 
 const context = computed(() => {
+  void currentLocale.value
+  const runtimeContext = Object.freeze({
+    ...Endge.context.runtimeSnapshot(),
+    // Only effects that actually read the timezone depend on its Vue ref.
+    get timezone() { return currentTimezone.value },
+  })
   const context = createSFCVueRenderContext(
     props.props,
     props.renderVersion ?? 0,
@@ -77,7 +83,10 @@ const context = computed(() => {
     undefined,
     'default',
     tooltipManager,
+    undefined,
+    { context: runtimeContext },
   )
+  context.translate = props.translate
   return props.runtimeScopeId
     ? { ...context, runtimeScopeIds: [...context.runtimeScopeIds, props.runtimeScopeId] }
     : context

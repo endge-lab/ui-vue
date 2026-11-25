@@ -19,9 +19,9 @@ export function createSFCVueRenderContext(
   variant = 'default',
   tooltipManager: EndgeVueTooltipManager | null = null,
   portBindings: readonly ComponentSFCRequiredPortBinding[] = [],
-  parentContext?: SFCVueRenderContext,
+  inheritedContext?: Partial<Pick<SFCVueRenderContext, 'context' | 'translate' | 'runtimeScopeIds'>>,
 ): SFCVueRenderContext {
-  const runtimeScopeIds = parentContext?.runtimeScopeIds ?? resolveRuntimeScopeIds(host)
+  const runtimeScopeIds = inheritedContext?.runtimeScopeIds ?? resolveRuntimeScopeIds(host)
   const styleArtifacts = inheritedStyleArtifacts
     ? [...inheritedStyleArtifacts]
     : [...(host?.styleArtifacts ?? Endge.styles.getActiveArtifacts())]
@@ -30,7 +30,8 @@ export function createSFCVueRenderContext(
   }
   const context: SFCVueRenderContext = {
     props: props ?? {},
-    context: parentContext?.context ?? Object.freeze(Endge.context.runtimeSnapshot()),
+    translate: inheritedContext?.translate,
+    context: inheritedContext?.context ?? Object.freeze(Endge.context.runtimeSnapshot()),
     locals: {},
     iteration: null,
     dataScope: null,
@@ -78,6 +79,7 @@ export function extendSFCVueRenderContext(
 ): SFCVueRenderContext {
   return {
     props: context.props,
+    translate: context.translate,
     context: context.context,
     locals: {
       ...context.locals,
