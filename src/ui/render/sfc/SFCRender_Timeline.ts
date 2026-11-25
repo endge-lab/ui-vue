@@ -21,6 +21,10 @@ export const SFCRender_TimelineChart: SFCVueRenderFunction = (input) => {
   const entry = typeof presetName === 'string'
     ? resolveTimelinePresetContribution(resolveSFCModuleScope(input.context), presetName)
     : undefined
+  const hasBoundary = input.context.componentStack.length <= 1
+    && input.context.host?.getArtifact()?.payload.runtimeDependencies?.boundaries.some(boundary => (
+      boundary.kind === 'timeline' && boundary.id === input.node.id
+    ))
   return input.h(SFCTimelineChart, {
     ...input.attrs,
     [MODULE_VISUAL_ATTRIBUTE]: entry?.visualToken,
@@ -30,6 +34,7 @@ export const SFCRender_TimelineChart: SFCVueRenderFunction = (input) => {
     recipeContext: input.context,
     key,
     chartKey: key,
+    boundaryId: hasBoundary ? input.node.id : undefined,
     input: input.props,
     readonly: input.context.host?.readonly ?? false,
     theme: input.context.context.theme === 'dark' ? 'dark' : 'light',

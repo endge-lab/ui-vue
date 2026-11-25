@@ -23,12 +23,16 @@ export function inferTimelineRange(data: NonNullable<TimelineChartMountConfig['d
   }
   for (const rows of [data.tasks, data.backgrounds]) {
     for (const row of rows ?? []) {
-      include(row.startTime)
-      include(row.endTime)
+      if (row) {
+        include(row.startTime)
+        include(row.endTime)
+      }
     }
   }
   for (const point of data.points ?? []) {
-    include(point.time)
+    if (point) {
+      include(point.time)
+    }
   }
   if (!Number.isFinite(start)) {
     return undefined
@@ -136,11 +140,25 @@ export function readTimelineColumns(input: unknown): TimelineGroupColumnInput[] 
   })
 }
 
-export function readTimelineData(input: unknown): TimelineChartMountConfig['data'] {
+export const timelineCollections = ['groups', 'tasks', 'points', 'links', 'backgrounds'] as const
+
+// Indexed deletes can leave holes in a Raph array. Nova receives dense arrays.
+export function compactTimelineData(data: NonNullable<TimelineChartMountConfig['data']>): NonNullable<TimelineChartMountConfig['data']> {
+  let snapshot = data
+  for (const name of timelineCollections) {
+    const rows: readonly unknown[] | undefined = data[name]
+    if (rows?.includes(undefined)) {
+      snapshot = { ...snapshot, [name]: rows.filter(row => row !== undefined) }
+    }
+  }
+  return snapshot
+}
+
+export function readTimelineData(input: unknown): NonNullable<TimelineChartMountConfig['data']> {
   if (!isTimelineRecord(input)) {
     throw new TypeError('Timeline data должны быть объектом.')
   }
-  for (const name of ['groups', 'tasks', 'points', 'links', 'backgrounds']) {
+  for (const name of timelineCollections) {
     if (input[name] != null && !Array.isArray(input[name])) {
       throw new TypeError(`Timeline data.${name} должны быть массивом.`)
     }

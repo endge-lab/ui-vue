@@ -62,5 +62,6 @@ export { timelinePreviewGroupsHiddenKey } from '@/ui/timeline/timeline-group-con
 export { listTimelinePresets, registerTimelinePreset } from '@/ui/timeline/timeline-presets'
 export type { TimelinePresetContext, TimelinePresetDescriptor, TimelinePresetEditableRecipe, TimelinePresetField, TimelinePresetProvider } from '@/ui/timeline/timeline-presets'
 
+export { timelineRecipeElementAsset } from '@/ui/timeline/timeline-recipe-element'
 export { createTimelineTaskRenderRecipe, timelineRecipePreviewKey } from '@/ui/timeline/timeline-task-recipes'
 export type { TimelineRecipeChartPreview } from '@/ui/timeline/timeline-task-recipes'
