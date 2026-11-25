@@ -18,6 +18,7 @@ export default defineConfig({
         '@endge/core',
         '@endge/utils',
         '@raphy-js/raph',
+        '@nova-lab/core',
         '@nova-lab/timeline',
         'vue',
       ],

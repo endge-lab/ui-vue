@@ -1,4 +1,5 @@
 import type { ModuleArtifact, ScopedModule, ScopedModuleContext } from '@endge/core'
+import type { NovaAssets } from '@nova-lab/core'
 import type { SFCVueRenderAdapterKey, SFCVueRenderFunction } from '@/services/render/sfc/sfc-vue-render.type'
 import type { TimelinePresetDescriptor, TimelinePresetEntry, TimelinePresetProvider } from '@/ui/timeline/timeline-presets'
 import { isModuleRendererId } from '@endge/core'
@@ -43,7 +44,7 @@ export interface VueModuleHost {
   core: typeof import('@endge/core')
   vue: typeof import('vue')
   uiVue: typeof import('@/main')
-  timeline: typeof import('@nova-lab/timeline')
+  timeline: typeof import('@nova-lab/timeline') & { TimelineAssets: typeof NovaAssets }
 }
 
 export interface VueModuleExports {
@@ -68,6 +69,8 @@ function installVueModuleStyle(token: string, css: string): () => void {
   return () => style.remove()
 }
 
+let timelineModule: Promise<VueModuleHost['timeline']> | undefined
 export function loadVueModuleTimeline(): Promise<VueModuleHost['timeline']> {
-  return import('@nova-lab/timeline')
+  return timelineModule ??= Promise.all([import('@nova-lab/timeline'), import('@nova-lab/core')])
+    .then(([timeline, { NovaAssets }]) => ({ ...timeline, TimelineAssets: NovaAssets }))
 }

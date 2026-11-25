@@ -11,9 +11,12 @@ importers:
       '@lucide/vue':
         specifier: ^1.14.0
         version: 1.46.0(vue@3.5.38(typescript@6.0.3))
+      '@nova-lab/core':
+        specifier: 1.2.2-dev.274
+        version: 1.2.2-dev.274
       '@nova-lab/timeline':
-        specifier: 1.2.0-dev.28
-        version: 1.2.0-dev.28
+        specifier: 1.2.0-dev.29
+        version: 1.2.0-dev.29
       '@tanstack/vue-table':
         specifier: ^8.21.3
         version: 8.21.3(vue@3.5.38(typescript@6.0.3))
@@ -28,8 +31,8 @@ importers:
         specifier: 9.3.0
         version: 9.3.0(@typescript-eslint/typescript-estree@8.68.0(typescript@6.0.3))(@typescript-eslint/utils@8.68.0(eslint@10.9.1(jiti@1.21.7))(typescript@6.0.3))(@vue/compiler-sfc@3.5.38)(eslint@10.9.1(jiti@1.21.7))(typescript@6.0.3)(vitest@2.1.9(jsdom@26.1.0)(sass-embedded@1.100.0)(sass@1.100.0))
       '@endge/core':
-        specifier: 1.10.0-dev.34
-        version: 1.10.0-dev.34(@raphy-js/raph@1.0.1-dev.55)(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)
+        specifier: 1.11.0-dev.41
+        version: 1.11.0-dev.41(@raphy-js/raph@1.0.1-dev.55)(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)
       '@endge/utils':
         specifier: 1.0.0-dev.9
         version: 1.0.0-dev.9
@@ -348,8 +351,8 @@ packages:
       oxlint:
         optional: true
 
-  '@endge/core@1.10.0-dev.34':
-    resolution: {integrity: sha512-TuN/JP0kxCrPsYgc4IwFnEB87HFslMqPZEnK8mof1HX9wLahafmfNJQhI67+rZf68MFfri4mZ/v5QOszd7r+TQ==}
+  '@endge/core@1.11.0-dev.41':
+    resolution: {integrity: sha512-UWEp17sVSFuZU+MFb8Q7GmihCFvSrh8+z2+K3C7spVw5t4th7hVRZ0lS6GZ1jVwvCgp8j6eqRJf45jOesWQQ8A==}
     peerDependencies:
       '@raphy-js/raph': '>=1.0.0-dev.18 <2 || >=1.0.1-dev.25 <2'
       class-transformer: ^0.5.1
@@ -825,8 +828,8 @@ packages:
       '@typedworks/token':
         optional: true
 
-  '@nova-lab/timeline@1.2.0-dev.28':
-    resolution: {integrity: sha512-FS52SHm/NgP8ul+m9ONVcFDtxVWAqAsec7IgptiPn5r8TREwEt5zXrVfyo2spAnGD1drJGsPJtwFLHXFQMwz3Q==}
+  '@nova-lab/timeline@1.2.0-dev.29':
+    resolution: {integrity: sha512-tVOx55OR8fBadIkjzl5K/je4Q8AFL4OzYUuRIGfflsZ/UtXO0b8jEb0+24Al9JyFeTBmB9bqhynZjc/awncwhQ==}
 
   '@ota-meshi/ast-token-store@0.3.0':
     resolution: {integrity: sha512-XRO0zi2NIUKq2lUk3T1ecFSld1fMWRKE6naRFGkgkdeosx7IslyUKNv5Dcb5PJTja9tHJoFu0v/7yEpAkrkrTg==}
@@ -3850,7 +3853,7 @@ snapshots:
     optionalDependencies:
       eslint: 10.9.1(jiti@1.21.7)
 
-  '@endge/core@1.10.0-dev.34(@raphy-js/raph@1.0.1-dev.55)(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)':
+  '@endge/core@1.11.0-dev.41(@raphy-js/raph@1.0.1-dev.55)(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)':
     dependencies:
       '@babel/generator': 7.29.7
       '@babel/parser': 7.29.7
@@ -4239,7 +4242,7 @@ snapshots:
       gl-matrix: 3.4.4
       rbush: 4.0.1
 
-  '@nova-lab/timeline@1.2.0-dev.28':
+  '@nova-lab/timeline@1.2.0-dev.29':
     dependencies:
       '@endge/utils': 1.0.0-dev.9
       '@nova-lab/core': 1.2.2-dev.274
