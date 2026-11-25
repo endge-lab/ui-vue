@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { RComponentSFC_IR_ElementNode, TimelineTaskSelectedEvent } from '@endge/core'
+import type { RComponentSFC_IR_ElementNode, RComponentSFC_IR_Node, RComponentSFC_IR_Value, TimelineTaskSelectedEvent } from '@endge/core'
 import type { TimelineChartHandle, TimelineChartMountConfig } from '@nova-lab/timeline'
 import type { TimelinePresetContext, TimelinePresetEntry, TimelinePresetProvider } from './timeline-presets'
 import type { SFCVueRenderContext } from '@/services/render/sfc/sfc-vue-render.type'
 import { ChevronDown, ChevronUp } from '@lucide/vue'
 import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { timelineGroupKey } from './timeline-group-context'
+import { timelineGroupKey, timelinePreviewGroupsHiddenKey } from './timeline-group-context'
 import { EMPTY_TIMELINE_DATA, inferTimelineRange, isTimelineRecord, mergeTimelineOptions, nextTimelineId, readTimelineColumnNodes, readTimelineColumns, readTimelineData, readTimelineRange, sameTimelineRange, timelinePixels } from './timeline-input'
 import { resolveTimelinePreset } from './timeline-presets'
 import { createTimelineRecipeProfiles, inheritedTimelineProfile, timelineRecipePreviewKey } from './timeline-task-recipes'
@@ -14,8 +14,7 @@ defineOptions({ inheritAttrs: false })
 const props = defineProps<{
   input: Record<string, unknown>
   sourceStart?: number
-  columnNodes?: readonly RComponentSFC_IR_ElementNode[]
-  taskRecipes?: readonly RComponentSFC_IR_ElementNode[]
+  sourceChildren?: readonly RComponentSFC_IR_Node[]
   recipeContext?: SFCVueRenderContext
   chartKey: string
   modulePreset?: TimelinePresetEntry
@@ -27,18 +26,33 @@ const props = defineProps<{
 }>()
 const timelineId = nextTimelineId()
 const group = inject(timelineGroupKey, null)
+const previewGroupsHidden = inject(timelinePreviewGroupsHiddenKey, null)
 const observePreview = inject(timelineRecipePreviewKey, null)
 let clearRecipePreview: (() => void) | undefined
 let recipeData: NonNullable<TimelineChartMountConfig['data']> = EMPTY_TIMELINE_DATA
-let appliedRecipes: typeof props.taskRecipes
+let appliedRecipes: readonly RComponentSFC_IR_ElementNode[] | undefined
 let localProfiles: ReturnType<typeof createTimelineRecipeProfiles>
 let appliedProfileSelection: NonNullable<TimelineChartMountConfig['options']>['profiles']
 let appliedRecipeContext: SFCVueRenderContext | undefined
+let appliedSourceStart: number | undefined
+let appliedRecipeTimezone: string | null | undefined
 const target = ref<HTMLElement>()
 const title = computed(() => typeof props.input.title === 'string' ? props.input.title : '')
-const sourceColumns = computed(() => props.columnNodes?.length && props.recipeContext
-  ? readTimelineColumnNodes(props.columnNodes, props.recipeContext)
+const columnNodes = computed(() => childElements('Column'))
+const taskRecipes = computed(() => childElements('TimelineTaskRecipe'))
+const hasRecipeConditions = computed(() => taskRecipes.value.some(node => node.props.when))
+const columnTimezone = computed(() => columnNodes.value.some(node => Object.values(node.props).some(readsContext))
+  ? props.recipeContext?.context.timezone
   : undefined)
+const recipeTimezone = computed(() => taskRecipes.value.some(node => readsContext(node.props.when))
+  ? props.recipeContext?.context.timezone
+  : undefined)
+const sourceColumns = computed(() => {
+  void columnTimezone.value
+  return columnNodes.value.length && props.recipeContext
+    ? readTimelineColumnNodes(columnNodes.value, props.recipeContext)
+    : undefined
+})
 const collapsed = ref(false)
 const error = ref('')
 const loading = ref(true)
@@ -77,6 +91,14 @@ let authoredColumns: ReturnType<typeof readTimelineColumns> | undefined
 const blankColumnLabel = () => ''
 let resizeStart: { pointer: number, y: number, height: number } | undefined
 
+function childElements(tag: 'Column' | 'TimelineTaskRecipe'): RComponentSFC_IR_ElementNode[] {
+  return props.sourceChildren?.filter((node): node is RComponentSFC_IR_ElementNode => node.kind === 'element' && node.tag === tag) ?? []
+}
+
+function readsContext(value: RComponentSFC_IR_Value | undefined): boolean {
+  return value?.kind === 'expression' && value.reads.some(read => read.source === 'context')
+}
+
 function errorMessage(cause: unknown): string {
   return cause instanceof Error ? cause.message : String(cause)
 }
@@ -91,10 +113,10 @@ function focusTask(id: string): boolean {
 
 function configuration(base: Partial<TimelineChartMountConfig>) {
   const options = mergeTimelineOptions(base.options, props.input.options)
-  const timezone = props.input.timezone
-  if (typeof timezone === 'string' && timezone) {
-    options.timezone = timezone === 'local' ? Intl.DateTimeFormat().resolvedOptions().timeZone : timezone
-  }
+  const timezone = typeof props.input.timezone === 'string' && props.input.timezone
+    ? props.input.timezone
+    : options.timezone || 'UTC'
+  options.timezone = timezone === 'local' ? Intl.DateTimeFormat().resolvedOptions().timeZone : timezone
   if (sourceColumns.value) {
     options.groups = { ...options.groups, columns: sourceColumns.value }
   }
@@ -123,6 +145,9 @@ function configuration(base: Partial<TimelineChartMountConfig>) {
           }),
     }
     options.resize = { ...options.resize, groupColumns: 'lazy' }
+  }
+  if (previewGroupsHidden) {
+    options.groups = { ...options.groups, visible: !previewGroupsHidden.value && (options.groups?.visible ?? true) }
   }
   if (props.readonly || !preset.value.value) {
     options.interaction = mergeTimelineOptions(options, {
@@ -241,18 +266,20 @@ async function reconcile(): Promise<void> {
     const { data, options } = configuration(base)
     recipeData = data ?? EMPTY_TIMELINE_DATA
     const selection = options.profiles
-    const recipesChanged = appliedRecipes?.length !== props.taskRecipes?.length
-      || props.taskRecipes?.some((node, index) => {
+    const recipes = taskRecipes.value
+    const recipesChanged = appliedRecipes !== recipes && (appliedRecipes?.length !== recipes.length
+      || recipes.some((node, index) => {
         const previous = appliedRecipes?.[index]
         return node.id !== previous?.id || !sameValue(node.props, previous?.props)
-      }) === true
+      }))
     const selectionChanged = !sameValue(appliedProfileSelection, selection)
-    const contextChanged = props.taskRecipes?.some(node => node.props.when)
-      && (appliedRecipeContext?.props !== props.recipeContext?.props
-        || appliedRecipeContext?.context !== props.recipeContext?.context
-        || !sameValue(appliedRecipeContext?.locals, props.recipeContext?.locals))
+    const bindingsChanged = appliedRecipeContext?.props !== props.recipeContext?.props
+      || !sameValue(appliedRecipeContext?.locals, props.recipeContext?.locals)
+    const recipeContextChanged = hasRecipeConditions.value && (bindingsChanged
+      || appliedRecipeContext?.context !== props.recipeContext?.context
+      || appliedRecipeTimezone !== recipeTimezone.value)
     if (recipesChanged || selectionChanged || presetChanged) {
-      localProfiles = createTimelineRecipeProfiles(base, { profiles: selection }, props.taskRecipes ?? [], () => ({
+      localProfiles = createTimelineRecipeProfiles(base, { profiles: selection }, recipes, () => ({
         data: recipeData,
         context: props.recipeContext,
       }))
@@ -266,7 +293,7 @@ async function reconcile(): Promise<void> {
     const rangeChanged = !sameTimelineRange(readTimelineRange(appliedOptions?.timeRange), authoredRange)
     const desiredRange = group?.viewport() ?? (rangeChanged ? authoredRange : old?.timeRange)
 
-    if (!chart || presetChanged || recipesChanged || (localProfiles && (selectionChanged || contextChanged)) || removedOptions(appliedOptions, options)) {
+    if (!chart || presetChanged || recipesChanged || (localProfiles && selectionChanged) || removedOptions(appliedOptions, options)) {
       dispose()
       const mountOptions = desiredRange ? { ...options, timeRange: { ...options.timeRange, ...desiredRange } } : options
       const handle = timeline.TimelineChart.mount(target.value, {
@@ -316,6 +343,17 @@ async function reconcile(): Promise<void> {
       }
       const previous = (appliedOptions ?? {}) as Record<string, unknown>
       const patch = Object.fromEntries(Object.entries(options).filter(([key, value]) => !sameValue(previous[key], value)))
+      if (previewGroupsHidden && patch.groups && appliedOptions?.groups && options.groups) {
+        const { visible: previousVisibility, ...previousGroups } = appliedOptions.groups
+        const { visible, ...groups } = options.groups
+        if (visible !== previousVisibility && sameValue(previousGroups, groups)) {
+          patch.groups = { visible }
+        }
+      }
+      // The store merges options, while the renderer reads profiles from the latest patch.
+      if (options.profiles && ((localProfiles && recipeContextChanged) || Object.keys(patch).length)) {
+        patch.profiles = options.profiles
+      }
       if (Object.keys(patch).length) {
         if (patch.timeRange && !rangeChanged) {
           patch.timeRange = { ...options.timeRange, ...range }
@@ -331,13 +369,18 @@ async function reconcile(): Promise<void> {
     mountedProvider = selectedPreset?.provider
     presetConfig = base
     presetHeight.value = base.height
+    if (observePreview && (!clearRecipePreview || appliedSourceStart !== props.sourceStart || appliedData !== data
+      || presetChanged || selectionChanged || bindingsChanged || appliedOptions?.tasks?.height !== options.tasks?.height)) {
+      publishRecipePreview(base, { ...options, profiles: selection })
+    }
     appliedOptions = options
     appliedTheme = theme
     appliedData = data
-    appliedRecipes = props.taskRecipes
+    appliedRecipes = recipes
     appliedProfileSelection = selection
     appliedRecipeContext = props.recipeContext
-    publishRecipePreview(base, { ...options, profiles: selection })
+    appliedSourceStart = props.sourceStart
+    appliedRecipeTimezone = recipeTimezone.value
     error.value = ''
   }
   catch (cause) {
@@ -385,7 +428,21 @@ function resizeWithKey(event: KeyboardEvent): void {
 watch(() => props.input.collapsed, (value) => {
   collapsed.value = value === true
 }, { immediate: true })
-watch([() => props.input, () => props.columnNodes, () => props.taskRecipes, () => observePreview || props.columnNodes?.length || props.taskRecipes?.some(node => node.props.when) ? props.recipeContext : undefined, () => props.modulePreset, () => props.readonly, () => props.theme, showCanvas, compact, () => group?.labelWidth.value], () => {
+watch([
+  () => props.input,
+  columnNodes,
+  taskRecipes,
+  columnTimezone,
+  recipeTimezone,
+  () => observePreview || columnNodes.value.length || hasRecipeConditions.value ? props.recipeContext : undefined,
+  () => props.modulePreset,
+  () => props.readonly,
+  () => props.theme,
+  showCanvas,
+  compact,
+  () => group?.labelWidth.value,
+  () => previewGroupsHidden?.value,
+], () => {
   void reconcile()
 }, { flush: 'post' })
 onMounted(() => {
