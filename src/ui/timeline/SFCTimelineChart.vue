@@ -1,15 +1,22 @@
 <script setup lang="ts">
-import type { TimelineTaskSelectedEvent } from '@endge/core'
+import type { RComponentSFC_IR_ElementNode, TimelineTaskSelectedEvent } from '@endge/core'
 import type { TimelineChartHandle, TimelineChartMountConfig } from '@nova-lab/timeline'
 import type { TimelinePresetContext, TimelinePresetEntry, TimelinePresetProvider } from './timeline-presets'
+import type { SFCVueRenderContext } from '@/services/render/sfc/sfc-vue-render.type'
+import { ChevronDown, ChevronUp } from '@lucide/vue'
 import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { timelineGroupKey } from './timeline-group-context'
-import { EMPTY_TIMELINE_DATA, inferTimelineRange, isTimelineRecord, mergeTimelineOptions, nextTimelineId, readTimelineColumns, readTimelineData, readTimelineRange, sameTimelineRange, timelinePixels } from './timeline-input'
+import { EMPTY_TIMELINE_DATA, inferTimelineRange, isTimelineRecord, mergeTimelineOptions, nextTimelineId, readTimelineColumnNodes, readTimelineColumns, readTimelineData, readTimelineRange, sameTimelineRange, timelinePixels } from './timeline-input'
 import { resolveTimelinePreset } from './timeline-presets'
+import { createTimelineRecipeProfiles, inheritedTimelineProfile, timelineRecipePreviewKey } from './timeline-task-recipes'
 
 defineOptions({ inheritAttrs: false })
 const props = defineProps<{
   input: Record<string, unknown>
+  sourceStart?: number
+  columnNodes?: readonly RComponentSFC_IR_ElementNode[]
+  taskRecipes?: readonly RComponentSFC_IR_ElementNode[]
+  recipeContext?: SFCVueRenderContext
   chartKey: string
   modulePreset?: TimelinePresetEntry
   readonly?: boolean
@@ -20,14 +27,24 @@ const props = defineProps<{
 }>()
 const timelineId = nextTimelineId()
 const group = inject(timelineGroupKey, null)
+const observePreview = inject(timelineRecipePreviewKey, null)
+let clearRecipePreview: (() => void) | undefined
+let recipeData: NonNullable<TimelineChartMountConfig['data']> = EMPTY_TIMELINE_DATA
+let appliedRecipes: typeof props.taskRecipes
+let localProfiles: ReturnType<typeof createTimelineRecipeProfiles>
+let appliedProfileSelection: NonNullable<TimelineChartMountConfig['options']>['profiles']
+let appliedRecipeContext: SFCVueRenderContext | undefined
 const target = ref<HTMLElement>()
+const title = computed(() => typeof props.input.title === 'string' ? props.input.title : '')
+const sourceColumns = computed(() => props.columnNodes?.length && props.recipeContext
+  ? readTimelineColumnNodes(props.columnNodes, props.recipeContext)
+  : undefined)
 const collapsed = ref(false)
 const error = ref('')
 const loading = ref(true)
 const presetHeight = ref<number | string>()
 const minimum = computed(() => timelinePixels(props.input['min-height'], 80, 32))
 const maximum = computed(() => Math.max(minimum.value, timelinePixels(props.input['max-height'], 2400)))
-const title = computed(() => typeof props.input.title === 'string' ? props.input.title : '')
 const baseHeight = computed(() => timelinePixels(props.input.height, timelinePixels(presetHeight.value, 320)))
 const panelHeight = computed(() => clampHeight(group?.height(props.chartKey) ?? baseHeight.value))
 const viewportHeight = computed(() => collapsed.value ? 32 : panelHeight.value)
@@ -74,7 +91,14 @@ function focusTask(id: string): boolean {
 
 function configuration(base: Partial<TimelineChartMountConfig>) {
   const options = mergeTimelineOptions(base.options, props.input.options)
-  if (props.input.columns != null) {
+  const timezone = props.input.timezone
+  if (typeof timezone === 'string' && timezone) {
+    options.timezone = timezone === 'local' ? Intl.DateTimeFormat().resolvedOptions().timeZone : timezone
+  }
+  if (sourceColumns.value) {
+    options.groups = { ...options.groups, columns: sourceColumns.value }
+  }
+  else if (props.input.columns != null) {
     if (!authoredColumns || !sameValue(columnSource, props.input.columns)) {
       authoredColumns = readTimelineColumns(props.input.columns)
       columnSource = props.input.columns
@@ -155,6 +179,45 @@ function removedOptions(previous: unknown, next: unknown): boolean {
     || Object.keys(previous).some(key => !Object.hasOwn(next, key) || removedOptions(previous[key], next[key])))
 }
 
+function publishRecipePreview(base: Partial<TimelineChartMountConfig>, options: NonNullable<TimelineChartMountConfig['options']>) {
+  if (!observePreview || props.sourceStart === undefined) {
+    return
+  }
+  const profiles = Object.keys(base.taskProfiles?.profiles ?? {})
+  const ids = new Set(profiles)
+  const defaultProfile = options.profiles?.tasks?.default ?? base.defaultTaskProfile ?? base.taskProfiles?.defaultProfileId
+  const profileByTask = new Map<string, string>()
+  if (ids.size) {
+    for (const task of recipeData.tasks ?? []) {
+      const profile = inheritedTimelineProfile(base, options, task)
+      if (profile && ids.has(profile)) {
+        profileByTask.set(task.id, profile)
+      }
+      else if (defaultProfile && ids.has(defaultProfile)) {
+        profileByTask.set(task.id, defaultProfile)
+      }
+    }
+  }
+  const previous = clearRecipePreview
+  clearRecipePreview = observePreview({
+    sourceStart: props.sourceStart,
+    chartKey: props.chartKey,
+    data: recipeData,
+    presetName: typeof props.input.preset === 'string' ? props.input.preset : undefined,
+    presetResolved: Boolean(preset.value.value),
+    presetError: preset.value.error || undefined,
+    profiles,
+    editableRecipes: preset.value.value?.provider.editableRecipes,
+    defaultProfile,
+    profileByTask,
+    taskHeight: options.tasks?.height,
+    expressionBindings: props.recipeContext
+      ? { ...props.recipeContext.props, ...props.recipeContext.locals, props: props.recipeContext.props }
+      : undefined,
+  })
+  previous?.()
+}
+
 async function reconcile(): Promise<void> {
   const currentGeneration = ++generation
   if (!active || !showCanvas.value) {
@@ -162,7 +225,8 @@ async function reconcile(): Promise<void> {
     return
   }
   try {
-    if (preset.value.error) {
+    // The visual editor can inspect authored recipes using the standard Timeline.
+    if (preset.value.error && !observePreview) {
       throw new Error(preset.value.error)
     }
     timeline ??= await import('@nova-lab/timeline')
@@ -175,18 +239,40 @@ async function reconcile(): Promise<void> {
     const context: TimelinePresetContext = { settings: selectedPreset?.settings ?? {}, collapsed: collapsed.value }
     const base = presetChanged ? selectedPreset?.provider.configure?.(context) ?? {} : presetConfig
     const { data, options } = configuration(base)
+    recipeData = data ?? EMPTY_TIMELINE_DATA
+    const selection = options.profiles
+    const recipesChanged = appliedRecipes?.length !== props.taskRecipes?.length
+      || props.taskRecipes?.some((node, index) => {
+        const previous = appliedRecipes?.[index]
+        return node.id !== previous?.id || !sameValue(node.props, previous?.props)
+      }) === true
+    const selectionChanged = !sameValue(appliedProfileSelection, selection)
+    const contextChanged = props.taskRecipes?.some(node => node.props.when)
+      && (appliedRecipeContext?.props !== props.recipeContext?.props
+        || appliedRecipeContext?.context !== props.recipeContext?.context
+        || !sameValue(appliedRecipeContext?.locals, props.recipeContext?.locals))
+    if (recipesChanged || selectionChanged || presetChanged) {
+      localProfiles = createTimelineRecipeProfiles(base, { profiles: selection }, props.taskRecipes ?? [], () => ({
+        data: recipeData,
+        context: props.recipeContext,
+      }))
+    }
+    if (localProfiles) {
+      options.profiles = { ...selection, tasks: { ...selection?.tasks, by: localProfiles.select } }
+    }
     const theme = base.theme ?? props.theme ?? 'light'
     const old = chart?.getViewport()
     const authoredRange = readTimelineRange(options.timeRange)
     const rangeChanged = !sameTimelineRange(readTimelineRange(appliedOptions?.timeRange), authoredRange)
     const desiredRange = group?.viewport() ?? (rangeChanged ? authoredRange : old?.timeRange)
 
-    if (!chart || presetChanged || removedOptions(appliedOptions, options)) {
+    if (!chart || presetChanged || recipesChanged || (localProfiles && (selectionChanged || contextChanged)) || removedOptions(appliedOptions, options)) {
       dispose()
       const mountOptions = desiredRange ? { ...options, timeRange: { ...options.timeRange, ...desiredRange } } : options
       const handle = timeline.TimelineChart.mount(target.value, {
         renderer: 'web2d',
         ...base,
+        ...(localProfiles ? { taskProfiles: localProfiles.taskProfiles } : {}),
         id: timelineId,
         theme,
         data,
@@ -248,6 +334,10 @@ async function reconcile(): Promise<void> {
     appliedOptions = options
     appliedTheme = theme
     appliedData = data
+    appliedRecipes = props.taskRecipes
+    appliedProfileSelection = selection
+    appliedRecipeContext = props.recipeContext
+    publishRecipePreview(base, { ...options, profiles: selection })
     error.value = ''
   }
   catch (cause) {
@@ -295,7 +385,7 @@ function resizeWithKey(event: KeyboardEvent): void {
 watch(() => props.input.collapsed, (value) => {
   collapsed.value = value === true
 }, { immediate: true })
-watch([() => props.input, () => props.modulePreset, () => props.readonly, () => props.theme, showCanvas, compact, () => group?.labelWidth.value], () => {
+watch([() => props.input, () => props.columnNodes, () => props.taskRecipes, () => observePreview || props.columnNodes?.length || props.taskRecipes?.some(node => node.props.when) ? props.recipeContext : undefined, () => props.modulePreset, () => props.readonly, () => props.theme, showCanvas, compact, () => group?.labelWidth.value], () => {
   void reconcile()
 }, { flush: 'post' })
 onMounted(() => {
@@ -305,17 +395,15 @@ onMounted(() => {
 onBeforeUnmount(() => {
   active = false
   generation++
+  clearRecipePreview?.()
   dispose()
 })
 </script>
 
 <template>
-  <section v-bind="$attrs" class="endge-timeline-chart">
-    <header v-if="title || collapsed" class="endge-timeline-chart__header">
-      <button v-if="group" type="button" :aria-expanded="!collapsed" @click="collapsed = !collapsed">
-        {{ collapsed ? '▸' : '▾' }} {{ title || 'Timeline' }}
-      </button>
-      <span v-else>{{ title || 'Timeline' }}</span>
+  <section v-bind="$attrs" class="endge-timeline-chart" :aria-label="title || undefined" :class="{ 'endge-timeline-chart--collapsed': collapsed }">
+    <header v-if="title" class="endge-timeline-chart__title">
+      {{ title }}
     </header>
     <div v-if="showCanvas" class="endge-timeline-chart__surface" :style="{ height: `${viewportHeight}px` }">
       <div ref="target" class="endge-timeline-chart__canvas" />
@@ -326,6 +414,17 @@ onBeforeUnmount(() => {
         Загрузка Timeline…
       </div>
     </div>
+    <button
+      v-if="group || collapsed"
+      type="button"
+      class="endge-timeline-chart__collapse"
+      :aria-expanded="!collapsed"
+      :aria-label="collapsed ? 'Развернуть диаграмму Timeline' : 'Свернуть диаграмму Timeline'"
+      @click="collapsed = !collapsed"
+    >
+      <ChevronDown v-if="collapsed" :size="16" aria-hidden="true" />
+      <ChevronUp v-else :size="16" aria-hidden="true" />
+    </button>
     <div
       v-if="showSplitter"
       class="endge-timeline-chart__splitter"
@@ -345,8 +444,36 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.endge-timeline-chart { min-width: 0; flex-shrink: 0; }
-.endge-timeline-chart__header { min-height: 26px; display: flex; align-items: center; padding-inline: 8px; }
+.endge-timeline-chart { position: relative; min-width: 0; flex-shrink: 0; }
+.endge-timeline-chart__title {
+  min-height: 1.875rem;
+  padding: .375rem 3rem .375rem .625rem;
+  color: inherit;
+  font-size: .875rem;
+  font-weight: 600;
+}
+.endge-timeline-chart--collapsed { min-height: 32px; }
+.endge-timeline-chart__collapse {
+  position: absolute;
+  top: 4px;
+  inset-inline-end: 20px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--endge-border, GrayText);
+  border-radius: 4px;
+  background: var(--endge-surface, Canvas);
+  color: inherit;
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .endge-timeline-chart:not(.endge-timeline-chart--collapsed):not(:hover) > .endge-timeline-chart__collapse:not(:focus-visible) {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
 .endge-timeline-chart__surface { position: relative; width: 100%; }
 .endge-timeline-chart__canvas { width: 100%; height: 100%; overflow: hidden; }
 .endge-timeline-chart__status { position: absolute; inset: 0; display: grid; place-content: center; padding: 12px; background: var(--endge-surface, Canvas); }

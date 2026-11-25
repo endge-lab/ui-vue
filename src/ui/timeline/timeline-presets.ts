@@ -1,7 +1,7 @@
-import type { RuntimeScope } from '@endge/core'
+import type { ModuleTimelinePresetDescriptor, ModuleTimelinePresetReference, RuntimeScope, TimelineRecipeLayout } from '@endge/core'
 import type { TimelineChartHandle, TimelineChartMountConfig } from '@nova-lab/timeline'
 
-import { Endge } from '@endge/core'
+import { Endge, workspaceModuleAttachment } from '@endge/core'
 import { VUE_MODULE_TIMELINE_PRESETS } from '@/services/modules/vue-module'
 
 interface TimelinePresetFieldBase {
@@ -14,9 +14,7 @@ export type TimelinePresetField = TimelinePresetFieldBase & (
   | { type: 'string' | 'color', default?: string, values?: readonly string[] }
 )
 
-export interface TimelinePresetDescriptor {
-  name: string
-  label?: string
+export interface TimelinePresetDescriptor extends ModuleTimelinePresetDescriptor {
   fields: Readonly<Record<string, TimelinePresetField>>
   compact?: boolean
 }
@@ -26,7 +24,16 @@ export interface TimelinePresetContext {
   collapsed: boolean
 }
 
+export interface TimelinePresetEditableRecipe {
+  name?: string
+  kind?: string
+  when?: string
+  recipe: TimelineRecipeLayout
+}
+
 export interface TimelinePresetProvider {
+  // Optional Source templates keyed by the IDs returned in configure().taskProfiles.
+  editableRecipes?: Readonly<Record<string, TimelinePresetEditableRecipe>>
   configure?: (context: TimelinePresetContext) => Partial<Omit<TimelineChartMountConfig, 'id'>>
   mounted?: (chart: TimelineChartHandle, context: TimelinePresetContext) => void | (() => void)
 }
@@ -55,10 +62,44 @@ export function registerTimelinePreset(descriptor: TimelinePresetDescriptor, pro
 
 export function listTimelinePresets(scope?: RuntimeScope | null): TimelinePresetDescriptor[] {
   const available = new Map(presets)
-  for (const [name, { value }] of Endge.runtime.modules.list<TimelinePresetEntry>(scope ?? null, VUE_MODULE_TIMELINE_PRESETS)) {
+  const workspaceScope = Endge.runtime.workspaceModuleScope
+  for (const reference of workspaceTimelinePresets()) {
+    const entry = resolveWorkspaceTimelinePreset(workspaceScope, reference)
+    available.set(reference.name, entry?.value ?? { descriptor: { name: reference.name, fields: {} } })
+  }
+  for (const [name, { value }] of Endge.runtime.modules.list<TimelinePresetEntry>(scope ?? null, VUE_MODULE_TIMELINE_PRESETS, workspaceScope)) {
     available.set(name, value)
   }
   return [...available.values()].map(({ descriptor }) => structuredClone(descriptor))
+}
+
+export function resolveTimelinePresetContribution(
+  scope: RuntimeScope | null,
+  name: string,
+): { value: TimelinePresetEntry, visualToken?: string } | undefined {
+  const workspaceScope = Endge.runtime.workspaceModuleScope
+  const local = Endge.runtime.modules.resolve<TimelinePresetEntry>(scope, VUE_MODULE_TIMELINE_PRESETS, name, workspaceScope)
+  if (local) {
+    return local
+  }
+  const reference = workspaceTimelinePresets().find(preset => preset.name === name)
+  return reference && (resolveWorkspaceTimelinePreset(workspaceScope, reference)
+    ?? { value: { descriptor: { name, fields: {} } } })
+}
+
+function workspaceTimelinePresets(): readonly ModuleTimelinePresetReference[] {
+  return Endge.configuration.isResolved && Endge.mode !== 'debugger'
+    ? Endge.configuration.current.timelinePresets ?? []
+    : []
+}
+
+function resolveWorkspaceTimelinePreset(scope: RuntimeScope | null, reference: ModuleTimelinePresetReference) {
+  return Endge.runtime.modules.resolveAttachment<TimelinePresetEntry>(
+    scope,
+    workspaceModuleAttachment(reference),
+    VUE_MODULE_TIMELINE_PRESETS,
+    reference.name,
+  )
 }
 
 export function resolveTimelinePreset(name: unknown, settings: unknown, entry?: TimelinePresetEntry) {

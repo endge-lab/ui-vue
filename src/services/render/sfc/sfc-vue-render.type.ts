@@ -52,6 +52,7 @@ export type SFCVueRenderBinding
 // Контекст текущего SFC render pass.
 export interface SFCVueRenderContext {
   props: Record<string, unknown>
+  translate?: (key: string, fallback?: string) => string | undefined
   // Read-only snapshot глобального Endge context для текущего render pass.
   context: Readonly<EndgeRuntimeContextSnapshot>
   locals: Record<string, unknown>
@@ -118,6 +119,7 @@ export interface SFCVueRenderAdapterProps {
   props?: Record<string, unknown>
   renderVersion?: number
   runtimeScopeId?: string
+  translate?: SFCVueRenderContext['translate']
   host?: ComponentSFCRenderPort | null
   inspection?: SFCRenderInspectionSessionLike | null
 }

@@ -1,4 +1,4 @@
-import type { ModuleContribution, ModuleReference } from '@endge/core'
+import type { ModuleContribution } from '@endge/core'
 
 import type {
   SFCVueRenderAdapterKey,
@@ -14,6 +14,7 @@ import {
   ENDGE_SFC_RENDER_ADAPTER_PROTOCOL_VERSION,
   moduleReferenceKey,
   parseModuleRendererSelection,
+  workspaceModuleAttachment,
 } from '@endge/core'
 import { cloneVNode, isVNode } from 'vue'
 import { MODULE_VISUAL_ATTRIBUTE, VUE_MODULE_RENDERERS } from '@/services/modules/vue-module'
@@ -62,10 +63,6 @@ export function readWorkspaceRendererReferences() {
     : undefined
 }
 
-export function workspaceRendererAttachment(reference: ModuleReference): string {
-  return `workspace-renderer:${moduleReferenceKey(reference)}`
-}
-
 export function renderWithSFCAdapter(tag: SFCVueRenderAdapterKey, input: SFCVueRenderElementInput): SFCVueRenderResult {
   const scope = resolveSFCModuleScope(input.context)
   const selection = input.context.host?.rendererSelections?.[tag]
@@ -90,7 +87,7 @@ export function renderWithSFCAdapter(tag: SFCVueRenderAdapterKey, input: SFCVueR
   if (reference) {
     const entry = Endge.runtime.modules.resolveAttachment<SFCVueRenderFunction>(
       Endge.runtime.workspaceModuleScope,
-      workspaceRendererAttachment(reference),
+      workspaceModuleAttachment(reference),
       VUE_MODULE_RENDERERS,
       `${tag}/${reference.rendererId}`,
     )
@@ -99,7 +96,7 @@ export function renderWithSFCAdapter(tag: SFCVueRenderAdapterKey, input: SFCVueR
     }
     return renderModuleRenderer(entry, input)
   }
-  const entry = Endge.runtime.modules.resolve<SFCVueRenderFunction>(scope, VUE_MODULE_RENDERERS, tag)
+  const entry = Endge.runtime.modules.resolve<SFCVueRenderFunction>(scope, VUE_MODULE_RENDERERS, tag, Endge.runtime.workspaceModuleScope)
   if (!entry) {
     return requireSFCAdapterRenderer(tag)(input)
   }

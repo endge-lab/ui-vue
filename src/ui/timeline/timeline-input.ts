@@ -1,4 +1,8 @@
+import type { RComponentSFC_IR_ElementNode } from '@endge/core'
 import type { TimelineChartMountConfig, TimelineGroupColumnInput, TimelineGroupInput } from '@nova-lab/timeline'
+
+import type { SFCVueRenderContext } from '@/services/render/sfc/sfc-vue-render.type'
+import { evaluateSFCValue, readSFCObjectPath } from '@/ui/render/sfc/SFCRender_Evaluator'
 
 export interface TimelineViewportRange { start: number, end: number }
 let generatedId = 0
@@ -78,6 +82,22 @@ export function isTimelineRecord(value: unknown): value is Record<string, unknow
   return value != null && typeof value === 'object' && !Array.isArray(value)
 }
 
+export function readTimelineColumnNodes(
+  nodes: readonly RComponentSFC_IR_ElementNode[],
+  context: SFCVueRenderContext,
+): TimelineGroupColumnInput[] {
+  return readTimelineColumns(nodes.map((node) => {
+    const { value, ...header } = node.props
+    const descriptor = Object.fromEntries(Object.entries(header).map(([key, binding]) => [key, evaluateSFCValue(binding, context)]))
+    return value
+      ? {
+          ...descriptor,
+          value: ($group: TimelineGroupInput) => evaluateSFCValue(value, { ...context, locals: { ...context.locals, $group } }),
+        }
+      : descriptor
+  }))
+}
+
 export function readTimelineColumns(input: unknown): TimelineGroupColumnInput[] {
   if (!Array.isArray(input)) {
     throw new TypeError('Timeline columns должны быть массивом.')
@@ -85,18 +105,26 @@ export function readTimelineColumns(input: unknown): TimelineGroupColumnInput[] 
   const ids = new Set<string>()
   return input.map((column: unknown) => {
     if (!isTimelineRecord(column) || typeof column.id !== 'string' || !column.id.trim()
-      || typeof column.field !== 'string' || !column.field.trim() || ids.has(column.id)) {
-      throw new Error('Timeline column требует уникальный id и имя поля field.')
+      || ids.has(column.id)) {
+      throw new Error('Колонке Timeline нужен уникальный key или id.')
+    }
+    const field = typeof column.field === 'string' ? column.field.trim() : ''
+    const expression = typeof column.value === 'function' ? column.value as (group: TimelineGroupInput) => unknown : undefined
+    if (!field && !expression) {
+      throw new Error('Колонке Timeline нужен путь field или выражение :value.')
     }
     ids.add(column.id)
-    const field = column.field
-    const value = (group: TimelineGroupInput) => {
+    const value = expression ?? ((group: TimelineGroupInput) => {
       const record = group as unknown as Record<string, unknown>
-      return Object.hasOwn(record, field) ? record[field] : undefined
-    }
+      if (Object.hasOwn(record, field)) {
+        return record[field]
+      }
+      const nested = readSFCObjectPath(field, record)
+      return nested === record ? undefined : nested
+    })
     return {
       id: column.id,
-      title: typeof column.title === 'string' ? column.title : field,
+      title: typeof column.title === 'string' ? column.title : field || column.id,
       width: timelinePixels(column.width, 160),
       sortable: column.sortable === true,
       data: group => String(value(group) ?? ''),

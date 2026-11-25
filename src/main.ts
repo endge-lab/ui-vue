@@ -59,4 +59,7 @@ export * from '@/ui/table/tanstack-table.types'
 export { default as TanStackSfcDataTable } from '@/ui/table/TanStackSfcDataTable.vue'
 export { default as TanStackTableRuntimeRenderer } from '@/ui/table/TanStackTableRuntimeRenderer.vue'
 export { listTimelinePresets, registerTimelinePreset } from '@/ui/timeline/timeline-presets'
-export type { TimelinePresetContext, TimelinePresetDescriptor, TimelinePresetField, TimelinePresetProvider } from '@/ui/timeline/timeline-presets'
+export type { TimelinePresetContext, TimelinePresetDescriptor, TimelinePresetEditableRecipe, TimelinePresetField, TimelinePresetProvider } from '@/ui/timeline/timeline-presets'
+
+export { createTimelineTaskRenderRecipe, timelineRecipePreviewKey } from '@/ui/timeline/timeline-task-recipes'
+export type { TimelineRecipeChartPreview } from '@/ui/timeline/timeline-task-recipes'
